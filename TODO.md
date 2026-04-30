@@ -81,10 +81,15 @@
   - `CORE-002e` — `yukki prompt-update`
   - `CORE-002f` — `yukki sync`
 - 🟡 **UI-001** — Initialiser l'app desktop yukki — Wails v2 + React 18
-  + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Sous-cmd
-  `yukki ui`, project picker, hub (liste stories), modal *New Story*
-  câblé sur `workflow.RunStory`. Story rédigée en
-  [`spdd/stories/UI-001-init-desktop-app-wails-react.md`](spdd/stories/UI-001-init-desktop-app-wails-react.md).
+  + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Splittée
+  SPIDR axe **I** (Interface) en 3 stories filles
+  (analyse de famille en [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](spdd/analysis/UI-001-init-desktop-app-wails-react.md)) :
+  - `UI-001a` — App skeleton & sub-cmd `yukki ui` + scaffold React +
+    CI build matrix (~1.5j) — [story](spdd/stories/UI-001a-app-skeleton-and-subcommand.md)
+  - `UI-001b` — Hub viewer (project picker, sidebar, liste stories,
+    banner Claude, init SPDD empty state) (~1.5j) — [story](spdd/stories/UI-001b-hub-viewer-claude-banner.md)
+  - `UI-001c` — New Story flow (modal, `RunStory` binding, EventsEmit
+    streaming, cancellation `OnShutdown`) (~1.5j) — [story](spdd/stories/UI-001c-new-story-flow.md)
 - ⬜ **UI-002** — Canvas REASONS éditable (React Flow v12, drag&drop des
   7 blocs R/E/A/S/O/N/S, save vers `spdd/prompts/<id>-<slug>.md`).
   Suite directe d'UI-001.
@@ -155,3 +160,13 @@ guide pédagogique avec schémas.
   UI-003, UI-004, UI-005 (filiation directe), promotion d'UI-001 de
   *post-MVP* à *en attente — features projet* (statut 🟡), ajout
   d'OPS-001 en post-MVP (signing binaires). 18 items au total.
+- **2026-05-01** — split SPIDR axe **I** d'UI-001 en 3 stories filles
+  (UI-001a skeleton, UI-001b hub viewer, UI-001c new story flow) sur
+  feedback utilisateur *"elle est grosse cette story"*. Chaque fille
+  ≤ 1.5j (vs 4-4.5j monolithique), respect INVEST-Small. Analyse
+  conservée en analyse de famille (1 analyse pour 3 canvas REASONS à
+  venir). Q1=B (refresh manuel), Q2=A (build tag mock), Q3=A (empty
+  state init), Q4=A (liste stories en first view), Q5=A (cancellation
+  OnShutdown), Q6=A (NextID race accepté V1), Q7=A (EN-only V1)
+  validés par utilisateur. 18 items toujours (le compte UI-001 ne
+  change pas, juste son éclatement interne en filiation a/b/c).
