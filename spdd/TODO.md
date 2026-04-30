@@ -50,6 +50,16 @@
   interdiction `--amend` / `--no-verify`, footer `Co-Authored-By:`,
   scope `(spdd)` ou nom de module). Extraction depuis `CLAUDE.md` vers
   la ref ; `CLAUDE.md` pointera ensuite vers la ref.
+- ⬜ **META-006** — Adoption du **format de nommage canonical SPDD** :
+  `[Type]-[ID]-[DateHeure]-[Titre].md` (ex.
+  `[Analysis]-CORE-001-202604301100-cli-story-via-claude.md`).
+  Cycle SPDD complet (story + analyse + canvas + generate). Touche
+  tous les artefacts existants (rename via `/spdd-sync` ou script),
+  les 3 templates `spdd/templates/`, le writer Go
+  `internal/artifacts/writer.go` (préfixe + datetime), les skills
+  qui référencent des chemins relatifs, et la doc (README, CLAUDE.md,
+  TODO.md, methodology/README.md). Aligne le projet avec la
+  convention décrite dans l'article SPDD original.
 - 🔧 **FIX** — Exposer `spdd/templates/tests.md` au niveau projet.
   Actuellement le template existe uniquement dans
   `internal/templates/embedded/tests.md` (créé pendant
@@ -94,3 +104,4 @@ complet de META-001.
 ## Historique de ce fichier
 
 - **2026-04-30** — création initiale, 12 items (4 livrés, 7 pending, 1 fix)
+- **2026-04-30** — ajout META-006 (format de nommage canonical SPDD), 13 items
