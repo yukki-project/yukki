@@ -10,8 +10,36 @@ permissions:
   contents: read
 
 jobs:
-  build-test:
-    name: build & test (${{ matrix.os }})
+  static-checks:
+    name: static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt check
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::gofmt found unformatted files:"
+            echo "$unformatted"
+            exit 1
+          fi
+        shell: bash
+
+      - name: build
+        run: go build -v ./...
+
+  unit-tests:
+    name: unit tests (${{ matrix.os }})
+    needs: static-checks
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -26,22 +54,61 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: go vet
-        run: go vet ./...
+      - name: unit tests (cmd + internal)
+        run: go test -race -coverprofile=coverage-unit.out ./cmd/... ./internal/...
 
-      - name: gofmt check
-        if: matrix.os != 'windows-latest'
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "::error::gofmt found unformatted files:"
-            echo "$unformatted"
-            exit 1
-          fi
-        shell: bash
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: coverage-unit
+          path: coverage-unit.out
 
-      - name: build
-        run: go build -v ./...
+  integration-tests:
+    name: integration tests (${{ matrix.os }})
+    needs: static-checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
-      - name: test
-        run: go test -race -coverprofile=coverage.out ./...
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: integration tests (tests/integration)
+        run: go test -race -coverprofile=coverage-integration.out -coverpkg=./internal/... ./tests/integration/...
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: coverage-integration
+          path: coverage-integration.out
+
+  e2e-tests:
+    name: e2e tests (${{ matrix.os }})
+    needs: static-checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: e2e tests (build yukki + fakeclaude, run subprocess)
+        # E2E tests build the yukki binary themselves and exercise it as a
+        # real subprocess with a fake claude binary on PATH. No race detector
+        # because the test orchestrator forks the actual binary; -race only
+        # instruments the test process itself.
+        run: go test -timeout 5m ./tests/e2e/...
