@@ -17,17 +17,14 @@ modules:
 
 ## Background
 
-Le projet **yukki** est un outil open source en Go
-([github.com/yukki-project/yukki](https://github.com/yukki-project/yukki))
-qui implémente la méthode [Structured Prompt-Driven Development](https://martinfowler.com/articles/structured-prompt-driven/).
-La cible v1 est un toolkit qui couvre tout le cycle SPDD avec deux surfaces
-(CLI + canvas editor graphique).
-
-Cette story est la **première tranche fondatrice** : faire fonctionner la
-commande `yukki story "<description>"` en CLI Go en orchestrant le `claude`
-CLI, et établir l'architecture sur laquelle s'appuieront les 6 autres
-commandes (CORE-002), la canvas UI (UI-001) et le provider Copilot CLI
-(INT-001).
+Le projet **yukki** ([github.com/yukki-project/yukki](https://github.com/yukki-project/yukki))
+est un outil open source en Go qui implémente la méthode
+[Structured Prompt-Driven Development](https://martinfowler.com/articles/structured-prompt-driven/).
+La v1 couvre tout le cycle SPDD avec deux surfaces : une CLI et un canvas
+editor graphique. Cette story est la **première tranche fondatrice** : faire
+fonctionner `yukki story` en orchestrant `claude` CLI, et établir l'architecture
+sur laquelle s'appuieront CORE-002 (6 autres commandes), UI-001 (canvas editor)
+et INT-001 (provider Copilot CLI).
 
 ## Business Value
 
@@ -159,6 +156,24 @@ commandes (CORE-002), la canvas UI (UI-001) et le provider Copilot CLI
   [`templates/canvas-reasons.md`](../templates/canvas-reasons.md)
 - Tests : `go test ./...` doit passer ; tests d'intégration moqués via un
   `Provider` factice qui ne lance pas vraiment `claude`
+
+### Découpage SPIDR — analyse et décision
+
+Story à 7 AC, donc à challenger contre [SPIDR](https://www.mountaingoatsoftware.com/blog/five-simple-but-powerful-ways-to-split-user-stories) (Mike Cohn).
+
+| Axe | Application | Verdict |
+|---|---|---|
+| **P** — Paths | AC1/AC2/AC5/AC7 sont des paths variants | les paths partagent ~80 % de la stack (Cobra + provider + writer) ; scinder créerait de la duplication |
+| **I** — Interfaces | une seule (CLI) | n/a |
+| **D** — Data | n/a | n/a |
+| **R** — Rules | possible : "MVP strict" (AC1+3+4) puis "Variants" (AC2+5+6+7) | le MVP strict (préfixe figé, sans stdin, sans fallback embed) a peu de valeur user seul |
+| **S** — Spike | n/a | n/a |
+
+**Décision** : garder en l'état. La fondation architecturale
+(Cobra + provider abstraction + writer + template loader) se livre d'un bloc
+parce que c'est précisément la *valeur* de la story fondatrice — chaque
+"variant" séparé reposerait sur la même infrastructure, qu'il faudrait écrire
+à un moment ou à un autre.
 
 ### Architecture pressentie (indicatif)
 
