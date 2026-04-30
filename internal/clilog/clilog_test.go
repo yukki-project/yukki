@@ -9,12 +9,12 @@ import (
 
 func TestNew_FormatAndLevel(t *testing.T) {
 	tests := []struct {
-		name        string
-		format      Format
-		verbose     bool
-		wantLevel   slog.Level
-		wantJSON    bool
-		message     string
+		name      string
+		format    Format
+		verbose   bool
+		wantLevel slog.Level
+		wantJSON  bool
+		message   string
 	}{
 		{"text default level info", FormatText, false, slog.LevelInfo, false, "hello"},
 		{"text verbose level debug", FormatText, true, slog.LevelDebug, false, "hello"},

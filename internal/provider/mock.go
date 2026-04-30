@@ -5,11 +5,11 @@ import "context"
 // MockProvider is a test double implementing Provider. Set Response (and
 // optionally Err) to control its behavior. Calls captures the prompts.
 type MockProvider struct {
-	NameVal     string
-	Response    string
-	Err         error
-	VersionErr  error
-	Calls       []string
+	NameVal    string
+	Response   string
+	Err        error
+	VersionErr error
+	Calls      []string
 }
 
 // Name returns NameVal or "mock" if empty.
