@@ -186,5 +186,5 @@ section `## Changelog` du canvas, qui trace qui a changé quoi quand.
 - [`methodology/README.md`](methodology/README.md) — index des techniques disponibles
 - [`templates/`](templates/) — squelettes des artefacts à produire
 - [`stories/META-001-extract-methodology-references.md`](stories/META-001-extract-methodology-references.md) — l'exemple complet
-- [`TODO.md`](TODO.md) — backlog SPDD (stories à venir + état)
+- [`../TODO.md`](../TODO.md) — backlog SPDD à la racine du repo (stories à venir + état)
 - [Root `CLAUDE.md`](../CLAUDE.md) — guide pour un agent qui débarque dans le repo

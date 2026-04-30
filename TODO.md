@@ -2,7 +2,8 @@
 
 > Liste des stories SPDD à venir et leur état. Maintenue **manuellement** en
 > attendant la formalisation d'un backlog SPDD propre (cf. discussion
-> *META-006 candidate*). Pour les stories *écrites*, voir [`stories/`](stories/).
+> *META-006 candidate*). Pour les stories *écrites*, voir
+> [`spdd/stories/`](spdd/stories/).
 >
 > **Note** : ce fichier reflète l'outil interne de session (`TodoWrite` côté
 > Claude Code) et le matérialise pour qu'il survive à la fermeture de la
@@ -98,10 +99,17 @@ Quand un item passe de ⬜ à 🟡 :
 2. Dérouler le cycle SPDD complet (étape 1 → 5)
 3. Passer la ligne à ✅ une fois `status: implemented` côté canvas
 
-Cf. [`README.md`](README.md) pour la philosophie générale et l'exemple
-complet de META-001.
+Cf. [`spdd/README.md`](spdd/README.md) pour la philosophie générale et
+l'exemple complet de META-001 ; [`spdd/GUIDE.md`](spdd/GUIDE.md) pour le
+guide pédagogique avec schémas.
 
 ## Historique de ce fichier
 
-- **2026-04-30** — création initiale, 12 items (4 livrés, 7 pending, 1 fix)
-- **2026-04-30** — ajout META-006 (format de nommage canonical SPDD), 13 items
+- **2026-04-30** — création initiale en `spdd/TODO.md`, 12 items
+  (4 livrés, 7 pending, 1 fix)
+- **2026-04-30** — ajout META-006 (format de nommage canonical SPDD),
+  13 items
+- **2026-04-30** — déplacement à la racine du repo (`/TODO.md`),
+  convention plus standard pour la visibilité ; les liens internes ont
+  été ajustés en conséquence (`spdd/stories/`, `spdd/README.md`,
+  `spdd/GUIDE.md`)

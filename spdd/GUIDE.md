@@ -316,7 +316,7 @@ améliorations issues de l'expérience.
 | **Mirror Claude / Copilot** | chaque skill existe dans `.claude/commands/` et `.github/skills/` | multi-provider, pas de lock-in |
 | **Status lifecycle explicite** (`draft → reviewed → accepted → implemented → synced`) | le `status` du frontmatter avance à chaque transition humaine ou automatique | machine-parseable, traçable |
 | **Section `## Changelog`** dans les canvas | obligatoire à chaque `/spdd-prompt-update` ou `/spdd-sync` | trace fine des évolutions |
-| **`spdd/TODO.md`** versionné | matérialise le backlog que SPDD canonical ne formalise pas | combler le gap roadmap du canonical |
+| **`TODO.md`** (racine du repo) versionné | matérialise le backlog que SPDD canonical ne formalise pas | combler le gap roadmap du canonical |
 
 ---
 
