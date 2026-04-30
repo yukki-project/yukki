@@ -2,7 +2,7 @@
 id: CORE-001
 slug: cli-story-via-claude
 title: Commande CLI `yukki story` génère une user story SPDD via Claude CLI
-status: draft
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 owner: Thibaut Sannier
@@ -137,15 +137,24 @@ et INT-001 (provider Copilot CLI).
 
 ## Open Questions
 
-- [ ] **Stratégie de génération via `claude`** : on passe le template brut +
-  la description et on laisse Claude le remplir, ou on construit un prompt
-  structuré qui rappelle d'abord les règles INVEST + Given/When/Then + slug
-  kebab-case avant d'inclure le template ? — affecte directement la qualité
-  des stories générées (à trancher en analyse, mais le choix est *visible* à
-  l'utilisateur final)
-- [ ] **Préfixes d'ID acceptés** : tout préfixe `[A-Z]+` accepté par défaut,
-  ou liste blanche figée (`STORY|EXT|BACK|CORE|UI|INT|DOC|OPS`) avec un flag
-  `--allow-prefix` pour étendre ? — affecte ce que l'utilisateur peut taper
+- [x] **Stratégie de génération via `claude`** : ~~template brut OU prompt
+  structuré ?~~ → **prompt structuré** (option b). `yukki` construit en
+  amont du template les règles SPDD applicables (INVEST + Given/When/Then
+  déclaratif + slug kebab-case + sweet spot 3-5 AC + couverture happy +
+  erreur user + cas limite), puis injecte le template `templates/story.md`,
+  puis la description utilisateur. Justification : la valeur centrale de
+  SPDD est la rigueur du prompt — si `yukki` n'injecte pas ces règles, on
+  rate notre raison d'être. Le coût en tokens supplémentaires est
+  acceptable. Externalisation du prompt système dans un fichier surchargeable
+  (option c) reportée en post-MVP.
+- [x] **Préfixes d'ID acceptés** : ~~free-form OU liste blanche ?~~ →
+  **mode hybride** (option c). Par défaut, tout préfixe matchant `[A-Z]+`
+  est accepté (philosophie OSS : on ne dicte pas la convention de
+  nommage des projets utilisateurs). Le `--help` affiche la liste suggérée
+  (`STORY|EXT|BACK|CORE|UI|INT|DOC|OPS|META`) à titre indicatif.
+  Un flag `--strict-prefix` opt-in active la validation par liste blanche
+  pour les équipes qui veulent harmoniser. Justification : *best of both
+  worlds* — flexible par défaut, garde-fou opt-in.
 
 ## Notes
 
