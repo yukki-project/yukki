@@ -3,7 +3,7 @@ id: META-002
 slug: backport-story-techniques
 story: spdd/stories/META-002-backport-story-techniques.md
 analysis: spdd/analysis/META-002-backport-story-techniques.md
-status: draft
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 ---
