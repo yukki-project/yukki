@@ -104,14 +104,16 @@ dernier inlining résiduel.
 
 ## Open Questions
 
-- [ ] **Granularité d'INVEST** : faut-il une ref `invest.md` autonome, ou
-  INVEST est-il un sous-cadre de `splitting.md` (puisque le critère "Small"
-  d'INVEST est précisément ce que SPIDR adresse) ? — affecte le nombre de
-  fichiers final (2 vs 3) et la lisibilité
-- [ ] **Anti-patterns de découpage** : ils vivent actuellement dans
-  `/spdd-story` à côté des stratégies SPIDR. Vont-ils dans `splitting.md`
-  (cohérent thématiquement) ou restent-ils dans le skill comme "règles
-  procédurales" (cohérent avec la séparation skill = procédural) ?
+- [x] **Granularité d'INVEST** : ~~ref autonome ou sous-cadre de
+  `splitting.md` ?~~ → **`invest.md` autonome** (3 refs au final).
+  Justification : INVEST a une portée plus large que SPIDR — il sert aussi
+  en escalade `/spdd-analysis` (signal "story qui ne respecte pas INVEST"
+  → retour `/spdd-story`). Cohérent avec "1 ref = 1 technique transverse".
+- [x] **Anti-patterns de découpage** : ~~dans `splitting.md` ou dans le
+  skill ?~~ → **dans `splitting.md`**. Justification : les anti-patterns
+  décrivent *comment appliquer SPIDR correctement*, c'est de la
+  méthodologie, pas de la procédure du skill. Le skill reste procédural
+  pur ("évaluer SPIDR via `splitting.md`, scinder si signaux d'alerte").
 
 ## Notes
 
