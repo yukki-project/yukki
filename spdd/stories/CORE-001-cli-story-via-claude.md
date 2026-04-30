@@ -22,12 +22,10 @@ On démarre le projet **yukki** (outil open source en Go, repo
 qui implémente la méthode
 [Structured Prompt-Driven Development](https://martinfowler.com/articles/structured-prompt-driven/).
 
-Le nom *yukki* — d'inspiration japonaise comme [Kiro](https://kiro.dev/) qui a
-ouvert la voie au "spec-driven development" — est une variante affectueuse
-(diminutif romaji ユッキ) de *yuki* 雪 (la neige). Il évoque la **page blanche**
-qui se structure en un canvas REASONS bien tissé. Le doublement du **k**
-distingue clairement le projet du nom courant *yuki*, plus encombré côté
-namespaces.
+Le nom *yukki* est une variante affectueuse (diminutif romaji ユッキ) de
+*yuki* 雪 (la neige). Il évoque la **page blanche** qui se structure en un
+canvas REASONS bien tissé. Le doublement du **k** distingue clairement le
+projet du nom courant *yuki*, plus encombré côté namespaces.
 
 La cible v1 est un toolkit qui couvre tout le cycle SPDD avec deux surfaces
 (CLI + canvas editor graphique standalone) ; cette story est la **première
@@ -79,7 +77,7 @@ l'arborescence standard) sur laquelle s'appuieront les 6 autres commandes
   projet (`.yukki.toml` à la racine) en v1
 - Mode interactif (Q&A pour clarifier la story) — v1 produit la story d'un
   seul coup à partir de la description fournie
-- Hooks ou steering rules (style Kiro)
+- Hooks ou steering rules (déclencheurs automatiques sur événements)
 - Publication sur registry (Homebrew, Scoop, asdf, etc.) → tâche post-MVP
 
 ## Acceptance Criteria
@@ -156,7 +154,6 @@ l'arborescence standard) sur laquelle s'appuieront les 6 autres commandes
 ## Notes
 
 - Référentiel de méthode SPDD : <https://martinfowler.com/articles/structured-prompt-driven/>
-- Inspiration outil : [kiro.dev](https://kiro.dev/) — spec-driven development
 - Templates de référence : [`templates/story.md`](../templates/story.md),
   [`templates/analysis.md`](../templates/analysis.md),
   [`templates/canvas-reasons.md`](../templates/canvas-reasons.md)
