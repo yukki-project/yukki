@@ -1,0 +1,18 @@
+# Build artifacts
+/yukki
+/yukki.exe
+/dist/
+
+# IDE
+/.idea/
+/.vscode/
+
+# Test artifacts
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# OS
+.DS_Store
+Thumbs.db

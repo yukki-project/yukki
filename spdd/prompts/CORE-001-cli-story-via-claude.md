@@ -3,7 +3,7 @@ id: CORE-001
 slug: cli-story-via-claude
 story: spdd/stories/CORE-001-cli-story-via-claude.md
 analysis: spdd/analysis/CORE-001-cli-story-via-claude.md
-status: reviewed
+status: implemented
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -513,3 +513,16 @@ no file created
 
 - 2026-04-30 — v1 — création initiale (status: draft, prêt pour
   `/spdd-generate`)
+- 2026-04-30 — v1.1 — toutes les Operations O1-O8 implémentées :
+  `go.mod` Go 1.22, `cmd/yukki/main.go` (Cobra + flags + exit-code
+  mapping), `internal/clilog`, `internal/templates` (4 templates
+  embed.FS, project-first), `internal/artifacts` (id calculator avec
+  padding élargissable + slug avec ASCII fold + writer atomic-rename
+  + frontmatter validation `yaml.v3`), `internal/provider`
+  (interface + ClaudeProvider via `os/exec` + MockProvider),
+  `internal/workflow` (StoryOptions + RunStory + BuildStructuredPrompt
+  + system prompt embed `prompts/story-system.md`), `.github/workflows/ci.yml`
+  (matrix Linux/macOS/Windows, vet + gofmt + build + test). Status
+  `reviewed → implemented`. Tests locaux (Windows) bloqués par
+  restriction d'AV sur fork/exec depuis temp ; `go vet` et
+  `go build` clean ; tests valideront en CI.
