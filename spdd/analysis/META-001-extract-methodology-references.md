@@ -118,8 +118,10 @@ Pour garantir la cohérence des 4 refs (et de toute ref future) :
   Wikipedia ; on cite et on résume avec un angle opérationnel.
 - **Langue** : français (cohérent avec le reste du projet). Le frontmatter
   porte `lang: fr` pour permettre une future internationalisation.
-- **Exemples** : tirés de `yukki` (refs neuves) ou du portail k8s (techniques
-  rodées sur un cas mature).
+- **Exemples** : tirés **exclusivement** du projet `yukki`
+  (CORE-001 et stories suivantes). Pas d'exemples du portail k8s ou
+  d'autres projets externes — les refs publiées sont des assets du projet
+  yukki, leurs exemples doivent l'illustrer.
 
 ## Modules impactés
 

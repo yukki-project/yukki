@@ -3,7 +3,7 @@ id: META-001
 slug: extract-methodology-references
 story: spdd/stories/META-001-extract-methodology-references.md
 analysis: spdd/analysis/META-001-extract-methodology-references.md
-status: implemented
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -47,8 +47,8 @@ organisationnel.
       SPDD* qui rappelle la règle "skill = procédural, methodology = knowledge"
 - [ ] Chaque ref respecte le **Guide de style** : 80-150 lignes, structure
       type frontmatter → définition opérationnelle → heuristiques → exemple
-      → sources → `## Changelog`, ton pratique-d'abord, exemples côté yukki
-      ou portail
+      → sources → `## Changelog`, ton pratique-d'abord, **exemples
+      exclusivement issus du projet yukki** (CORE-001 et stories suivantes)
 - [ ] **Critère de revue manuelle** (non-AC) : le skill `/spdd-analysis`
       enrichi peut produire une analyse cohérente sur CORE-001 sans
       modification supplémentaire — boucle complète validée
@@ -190,7 +190,7 @@ spdd/methodology/<technique>.md (lecture complète)
   2. Heuristiques d'identification : trio **Entity / Value Object /
      Invariant** + **Integration points** + **Domain Events**, sous forme
      de tableau ou checklist
-  3. Exemple concret tiré de CORE-001 ou Trivy CSV
+  3. Exemple concret tiré de CORE-001 (yukki uniquement)
   4. Sources (≤ 2 liens externes max)
   5. Section `## Changelog` avec entrée v1 initiale
 - **Tests** (revue manuelle) :
@@ -226,7 +226,7 @@ spdd/methodology/<technique>.md (lecture complète)
   3. Sous-cadre **STRIDE** pour la branche Sécurité (Spoofing / Tampering /
      Repudiation / Info disclosure / DoS / Elevation)
   4. Format de description d'un risque : *Impact / Probabilité / Mitigation*
-  5. Exemple concret (un risque par catégorie tiré du portail ou de yukki)
+  5. Exemple concret (un risque par catégorie tiré de CORE-001, yukki uniquement)
   6. Sources + Changelog
 - **Tests** (revue manuelle) : idem O1
 
@@ -258,7 +258,7 @@ spdd/methodology/<technique>.md (lecture complète)
      représentant par classe
   4. **Checklist 7 catégories** : boundaries / classes d'équivalence /
      null-empty / concurrence / failure modes / scale / security
-  5. Exemple concret (Trivy CSV ou CORE-001 stdin handling)
+  5. Exemple concret (CORE-001 stdin handling, id collision, yukki uniquement)
   6. Sources + Changelog
 
 ### O4 — Créer `spdd/methodology/decisions.md`
@@ -418,3 +418,7 @@ spdd/methodology/<technique>.md (lecture complète)
 
 - 2026-04-30 — v1 — création initiale (status: draft, prêt pour `/spdd-generate`)
 - 2026-04-30 — v1.1 — toutes les Operations O1-O8 implémentées, status passé à `implemented`
+- 2026-04-30 — v1.2 — Norms / DoD : exemples *yukki uniquement* (le portail
+  n'apparaît plus dans les refs publiées). Touche O1, O2, O3 ; O4 utilise
+  déjà META-001 (yukki). Régénération ciblée des 3 refs requise via
+  `/spdd-generate`. Status `implemented` → `reviewed` jusqu'à régénération.
