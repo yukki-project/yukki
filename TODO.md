@@ -15,6 +15,7 @@
 - 🟡 en cours (story rédigée, en cycle)
 - ⬜ à faire (pas encore de story)
 - 🔧 fix méthodologique (ajustement ponctuel, pas un cycle SPDD complet)
+- 🎫 action opérationnelle / ticket externe (IT, infra, hors code)
 
 ## Livrés
 
@@ -88,6 +89,20 @@
   ou GUI desktop type Wails/Fyne — décision en analyse)
 - ⬜ **INT-001** — Provider Copilot CLI alternatif à Claude CLI
 
+## Actions opérationnelles (hors code)
+
+- 🎫 **TICKET IT** — Demander à l'IT une **exclusion Microsoft Defender**
+  (ou équivalent corporate AV) sur le chemin du repo
+  `C:\workspace\yukki\`. Sans cette exclusion, l'exécution locale des
+  tests Go est bloquée par le scan AV qui empêche le fork/exec des
+  binaires fraîchement compilés (`fork/exec ... Access is denied`),
+  même quand `GOCACHE` et `GOTMPDIR` pointent dans le repo. La CI
+  GitHub Actions n'est pas concernée — c'est un blocage **local
+  uniquement**. Cf. [`DEVELOPMENT.md`](DEVELOPMENT.md) section
+  *"Si l'AV bloque malgré tout"*. Contournements en attendant :
+  WSL (clone sous Linux subsystem) ou CI-only (push tôt, attendre
+  les runners GitHub).
+
 ## Convention
 
 Les items préfixés `META-` touchent la méthodologie SPDD elle-même.
@@ -113,3 +128,6 @@ guide pédagogique avec schémas.
   convention plus standard pour la visibilité ; les liens internes ont
   été ajustés en conséquence (`spdd/stories/`, `spdd/README.md`,
   `spdd/GUIDE.md`)
+- **2026-04-30** — ajout 🎫 *Ticket IT exclusion AV* (action
+  opérationnelle hors code), nouvelle section *"Actions opérationnelles"*
+  + légende mise à jour. 14 items au total.
