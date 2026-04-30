@@ -3,7 +3,7 @@ id: META-002
 slug: backport-story-techniques
 story: spdd/stories/META-002-backport-story-techniques.md
 analysis: spdd/analysis/META-002-backport-story-techniques.md
-status: reviewed
+status: implemented
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -411,3 +411,7 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
 
 - 2026-04-30 — v1 — création initiale (status: draft, prêt pour
   `/spdd-generate`)
+- 2026-04-30 — v1.1 — toutes les Operations O1-O6 implémentées : 3 refs
+  créées (invest, spidr, acceptance-criteria), skill `/spdd-story`
+  refondu (Claude + Copilot miroir), index `methodology/README.md` mis
+  à jour. Status `reviewed → implemented`. Boucle SPDD close.
