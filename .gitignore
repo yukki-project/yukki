@@ -23,3 +23,7 @@ coverage.html
 # OS
 .DS_Store
 Thumbs.db
+
+# Local-only working docs (vision drafts, scratch notes — not committed)
+/VISION.md
+/notes/
