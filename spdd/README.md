@@ -182,7 +182,9 @@ section `## Changelog` du canvas, qui trace qui a changé quoi quand.
 ## Voir aussi
 
 - [Article SPDD — Martin Fowler](https://martinfowler.com/articles/structured-prompt-driven/)
+- [**`GUIDE.md`**](GUIDE.md) — guide pédagogique complet en français (pourquoi SPDD, comparaison Kiro/Spec-Kit/Tessl, risques 2026, schémas explicatifs, extensions yukki)
 - [`methodology/README.md`](methodology/README.md) — index des techniques disponibles
 - [`templates/`](templates/) — squelettes des artefacts à produire
 - [`stories/META-001-extract-methodology-references.md`](stories/META-001-extract-methodology-references.md) — l'exemple complet
+- [`../TODO.md`](../TODO.md) — backlog SPDD à la racine du repo (stories à venir + état)
 - [Root `CLAUDE.md`](../CLAUDE.md) — guide pour un agent qui débarque dans le repo

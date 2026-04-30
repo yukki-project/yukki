@@ -2,7 +2,7 @@
 id: CORE-001
 slug: cli-story-via-claude
 title: Commande CLI `yukki story` génère une user story SPDD via Claude CLI
-status: draft
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 owner: Thibaut Sannier
@@ -137,15 +137,24 @@ et INT-001 (provider Copilot CLI).
 
 ## Open Questions
 
-- [ ] **Stratégie de génération via `claude`** : on passe le template brut +
-  la description et on laisse Claude le remplir, ou on construit un prompt
-  structuré qui rappelle d'abord les règles INVEST + Given/When/Then + slug
-  kebab-case avant d'inclure le template ? — affecte directement la qualité
-  des stories générées (à trancher en analyse, mais le choix est *visible* à
-  l'utilisateur final)
-- [ ] **Préfixes d'ID acceptés** : tout préfixe `[A-Z]+` accepté par défaut,
-  ou liste blanche figée (`STORY|EXT|BACK|CORE|UI|INT|DOC|OPS`) avec un flag
-  `--allow-prefix` pour étendre ? — affecte ce que l'utilisateur peut taper
+- [x] **Stratégie de génération via `claude`** : ~~template brut OU prompt
+  structuré ?~~ → **prompt structuré** (option b). `yukki` construit en
+  amont du template les règles SPDD applicables (INVEST + Given/When/Then
+  déclaratif + slug kebab-case + sweet spot 3-5 AC + couverture happy +
+  erreur user + cas limite), puis injecte le template `templates/story.md`,
+  puis la description utilisateur. Justification : la valeur centrale de
+  SPDD est la rigueur du prompt — si `yukki` n'injecte pas ces règles, on
+  rate notre raison d'être. Le coût en tokens supplémentaires est
+  acceptable. Externalisation du prompt système dans un fichier surchargeable
+  (option c) reportée en post-MVP.
+- [x] **Préfixes d'ID acceptés** : ~~free-form OU liste blanche ?~~ →
+  **mode hybride** (option c). Par défaut, tout préfixe matchant `[A-Z]+`
+  est accepté (philosophie OSS : on ne dicte pas la convention de
+  nommage des projets utilisateurs). Le `--help` affiche la liste suggérée
+  (`STORY|EXT|BACK|CORE|UI|INT|DOC|OPS|META`) à titre indicatif.
+  Un flag `--strict-prefix` opt-in active la validation par liste blanche
+  pour les équipes qui veulent harmoniser. Justification : *best of both
+  worlds* — flexible par défaut, garde-fou opt-in.
 
 ## Notes
 
@@ -157,9 +166,46 @@ et INT-001 (provider Copilot CLI).
 - Tests : `go test ./...` doit passer ; tests d'intégration moqués via un
   `Provider` factice qui ne lance pas vraiment `claude`
 
+### Application des refs methodology
+
+Cette story applique les 3 refs `spdd/methodology/` qui s'adressent au
+skill `/spdd-story` :
+
+- [`invest.md`](../methodology/invest.md) — évaluation INVEST des 6
+  critères, détaillée ci-dessous
+- [`spidr.md`](../methodology/spidr.md) — découpage SPIDR analysé
+  ci-dessous (5 axes, décision de garder en l'état)
+- [`acceptance-criteria.md`](../methodology/acceptance-criteria.md) —
+  les 7 AC respectent les règles : Given/When/Then **déclaratif**, pas
+  de "should", pas de termes vagues, couverture **happy** (AC1) +
+  **erreur user** (AC4) + **cas limite** (AC6 template fallback). Les
+  AC d'erreur (AC3, AC4) regroupent plusieurs effets observables sous
+  forme d'**état d'échec composite**, exception pragmatique au "1
+  comportement par AC" pour les cas où l'échec doit être validé en bloc.
+
+### Évaluation INVEST
+
+> Détail complet (cross-référence) : voir l'exemple concret de CORE-001
+> dans [`invest.md` — section *Exemple concret*](../methodology/invest.md#exemple-concret--core-001-de-yukki).
+
+Synthèse :
+
+| Critère | Verdict | Justification |
+|---|---|---|
+| Independent | ✅ | aucune dépendance amont |
+| Negotiable | ✅ | 2 Open Questions explicites |
+| Valuable | ✅ | un user peut générer une story SPDD dans n'importe quel projet |
+| Estimable | ✅ | architecture pressentie + modules listés |
+| Small | ⚠️ | 7 AC, à la limite haute. Justifié *story fondatrice* — voir analyse SPIDR ci-dessous |
+| Testable | ✅ | chaque AC en G/W/T avec résultat observable |
+
+5/6 critères passent ; **Small** justifié via SPIDR analysé plutôt que
+satisfait littéralement.
+
 ### Découpage SPIDR — analyse et décision
 
-Story à 7 AC, donc à challenger contre [SPIDR](https://www.mountaingoatsoftware.com/blog/five-simple-but-powerful-ways-to-split-user-stories) (Mike Cohn).
+Story à 7 AC, donc à challenger contre [`spidr.md`](../methodology/spidr.md)
+(framework SPIDR de Mike Cohn).
 
 | Axe | Application | Verdict |
 |---|---|---|
