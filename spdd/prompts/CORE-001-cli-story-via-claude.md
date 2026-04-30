@@ -3,7 +3,7 @@ id: CORE-001
 slug: cli-story-via-claude
 story: spdd/stories/CORE-001-cli-story-via-claude.md
 analysis: spdd/analysis/CORE-001-cli-story-via-claude.md
-status: draft
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 ---
