@@ -15,7 +15,8 @@ parent: UI-001
 sibling-stories:
   - UI-001b-hub-viewer-claude-banner
   - UI-001c-new-story-flow
-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+analysis: spdd/analysis/UI-001a-app-skeleton-and-subcommand.md
+family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
 ---
 
 # App skeleton — `yukki ui` sub-cmd lance une fenêtre Wails vide + scaffold React
