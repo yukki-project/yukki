@@ -3,7 +3,7 @@ id: CORE-001
 slug: cli-story-via-claude
 story: spdd/stories/CORE-001-cli-story-via-claude.md
 analysis: spdd/analysis/CORE-001-cli-story-via-claude.md
-status: implemented
+status: synced
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -129,14 +129,19 @@ déclaratif, sweet spot 3-5 AC, couverture happy/erreur/limite) doit
 
 | Module | Fichiers principaux | Nature |
 |---|---|---|
-| `cmd/yukki/` | `main.go` | création (entrypoint Cobra) |
-| `internal/workflow/` | `story.go`, `prompt.go`, `prompts/story-system.md` (embed) | création |
-| `internal/provider/` | `provider.go`, `claude.go`, `mock.go` | création |
-| `internal/templates/` | `templates.go`, `embedded/story.md`, `embedded/analysis.md`, `embedded/canvas-reasons.md`, `embedded/tests.md` | création + embed des 4 templates depuis `spdd/templates/` |
-| `internal/artifacts/` | `writer.go`, `id.go`, `slug.go` | création |
-| `internal/clilog/` | `clilog.go` | création (setup `slog` text/JSON) |
+| `cmd/yukki/` | `main.go`, `main_test.go` | création (entrypoint Cobra + tests unitaires) |
+| `internal/workflow/` | `story.go`, `prompt.go`, `prompts/story-system.md` (embed), `*_test.go` | création |
+| `internal/provider/` | `provider.go`, `claude.go`, `mock.go`, `*_test.go` (TestMain construit un stub Go) | création |
+| `internal/templates/` | `templates.go`, `embedded/{story,analysis,canvas-reasons,tests}.md`, `templates_test.go` | création + embed des 4 templates depuis `spdd/templates/` |
+| `internal/artifacts/` | `writer.go`, `id.go`, `slug.go`, `writer_test.go`, `writer_concurrent_test.go`, `id_test.go`, `slug_test.go` | création |
+| `internal/clilog/` | `clilog.go`, `clilog_test.go` | création (setup `slog` text/JSON) |
+| `tests/integration/` (nouveau) | `story_integration_test.go` | création — tests cross-package avec MockProvider + file system réel |
+| `tests/e2e/` (nouveau) | `e2e_test.go`, `fakeclaude/main.go` | création — build + run du binaire `yukki` avec un faux `claude` |
+| `scripts/dev/` (nouveau) | `test-local.sh`, `test-local.bat` | wrappers locaux (GOCACHE/GOTMPDIR dans le repo) |
+| `DEVELOPMENT.md` (nouveau, racine) | guide dev humain | doc 3 tiers tests + workarounds AV |
+| `TODO.md` (racine, déplacé depuis `spdd/TODO.md`) | backlog SPDD versionné | matérialisation du TodoWrite |
 | `go.mod`, `go.sum` | (créés au bootstrap) | initialisation |
-| `.github/workflows/` | `ci.yml` | CI cross-platform |
+| `.github/workflows/` | `ci.yml` | CI 4-jobs (static + unit + integration + e2e), needs gating |
 
 ### Schéma de flux (génération nominale)
 
@@ -299,24 +304,42 @@ no file created
   var ErrGenerationFailed = errors.New("provider generation failed")
 
   // claude.go
-  type ClaudeProvider struct{ logger *slog.Logger }
+  const DefaultClaudeTimeout = 5 * time.Minute
+  type ClaudeProvider struct {
+      logger  *slog.Logger
+      Binary  string         // default "claude"
+      Args    []string       // default ["--print"], configurable for tests/future versions
+      Timeout time.Duration  // 0 ⇒ DefaultClaudeTimeout ; <0 disables
+  }
   func NewClaude(logger *slog.Logger) *ClaudeProvider
 
   // mock.go (test only, build tag `test` ou exporté pour tests externes)
-  type MockProvider struct{ Response string; Err error }
+  type MockProvider struct {
+      NameVal string; Response string; Err error
+      VersionErr error; Calls []string
+  }
   func (m *MockProvider) Generate(...) ...
   ```
 - **Comportement** :
-  - `ClaudeProvider.CheckVersion` : `exec.LookPath("claude")` puis
-    `claude --version` → parse + log Info ; renvoie `ErrNotFound` ou
-    `ErrVersionIncompatible`
-  - `ClaudeProvider.Generate` : `exec.CommandContext(ctx, "claude",
-    "--print")` (ou flag équivalent pour non-interactive), stdin =
-    prompt, capture stdout
+  - `ClaudeProvider.CheckVersion` : `exec.LookPath(p.Binary)` puis
+    `<binary> --version` → parse + log Debug ; renvoie `ErrNotFound`
+    ou `ErrVersionIncompatible`
+  - `ClaudeProvider.Generate` : si `ctx` n'a pas de deadline, wrap
+    avec `Timeout` (par défaut `DefaultClaudeTimeout = 5 min`).
+    Lance `exec.CommandContext(ctx, p.Binary, p.Args...)`
+    (default args = `--print`), stdin = prompt, capture stdout +
+    stderr séparément. Si `ctx.Err() == DeadlineExceeded`, retourne
+    `ErrGenerationFailed: claude timed out after X`. Logs metadata
+    seulement (binary, args, prompt_bytes, timeout) — **jamais le
+    contenu** du prompt (Safeguard "no secret loggé").
 - **Tests** :
-  - `MockProvider` utilisé partout en test
-  - `ClaudeProvider` testé via fake `PATH` (script shell qui simule
-    `claude --version` / `claude` dans un répertoire temp)
+  - `MockProvider` utilisé pour les tests workflow et integration
+  - `ClaudeProvider` testé via un **stub Go construit dans `TestMain`**
+    (fichier généré + `go build`) qui simule `--version`, `--print`,
+    `--fail`, `--hang`. Couvre : `CheckVersion` ok via stub,
+    `Generate` happy path (canned story), `Generate` exit-non-zero
+    mappé sur `ErrGenerationFailed` avec stderr capturé, **timeout
+    qui kill un stub `--hang` en moins de 2s**.
 
 ### O6 — `internal/workflow/{story.go, prompt.go, prompts/story-system.md}` — orchestration
 
@@ -425,11 +448,49 @@ no file created
 ### O8 — CI GitHub Actions
 
 - **Fichier** : `.github/workflows/ci.yml`
-- **Comportement** :
-  - Build matrix : `ubuntu-latest`, `macos-latest`, `windows-latest`
-  - Steps : checkout, setup-go (1.22), `go build ./...`, `go test ./...`,
-    `gofmt -l . | grep . && exit 1 || true`
+- **Comportement** : 4 jobs orchestrés via `needs:` :
+  1. `static-checks` (Linux only) : `go vet`, `gofmt -l`, `go build`
+  2. `unit-tests` (matrix `ubuntu`/`macos`/`windows`) :
+     `go test -race -coverprofile=coverage-unit.out ./cmd/... ./internal/...`
+  3. `integration-tests` (matrix idem) :
+     `go test -race -coverprofile=coverage-integration.out -coverpkg=./internal/... ./tests/integration/...`
+  4. `e2e-tests` (matrix idem, **sans `-race`** car les tests forkent
+     le binaire `yukki` produit) :
+     `go test -timeout 5m ./tests/e2e/...`
+  Coverage uploadé via `actions/upload-artifact@v4` depuis ubuntu
+  uniquement pour rester léger.
 - **Tests** : exécuté par GitHub Actions, valide le ✅ vert sur PR.
+
+### O9 — Tests d'intégration `tests/integration/`
+
+- **Module** : nouveau dossier (hors `internal/`)
+- **Fichier** : `tests/integration/story_integration_test.go`
+- **Comportement** : exercise `workflow.RunStory` avec `MockProvider`
+  + `templates.Loader` réel + `artifacts.Writer` réel + file system
+  réel (`t.TempDir`). 4 tests :
+  - happy path end-to-end + assertion sur le chemin produit + le
+    prompt envoyé contient l'id assigné
+  - 3 invocations consécutives → ids `EXT-001`/`EXT-002`/`EXT-003`
+  - provider error → aucun fichier story orphelin
+  - template `templates/story.md` présent dans le projet → utilisé
+    en priorité (non-régression de l'override `SourceProject`)
+
+### O10 — Tests E2E `tests/e2e/`
+
+- **Module** : nouveau dossier
+- **Fichiers** :
+  - `tests/e2e/fakeclaude/main.go` — faux binaire `claude` qui imite
+    `--version` et `--print` (renvoie une story canned valide)
+  - `tests/e2e/e2e_test.go` — `mustBuild` compile `yukki` + le faux
+    `claude` dans `t.TempDir`, prepend ce dir au `PATH` et lance le
+    binaire `yukki` en subprocess
+- **Tests** : 3 tests :
+  - happy path : `yukki story <description>` → exit 0, fichier
+    présent sous `stories/`, contient le titre canned, frontmatter
+    valide
+  - description vide : `yukki story` (no arg, no stdin) → exit 1
+    (erreur user), aucun fichier
+  - claude absent : `PATH=` vide → exit 2 (erreur provider)
 
 ---
 
@@ -473,10 +534,29 @@ no file created
   - Pas de test qui invoque réellement `claude` (CI sans secret)
   - Coverage cible : ≥ 70 % sur `internal/`
 - **Pas de Makefile obligatoire en v1** — `go build`, `go test`
-  suffisent. Un `Makefile` viendra dans une story dédiée si besoin.
+  suffisent. Wrappers `scripts/dev/test-local.{sh,bat}` proposés
+  pour les devs sur Windows corporate (cf. `DEVELOPMENT.md`).
 - **Préfixes d'ID** : free-form `[A-Z]+` par défaut (validation regex)
   ; flag `--strict-prefix` pour activer la liste blanche
-  `STORY|EXT|BACK|CORE|UI|INT|DOC|OPS|META`.
+  `STORY|EXT|BACK|FRONT|CTRL|CORE|UI|INT|OPS|DOC|META`.
+- **Timeout provider** : `ClaudeProvider.Timeout` par défaut
+  `DefaultClaudeTimeout = 5 * time.Minute` ; surchargeable au cas
+  par cas. Un `ctx` qui a déjà un deadline n'est pas wrappé.
+  `<0` désactive le timeout (à utiliser avec parcimonie).
+- **Args du provider** : `ClaudeProvider.Args` configurable
+  (default `["--print"]`). Utile pour les tests (stub binary) et
+  pour suivre les évolutions futures du `claude` CLI.
+- **Trois tiers de tests** :
+  1. **Unit** : dans `internal/<pkg>/*_test.go` et
+     `cmd/yukki/main_test.go`. Mocks aux frontières.
+  2. **Integration** : dans `tests/integration/`. Plusieurs packages
+     internes collaborant, file system réel, MockProvider.
+  3. **E2E** : dans `tests/e2e/`. Build du binaire `yukki` + faux
+     `claude` (`tests/e2e/fakeclaude/`), lancé en subprocess.
+- **Wrappers de tests locaux** : `scripts/dev/test-local.{sh,bat}`
+  pointent `GOCACHE` et `GOTMPDIR` dans le repo (ignorés via
+  `.gitignore`). Documentation des contournements AV dans
+  `DEVELOPMENT.md`.
 
 ---
 
@@ -526,3 +606,52 @@ no file created
   `reviewed → implemented`. Tests locaux (Windows) bloqués par
   restriction d'AV sur fork/exec depuis temp ; `go vet` et
   `go build` clean ; tests valideront en CI.
+- 2026-04-30 — **v2 (sync)** — `/spdd-sync` après une déviation
+  pragmatique autorisée par l'utilisateur. Le canvas est mis à jour
+  pour refléter l'état du code après code-review + ajout de tests
+  + CI restructurée. **Note de transparence** : certains changements
+  capturés ici sont *behavioralement additifs* (notamment
+  `ClaudeProvider.Args` et `ClaudeProvider.Timeout` + constante
+  `DefaultClaudeTimeout`) et auraient en discipline stricte SPDD
+  exigé `/spdd-prompt-update` puis `/spdd-generate ciblé`. La
+  déviation est tracée ici plutôt que dissimulée.
+
+  Détail des changements absorbés :
+
+  - **O5 (provider)** — `ClaudeProvider` étendu :
+    `Binary string` (default "claude"), `Args []string` (default
+    `["--print"]`), `Timeout time.Duration` (default
+    `DefaultClaudeTimeout = 5 min`). `Generate` wrap `ctx` avec le
+    timeout si pas de deadline. `MockProvider` étendu :
+    `NameVal string`, `VersionErr error`, `Calls []string`. Tests :
+    `TestMain` construit un stub Go qui simule `--version`,
+    `--print`, `--fail`, `--hang` ; les tests `Generate` happy /
+    fail / timeout exploitent ce stub.
+  - **O8 (CI)** — refactor en 4 jobs avec `needs:` gating :
+    `static-checks` (vet + gofmt + build), `unit-tests` (matrix
+    3 OS, race + coverage), `integration-tests` (matrix, race +
+    coverage), `e2e-tests` (matrix, sans race car forke un
+    subprocess). Coverage uploadé depuis ubuntu uniquement.
+  - **O9 (nouveau)** — package `tests/integration/` : 4 tests
+    cross-package avec `MockProvider` + file system réel.
+  - **O10 (nouveau)** — package `tests/e2e/` + binaire fake
+    `tests/e2e/fakeclaude/` : 3 tests qui buildent `yukki` et le
+    faux `claude`, prepend au `PATH`, et exécutent `yukki story`
+    en subprocess.
+  - **O4 (artifacts)** — ajout du test
+    `writer_concurrent_test.go` qui guarde Invariant I2 (pas de
+    corruption sous concurrence + pas de `.tmp.*` orphelin).
+  - **Norms** — ajout : timeout provider 5 min, Args provider
+    configurable, 3 tiers de tests (unit / integration / e2e),
+    wrappers locaux `scripts/dev/test-local.{sh,bat}`.
+  - **Structure** — nouveaux fichiers/dossiers ajoutés au
+    tableau : `tests/integration/`, `tests/e2e/`,
+    `scripts/dev/`, `DEVELOPMENT.md` (racine), `TODO.md`
+    (déplacé à la racine, ex-`spdd/TODO.md`).
+
+  Status : `implemented → synced`.
+
+  Convention prise note pour la suite : si plusieurs changements
+  *purement refactor* sont mêlés à un changement *behavioral
+  additif*, scinder en `/spdd-prompt-update` + `/spdd-sync`
+  séparés.
