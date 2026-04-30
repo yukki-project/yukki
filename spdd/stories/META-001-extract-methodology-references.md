@@ -116,12 +116,12 @@ ailleurs et est référencée par lien.
 
 ## Open Questions
 
-- [ ] **Format du champ `version`** dans le front-matter : `v1.0` (semver),
-  `1` (entier simple), ou la date de dernière modif majeure ? — affecte la
-  lisibilité d'un éventuel changelog en cas d'évolution d'une technique
-- [ ] **Index `spdd/methodology/README.md`** : faut-il un fichier d'index qui
-  liste les refs disponibles avec leur résumé, ou la convention de nommage par
-  fichier suffit ? — affecte la découverte par un nouveau contributeur
+- [x] **Format du champ `version`** dans le front-matter : ~~v1.0 / 1 / date~~
+  → **entier simple** (`1`, `2`, `3`), tracé via une section
+  `## Changelog` en fin de fichier (même pattern que les canvas REASONS)
+- [x] **Index `spdd/methodology/README.md`** : ~~optionnel ?~~
+  → **oui**, court (≤ 30 lignes), liste chaque ref avec une phrase de résumé
+  et son `applies-to`
 
 ## Notes
 
@@ -189,3 +189,14 @@ des états intermédiaires où le skill référence des refs inexistantes.
 - **Front-matter** : normalisé sur tous les fichiers de méthodologie
 - **Préfixe d'ID story** : `META-` pour toute story qui touche la méthodologie
   SPDD elle-même (skills, templates, refs, scaffolding)
+- **Format `version`** (résolu OQ1) : entier simple, changelog en fin de fichier
+- **Index** (résolu OQ2) : `spdd/methodology/README.md` court avec un résumé
+  par ref et le champ `applies-to` repris
+
+### Critère de revue post-génération (étape 2)
+
+Au-delà des AC strictes, la livraison sera considérée comme réussie si le skill
+`/spdd-analysis` enrichi peut produire une analyse cohérente sur CORE-001 sans
+modification supplémentaire. C'est un test de boucle complète qui valide que
+les 4 refs sont réellement utilisables par l'agent — pas une AC formelle car
+non-quantifiable, mais un critère de **revue manuelle** au moment du review.
