@@ -2,7 +2,7 @@
 id: META-001
 slug: extract-methodology-references
 story: spdd/stories/META-001-extract-methodology-references.md
-status: draft
+status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -106,6 +106,21 @@ et la règle de séparation. Pas plus : la richesse vit dans les refs elles-mêm
   ref méthodologique est une description d'une technique. Deux choses
   différentes.
 
+### Guide de style des refs
+
+Pour garantir la cohérence des 4 refs (et de toute ref future) :
+
+- **Structure type** : frontmatter → Définition opérationnelle (≤ 4 lignes) →
+  Heuristiques d'application (tableau ou checklist) → Exemple concret →
+  Sources (1-2 liens externes max) → `## Changelog`
+- **Longueur cible** : 80-150 lignes par ref. Au-delà, scinder.
+- **Ton** : pratique-d'abord, théorique-ensuite. Pas de copie d'article
+  Wikipedia ; on cite et on résume avec un angle opérationnel.
+- **Langue** : français (cohérent avec le reste du projet). Le frontmatter
+  porte `lang: fr` pour permettre une future internationalisation.
+- **Exemples** : tirés de `yukki` (refs neuves) ou du portail k8s (techniques
+  rodées sur un cas mature).
+
 ## Modules impactés
 
 | Module | Impact | Nature |
@@ -125,7 +140,15 @@ et la règle de séparation. Pas plus : la richesse vit dans les refs elles-mêm
   adr.github.io, Nygard original ADR post, Fowler bliki ADR.
 - **Pattern frontmatter** (cohérence interne) — les refs réutilisent le
   vocabulaire YAML déjà en place sur les artefacts SPDD avec les ajouts
-  spécifiques (`version`, `applies-to`, `sources`).
+  spécifiques (`version`, `applies-to`, `sources`, `lang`).
+- **Parseabilité du frontmatter** (exigence non fonctionnelle) — un script
+  (Go ou shell + `yq`) doit pouvoir lister tous les fichiers
+  `spdd/methodology/*.md` et extraire `id`, `version`, `applies-to`, `status`.
+  Cela contraint le YAML à rester strict : pas de tag custom, listes en
+  format normalisé (`[a, b, c]` *ou* bullets `- item`, mais pas un mélange
+  par fichier), valeurs scalaires entre guillemets quand elles contiennent
+  des caractères ambigus. Cette propriété servira plus tard à META-003 pour
+  la vérification CI.
 
 ## Risques et points d'attention
 
@@ -134,24 +157,21 @@ et la règle de séparation. Pas plus : la richesse vit dans les refs elles-mêm
   Privacy) mais qu'un skill garde un exemple obsolète, on a une incohérence
   silencieuse. **Mitigation** : convention claire dans `spdd/README.md`, et
   META-003 prévoira un check CI (le skill ne doit pas mentionner les noms de
-  techniques sans lien vers leur ref).
+  techniques sans lien vers leur ref). 
 - **Surface d'apprentissage pour les nouveaux contributeurs** — *Impact
   faible, probabilité forte*. Un dev qui découvre le repo doit comprendre la
   différence entre `templates/` (squelettes d'artefacts) et `methodology/`
   (techniques). **Mitigation** : index `methodology/README.md` clair + mention
   dans `spdd/README.md`.
-- **Refs trop académiques** — *Impact moyen, probabilité moyenne*. Le
-  vocabulaire DDD ou STRIDE peut décourager si les refs ressemblent à des
-  copies d'articles Wikipedia. **Mitigation** : chaque ref doit privilégier
-  les heuristiques opérationnelles, citer 1 à 2 sources max, donner un
-  exemple concret côté `yukki` ou portail.
 - **Refs orphelines à terme** — *Impact faible, probabilité faible*. Si un
   skill est supprimé ou refondu mais que sa ref reste, elle devient
   orpheline. **Mitigation** : `applies-to` permet de tracer ; META-003
   pourra automatiser la vérification.
-- **Trop de refs au final** — *Impact faible, probabilité faible*. La
-  méthodologie ne doit pas pulluler. **Mitigation** : règle implicite "1 ref =
-  1 technique d'usage transverse" ; pas de ref pour des concepts ad hoc.
+
+> Le risque "refs trop académiques" est désormais traité par le **Guide de
+> style des refs** ci-dessus (heuristiques-first, sources limitées, exemple
+> concret obligatoire). Le risque "trop de refs au final" est tombé en v1
+> (4 refs, périmètre figé) et sera reconsidéré quand la collection grandira.
 
 ## Cas limites identifiés
 
@@ -171,16 +191,21 @@ et la règle de séparation. Pas plus : la richesse vit dans les refs elles-mêm
 
 ## Décisions à prendre avant le canvas
 
-- [ ] **Forme du champ `applies-to`** : liste de strings simples
-  (`[spdd-analysis, spdd-reasons-canvas]`) ou liste d'objets avec contexte
-  (`[{skill: spdd-analysis, used-in: étape-4-modélisation}]`) ? — La forme
-  simple suffit en v1 ; les détails contextuels appartiennent aux skills.
-- [ ] **Convention de nommage des fichiers** : kebab-case (`risk-taxonomy.md`,
-  `domain-modeling.md`) confirmé — c'est la convention markdown standard du repo.
-- [ ] **Présence d'un `_template.md` dans `methodology/`** pour normaliser
-  les futures refs : utile mais peut-être prématuré en v1 (4 refs créées
-  manuellement avec un pattern visible). À reporter à META-002 ou plus tard.
-- [ ] **Position de la mention dans `spdd/README.md`** : nouvelle section
-  dédiée, ou ajout de 2-3 lignes dans la section *Arborescence* existante ?
-  Reco : 2-3 lignes dans *Arborescence* + une phrase dans la section
-  *Quand utiliser SPDD* qui rappelle la règle de séparation.
+> Toutes tranchées en revue (étape 2 + revue d'analyse). Conservées ici pour
+> traçabilité.
+
+- [x] **Forme du champ `applies-to`** : ~~liste d'objets ?~~ →
+  **liste de strings simples** (`[spdd-analysis, spdd-reasons-canvas]`).
+  Les détails contextuels (étape consommatrice) appartiennent au skill,
+  pas à la ref.
+- [x] **Convention de nommage des fichiers** : **kebab-case**
+  (`risk-taxonomy.md`, `domain-modeling.md`) — convention markdown standard
+  du repo.
+- [x] **Présence d'un `_template.md` dans `methodology/`** : ~~v1 ?~~ →
+  **reporté** (META-002+). Les 4 refs créées en v1 servent d'exemple
+  implicite ; un template explicite n'apporte de valeur qu'au-delà de 5-6
+  refs.
+- [x] **Position de la mention dans `spdd/README.md`** : ~~section dédiée ?~~
+  → **2-3 lignes dans la section *Arborescence*** existante + **une phrase
+  dans *Quand utiliser SPDD*** qui rappelle la règle de séparation
+  "skill = procédural, methodology = knowledge".
