@@ -80,14 +80,29 @@
   - `CORE-002d` — `yukki api-test`
   - `CORE-002e` — `yukki prompt-update`
   - `CORE-002f` — `yukki sync`
+- 🟡 **UI-001** — Initialiser l'app desktop yukki — Wails v2 + React 18
+  + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Sous-cmd
+  `yukki ui`, project picker, hub (liste stories), modal *New Story*
+  câblé sur `workflow.RunStory`. Story rédigée en
+  [`spdd/stories/UI-001-init-desktop-app-wails-react.md`](spdd/stories/UI-001-init-desktop-app-wails-react.md).
+- ⬜ **UI-002** — Canvas REASONS éditable (React Flow v12, drag&drop des
+  7 blocs R/E/A/S/O/N/S, save vers `spdd/prompts/<id>-<slug>.md`).
+  Suite directe d'UI-001.
+- ⬜ **UI-003** — Wizard d'install Claude CLI au premier lancement de
+  l'app (détection OS, lien vers binaires Anthropic, vérification post-install).
+- ⬜ **UI-004** — Theming light/dark/system + persistance des préférences
+  utilisateur (`~/.config/yukki/prefs.json` ou équivalent OS).
+- ⬜ **UI-005** — Édition markdown des stories en UI + auto-refresh
+  via fsnotify + streaming token-par-token de la sortie provider.
 - ⬜ **DOC-001** — Publication OSS : story + cycle complet (README
   racine, LICENSE check, CONTRIBUTING, guide d'install, badge CI)
 
 ## Post-MVP
 
-- ⬜ **UI-001** — Canvas editor graphique standalone (TUI Bubble Tea
-  ou GUI desktop type Wails/Fyne — décision en analyse)
 - ⬜ **INT-001** — Provider Copilot CLI alternatif à Claude CLI
+- ⬜ **OPS-001** — Signing binaires (Authenticode Windows / notarization
+  Apple) pour distribuer l'app desktop sans déclencher Defender SmartScreen
+  / Gatekeeper.
 
 ## Actions opérationnelles (hors code)
 
@@ -131,3 +146,12 @@ guide pédagogique avec schémas.
 - **2026-04-30** — ajout 🎫 *Ticket IT exclusion AV* (action
   opérationnelle hors code), nouvelle section *"Actions opérationnelles"*
   + légende mise à jour. 14 items au total.
+- **2026-05-01** — pivot UI : abandon de CLI-001 (terminal niceties,
+  jamais committée sur main, branche locale supprimée) au profit de
+  **UI-001** redéfini en *fondation app desktop yukki* (Wails v2 +
+  React + bindings Go, sous-cmd `yukki ui`). Stack figée : Wails v2 +
+  React 18 + TypeScript + Vite + Tailwind + shadcn/ui + Zustand,
+  React Flow v12 réservé pour UI-002 (canvas éditable). Ajout de UI-002,
+  UI-003, UI-004, UI-005 (filiation directe), promotion d'UI-001 de
+  *post-MVP* à *en attente — features projet* (statut 🟡), ajout
+  d'OPS-001 en post-MVP (signing binaires). 18 items au total.
