@@ -2,6 +2,13 @@
 /yukki
 /yukki.exe
 /dist/
+/bin/
+
+# Local Go cache and tempdir (used by scripts/dev/* to keep build artifacts
+# inside the repo rather than %TEMP% — see DEVELOPMENT.md for the rationale,
+# typically Windows AV blocking exec from %TEMP%).
+/.gocache/
+/.gotmp/
 
 # IDE
 /.idea/
