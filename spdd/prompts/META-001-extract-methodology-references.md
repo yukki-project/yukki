@@ -3,7 +3,7 @@ id: META-001
 slug: extract-methodology-references
 story: spdd/stories/META-001-extract-methodology-references.md
 analysis: spdd/analysis/META-001-extract-methodology-references.md
-status: reviewed
+status: implemented
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -422,3 +422,6 @@ spdd/methodology/<technique>.md (lecture complète)
   n'apparaît plus dans les refs publiées). Touche O1, O2, O3 ; O4 utilise
   déjà META-001 (yukki). Régénération ciblée des 3 refs requise via
   `/spdd-generate`. Status `implemented` → `reviewed` jusqu'à régénération.
+- 2026-04-30 — v1.3 — régénération O1/O2/O3 effectuée avec exemples CORE-001
+  (yukki). Refs concernées passent en version 2. Status `reviewed` →
+  `implemented`. Boucle prompt-update / generate close.

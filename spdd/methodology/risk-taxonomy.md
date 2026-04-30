@@ -1,7 +1,7 @@
 ---
 id: METHO-risk-taxonomy
 title: Taxonomie de risques (6 catégories + STRIDE pour la sécurité)
-version: 1
+version: 2
 status: published
 applies-to: [spdd-analysis, spdd-reasons-canvas, spdd-prompt-update]
 lang: fr
@@ -26,11 +26,11 @@ catégories restent vides pour un cas donné.
 | Catégorie | Quoi y mettre | Exemples génériques |
 |---|---|---|
 | **Sécurité** | tout ce qui touche aux 6 piliers info-sécurité (voir STRIDE ci-dessous) | bypass auth, injection, fuite de données, élévation de privilège |
-| **Performance / Reliability** | latence, throughput, OOM, timeouts, panne de dépendance, dégradation gracieuse | export trop lent, cascade de timeouts, OOM sur gros volume, pas de retry |
+| **Performance / Reliability** | latence, throughput, OOM, timeouts, panne de dépendance, dégradation gracieuse | sortie trop lente, cascade de timeouts, OOM sur gros volume, pas de retry |
 | **Opérationnel** | deploy, monitoring, observabilité, support de production, runbook | feature sans logs structurés, alerting manquant, deploy non rejouable |
-| **Intégration externe** | dépendances tierces (API, brokers, librairies), contrats, versions | bump cassant d'une lib, contrat REST modifié sans migration, broker unreachable |
-| **Data** | migration de schéma, cohérence, encodage, scale, conservation | migration BDD non rejouable, encodage UTF-8 BOM oublié, perte de précision |
-| **Compatibilité** | rétro-compat, breaking changes API, anciens clients, anciens fichiers | breaking change CRD, ancien client qui appelle la route legacy, format de fichier obsolète |
+| **Intégration externe** | dépendances tierces (CLI, API, brokers, librairies), contrats, versions | bump cassant d'une lib, contrat CLI modifié, sous-processus introuvable |
+| **Data** | format de fichier, encodage, cohérence, scale, conservation | encodage UTF-8 BOM oublié, collision d'identifiants, perte de précision |
+| **Compatibilité** | rétro-compat, breaking changes, anciens fichiers, anciens callers | breaking change sur un format de frontmatter, ancien client qui appelle la commande historique |
 
 ## Sous-cadre STRIDE pour la branche Sécurité
 
@@ -54,22 +54,26 @@ Pour chaque risque identifié, écrire :
 > \<forte/moyenne/faible\>* — Description courte (1-2 phrases). **Mitigation**
 > : \<action concrète\>.
 
-## Exemple concret — Export CSV Trivy
+## Exemple concret — Story `CORE-001` de yukki
+
+Story [`CORE-001-cli-story-via-claude`](../stories/CORE-001-cli-story-via-claude.md)
+— la commande CLI `yukki story` qui orchestre `claude` :
 
 | Catégorie | Risque |
 |---|---|
-| Sécurité (Elevation) | Un utilisateur sans droit `get pods` accède à un namespace via l'API REST directe → *Impact fort, probabilité moyenne* — **Mitigation** : `SubjectAccessReview` côté serveur avant tout streaming. |
-| Performance | Namespace avec >10 000 vulnérabilités déclenche OOM → *Impact fort, probabilité moyenne* — **Mitigation** : `StreamingOutput` ligne par ligne, jamais de `List.toArray()`. |
-| Opérationnel | Pas de métrique sur le nombre d'exports / namespace → *Impact faible, probabilité forte* — **Mitigation** : compteur Micrometer `trivy_export_total{namespace, granted}`. |
-| Data | Le champ `description` Trivy contient des `\n` → CSV mal formé chez le client → *Impact moyen, probabilité forte* — **Mitigation** : escaping CSV strict avec quoting des `,`, `"`, `\n`, `\r`. |
+| Sécurité (Information disclosure) | `claude` CLI logge la description complète en mode verbose — fuite si la description contient des données sensibles → *Impact moyen, probabilité faible* — **Mitigation** : invoquer `claude --silent` par défaut, `--verbose` opt-in explicite. |
+| Performance | `claude` met >30 s à répondre, l'utilisateur ne sait pas si ça avance → *Impact faible, probabilité forte* — **Mitigation** : streaming des tokens si supporté par le CLI, sinon spinner avec message "génération en cours…" après 5 s. |
+| Opérationnel | Aucun log structuré côté `yukki`, debug post-mortem impossible → *Impact moyen, probabilité forte* — **Mitigation** : logs JSON via `slog` activables par `--log-format=json`. |
+| Intégration externe | `claude` CLI v2 change d'interface (rename d'un flag) — `yukki` crashe silencieusement → *Impact fort, probabilité moyenne* — **Mitigation** : check `claude --version` au démarrage, message explicite si incompatible. |
+| Data | Deux invocations parallèles de `yukki story` génèrent le même id — écrasement silencieux → *Impact fort, probabilité faible* — **Mitigation** : lock file `stories/.lock` pendant le calcul d'id, ou suffixe timestamp dans le nom de travail. |
 
 ## Bonnes pratiques
 
 - **3-5 risques majeurs** suffisent en analyse. Concentrer sur ceux qui
   **changent l'architecture**, pas sur tous les risques imaginables.
-- **Mitigation actionnable** : "valider l'input" est trop vague. *"Appeler
-  `SubjectAccessReview` avec verbe `get` ressource `pods` avant le
-  streaming"* est actionnable.
+- **Mitigation actionnable** : *"valider l'input"* est trop vague.
+  *"Vérifier que `claude --version` retourne une version compatible avant
+  toute invocation"* est actionnable.
 - **Ne pas confondre risque et bug** : un risque est un *scénario plausible
   qui changerait la décision* ; un bug est une erreur d'implémentation
   (couverte en tests).
@@ -82,3 +86,6 @@ Pour chaque risque identifié, écrire :
 ## Changelog
 
 - 2026-04-30 — v1 — création initiale
+- 2026-04-30 — v2 — exemple concret remplacé par CORE-001 de yukki
+  (anciennement export CSV Trivy/portail). Bonnes pratiques également
+  ajustées (exemple `claude --version` au lieu de `SubjectAccessReview`).

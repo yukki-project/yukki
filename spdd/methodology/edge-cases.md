@@ -1,7 +1,7 @@
 ---
 id: METHO-edge-cases
 title: Identification des cas limites (BVA + EP + checklist)
-version: 1
+version: 2
 status: published
 applies-to: [spdd-analysis, spdd-reasons-canvas]
 lang: fr
@@ -40,14 +40,14 @@ nichent dans les `<` vs `<=`. Six valeurs à considérer pour chaque borne :
 Découper l'espace d'entrée en **classes d'équivalence** : tous les inputs
 d'une classe se comportent pareil ; un test par classe suffit.
 
-Exemple sur un export selon le rôle utilisateur :
+Exemple sur la commande `yukki story` selon le préfixe d'id passé :
 
 | Classe | Représentant | Comportement attendu |
 |---|---|---|
-| admin | `admin@corp.com` | accès total |
-| viewer du namespace cible | `dev1@corp.com` (avec RoleBinding) | accès lecture |
-| user sans droit | `dev2@corp.com` (sans RoleBinding) | 403 |
-| token invalide | header forgé | 401 |
+| préfixe par défaut | absence de `--prefix` | `STORY-NNN` |
+| préfixe valide explicite | `--prefix=EXT` | `EXT-NNN` |
+| préfixe invalide (numérique) | `--prefix=123` | rejet, code 1 |
+| préfixe vide | `--prefix=` | rejet, code 1 |
 
 ## Checklist 7 catégories
 
@@ -61,29 +61,33 @@ Exemple sur un export selon le rôle utilisateur :
 6. **Scale** — volume 10× ou 100× du nominal (pagination, mémoire, durée)
 7. **Security / negative testing** — input malformé, injection, path traversal, charset hostile, dépassement de longueur
 
-## Exemple concret — Export CSV Trivy
+## Exemple concret — Story `CORE-001` de yukki
+
+Story [`CORE-001-cli-story-via-claude`](../stories/CORE-001-cli-story-via-claude.md)
+— la commande CLI `yukki story` qui orchestre `claude` :
 
 | Catégorie | Cas limite identifié |
 |---|---|
-| Boundaries | namespace avec 0 vuln, 1 vuln, 5 000 vulns, 5 001 vulns |
-| Classes d'équivalence | namespace existant et autorisé / existant et refusé / inexistant |
-| Null / empty | `?namespace=` (chaîne vide) → 400 ; pas de header `Authorization` → 401 |
-| Concurrence | 2 exports simultanés du même namespace par 2 utilisateurs → les deux doivent réussir indépendamment |
-| Failure modes | API k8s qui timeout en plein streaming → fermer proprement le stream et logger l'incident |
-| Scale | namespace à 10 000 vulnérabilités → vérifier mémoire constante (streaming respecté) |
-| Security | `?namespace=../../etc/passwd` → rejet par validation k8s name regex |
+| Boundaries | `stories/` vide → premier id `STORY-001` ; 999 stories existantes → `STORY-1000` (largeur du padding préservée) ; au-delà de 9 999 → format `STORY-10000` |
+| Classes d'équivalence | préfixe par défaut `STORY` / préfixe valide explicite `EXT` / préfixe invalide `123-FOO` (rejet) |
+| Null / empty | `yukki story ""` (chaîne vide) → erreur user code 1 ; `yukki story` sans argument et stdin vide → message d'usage code 1 |
+| Concurrence | deux exécutions parallèles de `yukki story` avec le même `--prefix` → ne pas écraser le même fichier (lock file ou timestamp dans le nom de travail) |
+| Failure modes | `claude` absent du `PATH` → code 2 message explicite ; `claude` crash en cours de génération → propager l'erreur, ne pas créer de fichier story orphelin |
+| Scale | `stories/` contenant 10 000 fichiers → le scan d'IDs existants doit rester sous la seconde (regex sur `os.ReadDir`, pas de `stat` individuel) |
+| Security | description contenant des backticks, `\n` ou caractères YAML ambigus → ne pas casser le frontmatter du fichier produit (échappement strict côté templating) |
 
 Chaque cas limite identifié devient soit une **AC dans la story** (s'il est
-visible utilisateur — ex. erreur 403, 400, fichier vide), soit un **test
-dans la canvas Operations** (s'il est technique — ex. mémoire constante).
+visible utilisateur — ex. message d'erreur, code retour), soit un **test
+dans la canvas Operations** (s'il est technique — ex. mémoire constante,
+pas de fichier orphelin).
 
 ## Bonnes pratiques
 
 - **3-5 cas limites majeurs** par story suffisent. Au-delà, la story est
   probablement trop grosse — voir le découpage SPIDR.
 - **Chaque cas limite a un résultat attendu observable**, pas un "le système
-  doit gérer". *"403 retourné, audit log enregistré, aucun fichier généré"*
-  est observable.
+  doit gérer". *"Code retour 2, message stderr `claude not found in PATH`,
+  aucun fichier créé"* est observable.
 - **Un cas limite n'est pas un bug** : c'est une **condition prévue** que la
   feature doit gérer. Si l'analyse révèle un cas non géré, retour vers la
   story (escalade).
@@ -96,3 +100,6 @@ dans la canvas Operations** (s'il est technique — ex. mémoire constante).
 ## Changelog
 
 - 2026-04-30 — v1 — création initiale
+- 2026-04-30 — v2 — exemples (EP + concret) remplacés par CORE-001 de yukki
+  (anciennement export CSV Trivy / RoleBinding du portail). Bonnes pratiques
+  ajustées avec un exemple `claude not found` au lieu d'un code HTTP 403.

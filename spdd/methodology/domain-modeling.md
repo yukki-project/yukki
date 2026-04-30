@@ -1,7 +1,7 @@
 ---
 id: METHO-domain-modeling
 title: Modélisation de domaine (DDD tactique allégé)
-version: 1
+version: 2
 status: published
 applies-to: [spdd-analysis, spdd-reasons-canvas]
 lang: fr
@@ -25,13 +25,13 @@ sont les frontières externes*. C'est la matière première des sections
 
 Pour chaque feature, parcourir cette grille à 5 entrées :
 
-| Brique | Identifier en cherchant... | Exemples |
+| Brique | Identifier en cherchant... | Exemples génériques |
 |---|---|---|
-| **Entity** | un nom du domaine avec **identité stable** et un **cycle de vie** (créée, mutée, archivée) | `User`, `Order`, `TrivyReport`, `Application` (k8s) |
-| **Value Object** | un nom **défini par ses attributs**, sans identité propre, **immutable** | `Email`, `Money`, `Vulnerability`, `Coordinate` |
-| **Invariant** | une règle métier **toujours vraie** ("ne jamais...", "doit toujours...") | "Un solde n'est jamais négatif", "Toute vulnérabilité a un CVE" |
-| **Integration point** | un **verbe externe** : appel d'API tierce, lecture/écriture k8s, accès file system, message broker | "lit les pods k8s", "écrit dans Stripe", "publie sur Kafka" |
-| **Domain event** | un **fait passé** important du métier ("a été créé", "a expiré") | `OrderPlaced`, `ReportGenerated`, `NamespaceLabelled` |
+| **Entity** | un nom du domaine avec **identité stable** et un **cycle de vie** (créée, mutée, archivée) | `User`, `Order`, `Document`, `Story` |
+| **Value Object** | un nom **défini par ses attributs**, sans identité propre, **immutable** | `Email`, `Money`, `Coordinate`, `SemVer` |
+| **Invariant** | une règle métier **toujours vraie** ("ne jamais...", "doit toujours...") | "Un solde n'est jamais négatif", "Un id est unique par préfixe" |
+| **Integration point** | un **verbe externe** : appel d'API tierce, accès file system, subprocess, message broker | "appelle un sous-processus", "écrit dans un fichier", "publie sur un topic" |
+| **Domain event** | un **fait passé** important du métier ("a été créé", "a expiré") | `OrderPlaced`, `DocumentArchived`, `StoryGenerated` |
 
 ### Questions à poser pendant l'analyse
 
@@ -41,21 +41,23 @@ Pour chaque feature, parcourir cette grille à 5 entrées :
 - Quelles **frontières externes** la feature traverse (= Integration points) ?
 - Quels **événements** déclenchent ou résultent de la feature (= Domain Events) ?
 
-## Exemple concret — Export CSV des vulnérabilités Trivy
+## Exemple concret — Story `CORE-001` de yukki
 
-Story `EXT-014` (portail k8s) :
+Story [`CORE-001-cli-story-via-claude`](../stories/CORE-001-cli-story-via-claude.md)
+— la commande CLI `yukki story` qui orchestre `claude` pour produire une
+user story SPDD :
 
 | Brique | Instance |
 |---|---|
-| Entity | `TrivyReport` (CR k8s scopé à un pod, cycle de vie géré par l'opérateur Trivy) |
-| Value Object | `Vulnerability` (immutable, définie par CVE + sévérité + package + version), `TrivyExportRow` (projection plate pour CSV) |
-| Invariant | "Aucun CSV ne sort sans validation RBAC `get pods` sur le namespace cible" |
-| Integration point | API Kubernetes (lecture des CR `TrivyReport`), filtre OIDC `JwtAuthFilter`, service `AuditLogService` |
-| Domain event | aucun en v1 (l'export est synchrone, pas de webhook). Candidat futur : `TrivyExportEmitted` pour la corrélation audit. |
+| Entity | `Story` (un fichier `spdd/stories/<id>-<slug>.md`, identifié par son `id`, cycle de vie `draft → reviewed → accepted`) |
+| Value Object | `StoryID` (chaîne `<préfixe>-<numéro>`, immutable, deux IDs identiques sont identiques), `Description` (texte d'entrée passé à `claude`) |
+| Invariant | "Le numéro d'un id généré est strictement supérieur au plus grand numéro existant pour le préfixe donné" |
+| Integration point | `claude` CLI invoqué via `os/exec` (subprocess), file system (lecture du template `templates/story.md`, écriture de la story dans `stories/`) |
+| Domain event | `StoryGenerated` — non réifié en v1 mais nommable (déclencheur potentiel d'un commit Git automatique post-MVP) |
 
 Cette grille remplie en 10 minutes guide directement la section *Entities*
-du canvas REASONS et nourrit la section *Approche stratégique* (par exemple
-"on streame ligne par ligne pour respecter l'invariant de mémoire").
+du canvas REASONS de CORE-001 et nourrit la section *Approche stratégique*
+(par exemple "calcul d'id atomique pour respecter l'invariant d'unicité").
 
 ## Bonnes pratiques
 
@@ -78,3 +80,7 @@ du canvas REASONS et nourrit la section *Approche stratégique* (par exemple
 ## Changelog
 
 - 2026-04-30 — v1 — création initiale
+- 2026-04-30 — v2 — exemple concret remplacé par CORE-001 de yukki
+  (anciennement Trivy/portail). Heuristique table également nettoyée des
+  références portail (TrivyReport, Vulnerability, k8s, Stripe, Kafka,
+  NamespaceLabelled) au profit d'exemples génériques transverses.
