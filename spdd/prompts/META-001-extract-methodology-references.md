@@ -3,7 +3,7 @@ id: META-001
 slug: extract-methodology-references
 story: spdd/stories/META-001-extract-methodology-references.md
 analysis: spdd/analysis/META-001-extract-methodology-references.md
-status: draft
+status: implemented
 created: 2026-04-30
 updated: 2026-04-30
 ---
@@ -416,4 +416,5 @@ spdd/methodology/<technique>.md (lecture complète)
 
 ## Changelog
 
-- 2026-04-30 — création initiale (status: draft, prêt pour `/spdd-generate`)
+- 2026-04-30 — v1 — création initiale (status: draft, prêt pour `/spdd-generate`)
+- 2026-04-30 — v1.1 — toutes les Operations O1-O8 implémentées, status passé à `implemented`
