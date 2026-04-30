@@ -50,13 +50,13 @@ procédural`.
 
 ### Nouveaux (à introduire)
 
-- **MethodologyReference `splitting`** — couvre SPIDR (5 axes) + signaux
+- **MethodologyReference `spidr`** — couvre SPIDR (5 axes) + signaux
   d'alerte + stratégies de découpage + anti-patterns. `applies-to:
   [spdd-story, spdd-prompt-update]`.
 - **MethodologyReference `invest`** — couvre les 6 critères Independent /
   Negotiable / Valuable / Estimable / Small / Testable + heuristiques
   d'application. `applies-to: [spdd-story, spdd-analysis]`.
-- **MethodologyReference `ac-formulation`** — couvre Given/When/Then,
+- **MethodologyReference `acceptance-criteria`** — couvre Given/When/Then,
   style déclaratif vs impératif, mots bannis, granularité 3-5.
   `applies-to: [spdd-story, spdd-prompt-update, spdd-reasons-canvas]`.
 
@@ -66,10 +66,10 @@ Côté `.claude/commands/spdd-story.md` (et son miroir Copilot) :
 
 | Section actuellement inlinée | Cible |
 |---|---|
-| « Formulation des Acceptance Criteria » + « Style déclaratif vs impératif » + « Mots et tournures à bannir » | `ac-formulation.md` |
-| « Granularité : combien d'AC ? » (table) | `ac-formulation.md` |
+| « Formulation des Acceptance Criteria » + « Style déclaratif vs impératif » + « Mots et tournures à bannir » | `acceptance-criteria.md` |
+| « Granularité : combien d'AC ? » (table) | `acceptance-criteria.md` |
 | Mention INVEST + lien Agile Alliance dans « Règles générales » | `invest.md` |
-| « Étape 4bis — Story trop grosse : scinder avec SPIDR » (table 5 axes + signaux + stratégies + anti-patterns + exemple) | `splitting.md` |
+| « Étape 4bis — Story trop grosse : scinder avec SPIDR » (table 5 axes + signaux + stratégies + anti-patterns + exemple) | `spidr.md` |
 
 Volume estimé : ~80 lignes à extraire de chaque format de skill (Claude +
 Copilot), soit ~160 lignes au total.
@@ -168,7 +168,7 @@ Copilot), soit ~160 lignes au total.
   cycle SPDD `/spdd-generate` produit toutes les Operations dans un même
   commit. À surveiller si le workflow change.
 - **Concurrence (édition humaine)** — deux contributeurs éditent
-  simultanément `splitting.md` et `/spdd-story` : conflit Git classique,
+  simultanément `spidr.md` et `/spdd-story` : conflit Git classique,
   pas un risque méthodologique.
 - **Security / negative testing** — n/a sur une story documentaire.
 
@@ -177,7 +177,7 @@ Copilot), soit ~160 lignes au total.
 > Toutes tranchables maintenant ; conservées ici pour traçabilité.
 
 - [ ] **Ancres markdown dans les refs** : faut-il garantir des `<a>` ou
-  ancres markdown stables (`splitting.md#anti-patterns`,
+  ancres markdown stables (`spidr.md#anti-patterns`,
   `invest.md#small`) pour permettre des liens partiels depuis le skill ?
   — recommandation : oui, ancres standard `## Section` markdown auto-générées
   par les titres ; pas de `<a id>` manuel sauf cas particulier.
@@ -186,7 +186,7 @@ Copilot), soit ~160 lignes au total.
   — recommandation : pas de section dédiée ; une entrée changelog suffit.
 - [ ] **Ordre de génération** des refs (impact sur les liens internes
   potentiels) ? — recommandation : `invest.md` d'abord (plus simple),
-  puis `splitting.md` (qui peut référencer `invest.md#small` en interne),
-  puis `ac-formulation.md` (autonome).
+  puis `spidr.md` (qui peut référencer `invest.md#small` en interne),
+  puis `acceptance-criteria.md` (autonome).
 - [ ] **Status initial** des 3 refs : `published` (cohérent avec META-001) ✓
   — décision implicite reprise.

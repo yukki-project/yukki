@@ -42,11 +42,11 @@ dernier inlining résiduel.
 ## Scope In
 
 - Création de 3 nouvelles refs dans `spdd/methodology/` :
-  - `splitting.md` — SPIDR (Paths / Interfaces / Data / Rules / Spike) +
+  - `spidr.md` — SPIDR (Paths / Interfaces / Data / Rules / Spike) +
     signaux d'alerte + stratégies de découpage + anti-patterns
   - `invest.md` — les 6 critères Independent / Negotiable / Valuable /
     Estimable / Small / Testable + heuristiques d'application
-  - `ac-formulation.md` — règles Given/When/Then + style déclaratif vs
+  - `acceptance-criteria.md` — règles Given/When/Then + style déclaratif vs
     impératif + mots et tournures bannis + granularité 3-5
 - Frontmatter normalisé identique à celui des refs META-001
   (`id`, `title`, `version: 1`, `status: published`, `applies-to`,
@@ -72,8 +72,8 @@ dernier inlining résiduel.
 
 - **Given** un développeur consulte `spdd/methodology/` après ce changement
 - **When** il liste le contenu du dossier
-- **Then** il y trouve les 3 nouveaux fichiers (`splitting.md`,
-  `invest.md`, `ac-formulation.md`), chacun lisible indépendamment, avec un
+- **Then** il y trouve les 3 nouveaux fichiers (`spidr.md`,
+  `invest.md`, `acceptance-criteria.md`), chacun lisible indépendamment, avec un
   frontmatter complet conforme à la convention META-001 et au moins une
   source bibliographique citée par fichier
 
@@ -105,15 +105,15 @@ dernier inlining résiduel.
 ## Open Questions
 
 - [x] **Granularité d'INVEST** : ~~ref autonome ou sous-cadre de
-  `splitting.md` ?~~ → **`invest.md` autonome** (3 refs au final).
+  `spidr.md` ?~~ → **`invest.md` autonome** (3 refs au final).
   Justification : INVEST a une portée plus large que SPIDR — il sert aussi
   en escalade `/spdd-analysis` (signal "story qui ne respecte pas INVEST"
   → retour `/spdd-story`). Cohérent avec "1 ref = 1 technique transverse".
-- [x] **Anti-patterns de découpage** : ~~dans `splitting.md` ou dans le
-  skill ?~~ → **dans `splitting.md`**. Justification : les anti-patterns
+- [x] **Anti-patterns de découpage** : ~~dans `spidr.md` ou dans le
+  skill ?~~ → **dans `spidr.md`**. Justification : les anti-patterns
   décrivent *comment appliquer SPIDR correctement*, c'est de la
   méthodologie, pas de la procédure du skill. Le skill reste procédural
-  pur ("évaluer SPIDR via `splitting.md`, scinder si signaux d'alerte").
+  pur ("évaluer SPIDR via `spidr.md`, scinder si signaux d'alerte").
 
 ## Notes
 
@@ -153,10 +153,10 @@ inexistantes.
 > Indicatif pour `/spdd-analysis`. Le canvas REASONS section *Operations*
 > tranchera la structure définitive.
 
-- `spdd/methodology/splitting.md`
+- `spdd/methodology/spidr.md`
 - `spdd/methodology/invest.md` (sous réserve de la résolution de l'OQ
   granularité)
-- `spdd/methodology/ac-formulation.md`
+- `spdd/methodology/acceptance-criteria.md`
 - Mise à jour de `.claude/commands/spdd-story.md` (suppression de l'inlining,
   ajout de liens vers les 3 refs)
 - Mise à jour de `.github/skills/spdd-story/SKILL.md` (miroir Copilot)
