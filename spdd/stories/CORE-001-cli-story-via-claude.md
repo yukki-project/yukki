@@ -157,9 +157,46 @@ et INT-001 (provider Copilot CLI).
 - Tests : `go test ./...` doit passer ; tests d'intégration moqués via un
   `Provider` factice qui ne lance pas vraiment `claude`
 
+### Application des refs methodology
+
+Cette story applique les 3 refs `spdd/methodology/` qui s'adressent au
+skill `/spdd-story` :
+
+- [`invest.md`](../methodology/invest.md) — évaluation INVEST des 6
+  critères, détaillée ci-dessous
+- [`spidr.md`](../methodology/spidr.md) — découpage SPIDR analysé
+  ci-dessous (5 axes, décision de garder en l'état)
+- [`acceptance-criteria.md`](../methodology/acceptance-criteria.md) —
+  les 7 AC respectent les règles : Given/When/Then **déclaratif**, pas
+  de "should", pas de termes vagues, couverture **happy** (AC1) +
+  **erreur user** (AC4) + **cas limite** (AC6 template fallback). Les
+  AC d'erreur (AC3, AC4) regroupent plusieurs effets observables sous
+  forme d'**état d'échec composite**, exception pragmatique au "1
+  comportement par AC" pour les cas où l'échec doit être validé en bloc.
+
+### Évaluation INVEST
+
+> Détail complet (cross-référence) : voir l'exemple concret de CORE-001
+> dans [`invest.md` — section *Exemple concret*](../methodology/invest.md#exemple-concret--core-001-de-yukki).
+
+Synthèse :
+
+| Critère | Verdict | Justification |
+|---|---|---|
+| Independent | ✅ | aucune dépendance amont |
+| Negotiable | ✅ | 2 Open Questions explicites |
+| Valuable | ✅ | un user peut générer une story SPDD dans n'importe quel projet |
+| Estimable | ✅ | architecture pressentie + modules listés |
+| Small | ⚠️ | 7 AC, à la limite haute. Justifié *story fondatrice* — voir analyse SPIDR ci-dessous |
+| Testable | ✅ | chaque AC en G/W/T avec résultat observable |
+
+5/6 critères passent ; **Small** justifié via SPIDR analysé plutôt que
+satisfait littéralement.
+
 ### Découpage SPIDR — analyse et décision
 
-Story à 7 AC, donc à challenger contre [SPIDR](https://www.mountaingoatsoftware.com/blog/five-simple-but-powerful-ways-to-split-user-stories) (Mike Cohn).
+Story à 7 AC, donc à challenger contre [`spidr.md`](../methodology/spidr.md)
+(framework SPIDR de Mike Cohn).
 
 | Axe | Application | Verdict |
 |---|---|---|
