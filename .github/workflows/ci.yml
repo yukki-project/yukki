@@ -56,6 +56,7 @@ jobs:
 
       - name: unit tests (cmd + internal)
         run: go test -race -coverprofile=coverage-unit.out ./cmd/... ./internal/...
+        shell: bash
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest'
@@ -82,6 +83,7 @@ jobs:
 
       - name: integration tests (tests/integration)
         run: go test -race -coverprofile=coverage-integration.out -coverpkg=./internal/... ./tests/integration/...
+        shell: bash
 
       - uses: actions/upload-artifact@v4
         if: matrix.os == 'ubuntu-latest'
@@ -112,3 +114,4 @@ jobs:
         # because the test orchestrator forks the actual binary; -race only
         # instruments the test process itself.
         run: go test -timeout 5m ./tests/e2e/...
+        shell: bash
