@@ -139,6 +139,36 @@ func TestClaudeProvider_CheckVersion_StubSucceeds(t *testing.T) {
 	}
 }
 
+func TestClaudeProvider_Version_StubSucceeds(t *testing.T) {
+	if stubBinary == "" {
+		t.Skip("stub binary not built")
+	}
+	p := &ClaudeProvider{
+		logger:  slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		Binary:  stubBinary,
+		Args:    []string{"--print"},
+		Timeout: 30 * time.Second,
+	}
+	v, err := p.Version(context.Background())
+	if err != nil {
+		t.Fatalf("Version: %v", err)
+	}
+	if !strings.Contains(v, "stub") {
+		t.Fatalf("expected stub version, got %q", v)
+	}
+}
+
+func TestClaudeProvider_Version_NotFound(t *testing.T) {
+	p := &ClaudeProvider{
+		logger: slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		Binary: "definitely-not-on-path-yukki-test-zzz",
+	}
+	_, err := p.Version(context.Background())
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got %v", err)
+	}
+}
+
 func TestClaudeProvider_Generate_StubReturnsCannedStory(t *testing.T) {
 	if stubBinary == "" {
 		t.Skip("stub binary not built")

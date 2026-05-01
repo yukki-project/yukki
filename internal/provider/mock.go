@@ -8,6 +8,8 @@ type MockProvider struct {
 	NameVal    string
 	Response   string
 	Err        error
+	CheckErr   error
+	VersionVal string
 	VersionErr error
 	Calls      []string
 }
@@ -20,9 +22,22 @@ func (m *MockProvider) Name() string {
 	return "mock"
 }
 
-// CheckVersion returns VersionErr.
+// CheckVersion returns CheckErr.
 func (m *MockProvider) CheckVersion(ctx context.Context) error {
-	return m.VersionErr
+	return m.CheckErr
+}
+
+// Version returns VersionVal/VersionErr. Defaults to "mock-1.0" when both are
+// zero, mirroring how MockProvider behaves when no specific version contract
+// is set by the test.
+func (m *MockProvider) Version(ctx context.Context) (string, error) {
+	if m.VersionErr != nil {
+		return "", m.VersionErr
+	}
+	if m.VersionVal != "" {
+		return m.VersionVal, nil
+	}
+	return "mock-1.0", nil
 }
 
 // Generate records the prompt and returns Response, Err.

@@ -27,6 +27,45 @@ func TestMockProvider_PropagatesError(t *testing.T) {
 	}
 }
 
+func TestMockProvider_Version_Default(t *testing.T) {
+	m := &MockProvider{}
+	v, err := m.Version(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if v != "mock-1.0" {
+		t.Fatalf("expected default 'mock-1.0', got %q", v)
+	}
+}
+
+func TestMockProvider_Version_Custom(t *testing.T) {
+	m := &MockProvider{VersionVal: "mock-2.7"}
+	v, err := m.Version(context.Background())
+	if err != nil || v != "mock-2.7" {
+		t.Fatalf("unexpected (%q, %v)", v, err)
+	}
+}
+
+func TestMockProvider_Version_Error(t *testing.T) {
+	want := errors.New("nope")
+	m := &MockProvider{VersionErr: want}
+	v, err := m.Version(context.Background())
+	if !errors.Is(err, want) {
+		t.Fatalf("expected wrapped err, got %v", err)
+	}
+	if v != "" {
+		t.Fatalf("expected empty version on error, got %q", v)
+	}
+}
+
+func TestMockProvider_CheckVersion_PropagatesCheckErr(t *testing.T) {
+	want := errors.New("not in PATH")
+	m := &MockProvider{CheckErr: want}
+	if err := m.CheckVersion(context.Background()); !errors.Is(err, want) {
+		t.Fatalf("expected wrapped err, got %v", err)
+	}
+}
+
 func TestSentinelErrorsAreDistinct(t *testing.T) {
 	if errors.Is(ErrNotFound, ErrVersionIncompatible) {
 		t.Fatal("sentinel errors must be distinct")

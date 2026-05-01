@@ -2,7 +2,7 @@
 id: UI-001b
 slug: hub-viewer-claude-banner
 title: Hub viewer — project picker, sidebar, liste read-only des stories, banner Claude, init SPDD (frontend & bindings, consume CORE-004)
-status: draft
+status: in-progress
 created: 2026-05-01
 updated: 2026-05-01
 owner: Thibaut Sannier
@@ -68,10 +68,14 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   permettre la réutilisation par INT-002 / future CLI `yukki list`
   sans refactor. UI-001b consomme ces fonctions, ne les implémente
   pas.)*
-- **`App.ListStories() ([]artifacts.Meta, error)`** binding Go pour le
-  hub. Idem `ListAnalyses`, `ListPrompts`, `ListTests` (4 méthodes
-  symétriques, ou une seule `ListArtifacts(kind)` exposée au front —
-  décision en canvas).
+- **Bindings Go de listing** exposés au front pour le hub : permet à
+  React d'appeler les 4 kinds (stories, analyses, prompts, tests).
+  Forme exacte (4 méthodes typées symétriques `App.ListStories` /
+  `ListAnalyses` / `ListPrompts` / `ListTests`, **ou** une seule
+  `App.ListArtifacts(kind string)` paramétrée) à trancher en canvas
+  via OQ5. Quel que soit le choix, la fonction délègue à
+  `internal/artifacts.ListArtifacts(projectDir, kind)` (livrée par
+  CORE-004).
 - **`App.GetClaudeStatus(ctx) ClaudeStatus`** binding Go.
   `ClaudeStatus{Available bool, Version, Err string}`. Appelle
   `provider.CheckVersion(ctx)` ; mappe `ErrNotFound`/`ErrVersionIncompatible`

@@ -5,3 +5,25 @@
 // overwrites it cleanly once the AV exclusion is in place.
 
 export function Greet(): Promise<string>;
+export function SelectProject(): Promise<string>;
+export function AllowedKinds(): Promise<string[]>;
+export function ListArtifacts(kind: string): Promise<Meta[]>;
+export function GetClaudeStatus(): Promise<ClaudeStatus>;
+export function InitializeSPDD(dir: string): Promise<void>;
+export function ReadArtifact(path: string): Promise<string>;
+
+export interface Meta {
+  ID: string;
+  Slug: string;
+  Title: string;
+  Status: string;
+  Updated: string;
+  Path: string;
+  Error?: string;
+}
+
+export interface ClaudeStatus {
+  Available: boolean;
+  Version: string;
+  Err: string;
+}

@@ -18,6 +18,11 @@ type Provider interface {
 	// Returns ErrNotFound if not in PATH, ErrVersionIncompatible otherwise.
 	CheckVersion(ctx context.Context) error
 
+	// Version returns the raw version string reported by the CLI (typically
+	// the trimmed stdout of `<binary> --version`). Returns ErrNotFound if the
+	// binary is not on PATH and ErrVersionIncompatible on subprocess failure.
+	Version(ctx context.Context) (string, error)
+
 	// Generate runs the LLM with the given prompt and returns the raw output.
 	// Returns ErrGenerationFailed wrapping the underlying error on subprocess
 	// failures.
