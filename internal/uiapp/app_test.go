@@ -123,7 +123,7 @@ func TestApp_SelectProject_Success(t *testing.T) {
 	})
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	got, err := app.SelectProject(context.Background())
+	got, err := app.SelectProject()
 	if err != nil {
 		t.Fatalf("SelectProject: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestApp_SelectProject_Cancelled(t *testing.T) {
 	})
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	got, err := app.SelectProject(context.Background())
+	got, err := app.SelectProject()
 	if err != nil {
 		t.Fatalf("expected nil err on cancel, got %v", err)
 	}
@@ -224,7 +224,7 @@ func TestApp_ListArtifacts_Delegation(t *testing.T) {
 
 func TestApp_GetClaudeStatus_Available(t *testing.T) {
 	app := NewApp(&provider.MockProvider{VersionVal: "claude 1.2.3"}, newTestLogger())
-	st := app.GetClaudeStatus(context.Background())
+	st := app.GetClaudeStatus()
 	if !st.Available {
 		t.Fatal("expected Available=true")
 	}
@@ -238,7 +238,7 @@ func TestApp_GetClaudeStatus_Available(t *testing.T) {
 
 func TestApp_GetClaudeStatus_NotFound(t *testing.T) {
 	app := NewApp(&provider.MockProvider{CheckErr: provider.ErrNotFound}, newTestLogger())
-	st := app.GetClaudeStatus(context.Background())
+	st := app.GetClaudeStatus()
 	if st.Available {
 		t.Fatal("expected Available=false on CheckErr")
 	}
@@ -249,7 +249,7 @@ func TestApp_GetClaudeStatus_NotFound(t *testing.T) {
 
 func TestApp_GetClaudeStatus_VersionFailedAfterCheck(t *testing.T) {
 	app := NewApp(&provider.MockProvider{VersionErr: errors.New("boom")}, newTestLogger())
-	st := app.GetClaudeStatus(context.Background())
+	st := app.GetClaudeStatus()
 	if !st.Available {
 		t.Fatal("expected Available=true (CheckVersion ok)")
 	}

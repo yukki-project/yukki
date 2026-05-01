@@ -114,7 +114,11 @@ func (a *App) Greet() string {
 // non-empty selection, updates the App's projectDir / loader / writer.
 // A user cancellation returns ("", nil) so the frontend can distinguish
 // it from a real error.
-func (a *App) SelectProject(ctx context.Context) (string, error) {
+//
+// Uses the App's startup context (a.ctx) — Wails 2.12 does not
+// auto-inject context.Context for bound methods, so the canvas-prescribed
+// `(ctx context.Context)` parameter is dropped here. Tracked for sync.
+func (a *App) SelectProject() (string, error) {
 	dir, err := openDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Select SPDD project root",
 	})
@@ -155,7 +159,14 @@ func (a *App) ListArtifacts(kind string) ([]artifacts.Meta, error) {
 // the outcome to a ClaudeStatus value. CheckVersion failure → Available
 // false. CheckVersion ok but Version failure → Available true with a
 // non-empty Err field. Both ok → Available true with Version populated.
-func (a *App) GetClaudeStatus(ctx context.Context) ClaudeStatus {
+//
+// Uses the App's startup context (a.ctx) — Wails 2.12 does not auto-inject
+// context.Context for bound methods. Tracked for sync.
+func (a *App) GetClaudeStatus() ClaudeStatus {
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if err := a.provider.CheckVersion(ctx); err != nil {
 		return ClaudeStatus{Available: false, Err: err.Error()}
 	}
