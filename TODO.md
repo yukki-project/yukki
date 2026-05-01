@@ -30,6 +30,14 @@
   SPDD complet (story → clarification → analyse → canvas → génération
   Go : 8 Operations livrées sur la branche `feature/CORE-001`, en
   attente de push CI + PR → main)
+- ✅ **CORE-002** — Isolation du cœur métier via `golangci-lint` +
+  `depguard` (allow-list strict). 6 Operations livrées (doc-package
+  × 4, `.golangci.yml`, step CI, annotation test-témoin, schéma
+  archi, entrée TODO `INT-002`). Prépare l'exposition MCP future.
+  Mergée dans PR #3.
+- ✅ **UI-001a** — Wails desktop skeleton + sous-cmd `yukki ui` +
+  scaffold React/TS/Vite/Tailwind/shadcn + CI build matrix 3 OS.
+  Mergée dans PR #2.
 
 ## En attente — méthodologie / méta
 
@@ -72,15 +80,6 @@
 
 ## En attente — features projet
 
-- ⬜ **CORE-002** — Isoler le cœur métier de la CLI pour permettre une
-  exposition MCP future. Audit + linter `golangci-lint`/`depguard`
-  (allow-list strict) sur `internal/{workflow,provider,templates,
-  artifacts}`, doc-package enrichie, schéma d'architecture dans
-  `DEVELOPMENT.md`. Story rédigée en
-  [`spdd/stories/CORE-002-isolate-business-core.md`](spdd/stories/CORE-002-isolate-business-core.md),
-  analyse en
-  [`spdd/analysis/CORE-002-isolate-business-core.md`](spdd/analysis/CORE-002-isolate-business-core.md).
-  Prérequis explicite de `INT-002` (post-MVP, serveur MCP).
 - ⬜ **CORE-003** — Découpage SPIDR axe **P** (Paths) en 6 stories
   filles, une par commande SPDD restante :
   - `CORE-003a` — `yukki analysis`
@@ -89,14 +88,24 @@
   - `CORE-003d` — `yukki api-test`
   - `CORE-003e` — `yukki prompt-update`
   - `CORE-003f` — `yukki sync`
+- ⬜ **CORE-004** — Listing & parsing des artefacts SPDD dans le cœur
+  métier (Go-only, multi-consumer). Livre
+  `internal/artifacts.ListArtifacts(dir, kind)` et
+  `ParseFrontmatter[T any]` pour scan + extraction typée du frontmatter.
+  Réutilisé par UI-001b (Hub viewer), futur INT-002 (serveur MCP), et
+  futur `yukki list` CLI éventuel. Story rédigée en
+  [`spdd/stories/CORE-004-list-and-parse-artifacts.md`](spdd/stories/CORE-004-list-and-parse-artifacts.md).
+  Estimation ~0.5-1j.
 - 🟡 **UI-001** — Initialiser l'app desktop yukki — Wails v2 + React 18
   + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Splittée
   SPIDR axe **I** (Interface) en 3 stories filles
   (analyse de famille en [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](spdd/analysis/UI-001-init-desktop-app-wails-react.md)) :
-  - `UI-001a` — App skeleton & sub-cmd `yukki ui` + scaffold React +
-    CI build matrix (~1.5j) — [story](spdd/stories/UI-001a-app-skeleton-and-subcommand.md)
-  - `UI-001b` — Hub viewer (project picker, sidebar, liste stories,
-    banner Claude, init SPDD empty state) (~1.5j) — [story](spdd/stories/UI-001b-hub-viewer-claude-banner.md)
+  - `UI-001a` ✅ — App skeleton & sub-cmd `yukki ui` + scaffold React +
+    CI build matrix (livré, mergé dans #2) — [story](spdd/stories/UI-001a-app-skeleton-and-subcommand.md)
+  - `UI-001b` — Hub viewer (project picker, sidebar, liste stories
+    via `artifacts.ListArtifacts` de **CORE-004**, banner Claude,
+    init SPDD empty state). Estim. réduite à **~1j** (depuis l'extract
+    du Go core vers CORE-004 le 2026-05-01) — [story](spdd/stories/UI-001b-hub-viewer-claude-banner.md)
   - `UI-001c` — New Story flow (modal, `RunStory` binding, EventsEmit
     streaming, cancellation `OnShutdown`) (~1.5j) — [story](spdd/stories/UI-001c-new-story-flow.md)
 - ⬜ **UI-002** — Canvas REASONS éditable (React Flow v12, drag&drop des
