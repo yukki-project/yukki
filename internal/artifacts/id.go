@@ -1,8 +1,7 @@
-// Package artifacts owns the writing of SPDD artifacts (stories, analyses,
-// canvases) on disk: id calculation, slug generation, atomic-rename writer.
-//
-// Implements O4 of the CORE-001 canvas.
 package artifacts
+
+// Implements O4 of the CORE-001 canvas: id calculator + slug + writer.
+// Package-level documentation lives in doc.go (CORE-002).
 
 import (
 	"errors"

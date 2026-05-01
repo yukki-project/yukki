@@ -3,7 +3,7 @@ id: CORE-002
 slug: isolate-business-core
 story: spdd/stories/CORE-002-isolate-business-core.md
 analysis: spdd/analysis/CORE-002-isolate-business-core.md
-status: draft
+status: implemented
 created: 2026-05-01
 updated: 2026-05-01
 ---

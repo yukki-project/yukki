@@ -1,7 +1,19 @@
-// Package integration_test exercises the yukki workflow across multiple
-// internal packages (workflow, provider, templates, artifacts) without
-// invoking a real LLM CLI. The Provider is mocked; templates and artifacts
-// touch the real file system in a t.TempDir.
+// Package integration_test exercises the yukki business core
+// (internal/workflow, internal/provider, internal/templates,
+// internal/artifacts) end-to-end with a MockProvider, deliberately
+// *without* involving cobra, wails, or any UI surface.
+//
+// This file is the **living example** of the core isolation guarantee
+// defined in CORE-002: if a future contributor finds themselves adding
+// imports of cmd/, internal/uiapp, github.com/spf13/cobra, or
+// github.com/wailsapp/wails here, that would defeat the test's
+// purpose. The same imports in internal/workflow et al. are also
+// rejected statically by the `core-isolation` depguard rule
+// (.golangci.yml).
+//
+// Templates and artifacts touch the real file system in a t.TempDir.
+//
+// See spdd/stories/CORE-002-isolate-business-core.md for the rationale.
 package integration_test
 
 import (

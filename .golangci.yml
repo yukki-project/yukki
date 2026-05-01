@@ -1,0 +1,45 @@
+# golangci-lint configuration for yukki.
+#
+# CORE-002 scope: only the `depguard` linter is enabled, with a single
+# rule (`core-isolation`) that enforces the architectural boundary
+# defined in spdd/stories/CORE-002-isolate-business-core.md:
+#
+#   The 4 business-core packages (workflow, provider, templates,
+#   artifacts) MUST NOT import cobra, wails, internal/uiapp, or any
+#   other UI-specific package.
+#
+# Strategy: list-mode: strict — only declared imports are allowed,
+# everything else (including cobra/wails/uiapp implicitly) is denied.
+#
+# Other useful linters (govet, errcheck, staticcheck, gosec, misspell,
+# revive, etc.) are intentionally NOT enabled here. They will be
+# activated when DOC-001 (OSS publication) lands. Adding them in this
+# story would constitute scope creep.
+#
+# See https://golangci-lint.run/docs/linters/configuration/ for the
+# full schema (v2 config format, golangci-lint >= v1.62).
+
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        core-isolation:
+          list-mode: strict
+          files:
+            - "**/internal/workflow/**"
+            - "**/internal/provider/**"
+            - "**/internal/templates/**"
+            - "**/internal/artifacts/**"
+            - "!**/*_test.go"
+          allow:
+            - $gostd
+            - gopkg.in/yaml.v3
+            - github.com/yukki-project/yukki/internal/workflow
+            - github.com/yukki-project/yukki/internal/provider
+            - github.com/yukki-project/yukki/internal/templates
+            - github.com/yukki-project/yukki/internal/artifacts

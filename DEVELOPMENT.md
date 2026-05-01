@@ -19,6 +19,42 @@ voir [`spdd/README.md`](spdd/README.md) et
 - **Zustand** (state) + **lucide-react** (icônes)
 - Aucune lib UI lourde (pas de Material, pas de Bubble Tea — cf. canvas UI-001a Safeguards)
 
+## Architecture
+
+yukki est composé d'**un cœur métier** (4 packages internes) et de
+**3 surfaces de consommation** :
+
+```
+┌─────────────────────────────────────────────────┐
+│  Surfaces de consommation                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
+│  │ CLI Cobra│  │ Wails UI │  │ MCP server   │   │
+│  │ (root)   │  │ (uiapp)  │  │ (INT-002,    │   │
+│  │          │  │          │  │  post-MVP)   │   │
+│  └────┬─────┘  └─────┬────┘  └──────┬───────┘   │
+│       └──────────┬───┴──────────────┘           │
+│                  ▼                              │
+│  ┌────────────────────────────────────────┐     │
+│  │  Cœur métier (internal/)               │     │
+│  │  - workflow   RunStory + Progress      │     │
+│  │  - provider   Provider + Claude + Mock │     │
+│  │  - templates  Loader                   │     │
+│  │  - artifacts  NextID + Slug + Writer   │     │
+│  └────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────┘
+```
+
+L'isolation du cœur (interdiction d'importer `cobra`, `wails` ou
+`internal/uiapp`) est **enforcée statiquement** par
+[.golangci.yml](.golangci.yml) — règle `depguard` `core-isolation`
+configurée en allow-list strict (seuls la stdlib, `gopkg.in/yaml.v3`
+et l'intra-cœur sont autorisés). Le job CI `static-checks` invoque
+`golangci-lint` à chaque PR.
+
+La 3ᵉ surface (serveur MCP, `INT-002`) n'est **pas livrée** —
+préparée par CORE-002, à implémenter en post-MVP. Voir
+[spdd/stories/CORE-002-isolate-business-core.md](spdd/stories/CORE-002-isolate-business-core.md).
+
 ## Build
 
 ```bash
