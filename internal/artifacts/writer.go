@@ -1,18 +1,10 @@
 package artifacts
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 )
-
-// ErrInvalidFrontmatter is returned when the generated story's YAML frontmatter
-// fails to parse (Invariant I2 of the CORE-001 canvas).
-var ErrInvalidFrontmatter = errors.New("invalid frontmatter")
 
 // Writer writes story files to a directory using an atomic rename.
 type Writer struct {
@@ -53,28 +45,4 @@ func (w *Writer) Write(id, slug, content string) (string, error) {
 	}
 
 	return final, nil
-}
-
-// ValidateFrontmatter ensures content starts with `---\n...\n---\n` and that
-// the YAML between the delimiters parses into a non-empty mapping.
-func ValidateFrontmatter(content string) error {
-	const delim = "---\n"
-	if !strings.HasPrefix(content, delim) {
-		return fmt.Errorf("%w: missing leading frontmatter delimiter", ErrInvalidFrontmatter)
-	}
-	rest := content[len(delim):]
-	end := strings.Index(rest, "\n"+delim[:len(delim)-1])
-	if end < 0 {
-		return fmt.Errorf("%w: missing closing frontmatter delimiter", ErrInvalidFrontmatter)
-	}
-	yamlSrc := rest[:end]
-
-	var m map[string]any
-	if err := yaml.Unmarshal([]byte(yamlSrc), &m); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidFrontmatter, err)
-	}
-	if len(m) == 0 {
-		return fmt.Errorf("%w: empty frontmatter", ErrInvalidFrontmatter)
-	}
-	return nil
 }

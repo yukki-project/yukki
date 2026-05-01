@@ -17,6 +17,9 @@
 //     the target directory.
 //   - Slugify is deterministic and idempotent: Slugify(Slugify(s)) ==
 //     Slugify(s) for any string s.
+//   - ListArtifacts is read-only and never modifies any file.
+//     A corrupted frontmatter never aborts the scan; the offending
+//     entry carries the error in Meta.Error.
 //   - No global state. Each Writer instance is bound to a single
 //     output directory.
 //

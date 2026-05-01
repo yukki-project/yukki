@@ -1,15 +1,13 @@
 ---
 id: UI-001b
 slug: hub-viewer-claude-banner
-title: Hub viewer — project picker, sidebar, liste read-only des stories, banner Claude, init SPDD
+title: Hub viewer — project picker, sidebar, liste read-only des stories, banner Claude, init SPDD (frontend & bindings, consume CORE-004)
 status: draft
 created: 2026-05-01
 updated: 2026-05-01
 owner: Thibaut Sannier
 modules:
-  - cmd/yukki
   - internal/uiapp
-  - internal/artifacts
   - frontend
 parent: UI-001
 sibling-stories:
@@ -18,6 +16,7 @@ sibling-stories:
 analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
 depends-on:
   - UI-001a-app-skeleton-and-subcommand
+  - CORE-004-list-and-parse-artifacts
 ---
 
 # Hub viewer — project picker, sidebar, liste read-only des stories, banner Claude, init SPDD
@@ -28,8 +27,8 @@ Deuxième story fille de UI-001, après UI-001a (skeleton). UI-001b transforme
 la fenêtre vide de UI-001a en **hub fonctionnel read-only** :
 
 - l'utilisateur sélectionne un dossier projet (OS-natif)
-- il voit la liste des stories existantes via le frontmatter YAML parsé
-  côté Go
+- il voit la liste des stories existantes (via `artifacts.ListArtifacts`
+  livrée par **CORE-004**)
 - il sait si Claude CLI est installé (banner non-bloquant async)
 - il peut initialiser un dossier vide en projet SPDD valide
   (création de la structure `spdd/{stories,analysis,prompts,tests}/`
@@ -37,6 +36,14 @@ la fenêtre vide de UI-001a en **hub fonctionnel read-only** :
 
 **Encore aucune écriture vers Claude** : c'est UI-001c qui apporte le
 flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
+
+> **Note de scope** *(2026-05-01)* : la couche Go pure de listing
+> (`internal/artifacts.ListArtifacts`, `ParseFrontmatter[T]`) a été
+> **extraite** vers **CORE-004** pour permettre sa réutilisation par
+> INT-002 (serveur MCP) et un éventuel futur `yukki list` CLI sans
+> refactor. UI-001b **consomme** ces fonctions Go déjà livrées, ne
+> les implémente pas. Estimation passée de ~1.5j (Go + UI) à ~1j
+> (UI uniquement, depuis CORE-004 livrée).
 
 ## Business Value
 
@@ -56,15 +63,11 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   annulé. Met à jour `app.projectDir`, recrée
   `templates.NewLoader(projectDir)` et
   `artifacts.NewWriter(filepath.Join(projectDir, "spdd/stories"))`.
-- **`internal/artifacts.ListArtifacts(dir, kind string) ([]Meta, error)`** —
-  scanne `<dir>/spdd/<kind>/*.md`, parse le frontmatter YAML
-  via `gopkg.in/yaml.v3` (déjà dépendance), retourne
-  `[]Meta{ID, Slug, Title, Status, Updated, Path}`. Mutualisé pour
-  Stories / Analyses / Canvas / Tests. Tests unitaires sur cas valides
-  + frontmatter manquant + YAML corrompu.
-- **`internal/artifacts.ParseFrontmatter[T any](content string) (T, error)`** —
-  helper générique d'extraction typée. Utilisé par `ListArtifacts` mais
-  aussi disponible pour de futurs use cases (UI-001c, UI-005).
+- *(Le scope Go pur — `internal/artifacts.ListArtifacts` et
+  `ParseFrontmatter[T]` — a été extrait dans **CORE-004** pour
+  permettre la réutilisation par INT-002 / future CLI `yukki list`
+  sans refactor. UI-001b consomme ces fonctions, ne les implémente
+  pas.)*
 - **`App.ListStories() ([]artifacts.Meta, error)`** binding Go pour le
   hub. Idem `ListAnalyses`, `ListPrompts`, `ListTests` (4 méthodes
   symétriques, ou une seule `ListArtifacts(kind)` exposée au front —
@@ -101,15 +104,16 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   `useArtifactsStore.refresh()` qui re-call `App.ListArtifacts(kind)`.
   Pas de fsnotify (Q1=B retenue, fsnotify déféré UI-005).
 - **Tests Go** unit sur :
-  - `internal/artifacts.ListArtifacts` : valide, frontmatter manquant,
-    YAML corrompu, dossier vide, dossier inexistant
-  - `internal/artifacts.ParseFrontmatter[T]` : type générique, champs
-    manquants, types incompatibles
   - `internal/uiapp.App.SelectProject` (avec mock Wails runtime)
+  - `internal/uiapp.App.ListStories` / `ListAnalyses` / etc. (assert
+    qu'elles délèguent correctement à `artifacts.ListArtifacts` —
+    livrée par **CORE-004**, déjà testée)
   - `internal/uiapp.App.GetClaudeStatus` avec MockProvider qui retourne
     `ErrNotFound`
   - `internal/uiapp.App.InitializeSPDD` avec dir temp + check de la
     structure créée
+  - *(les tests sur `ListArtifacts` et `ParseFrontmatter[T]`
+    eux-mêmes sont livrés par CORE-004, pas dupliqués ici)*
 
 ## Scope Out
 
@@ -216,12 +220,18 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
 
 - **Filiation** : story fille de **UI-001**, sœur de UI-001a (skeleton)
   et UI-001c (new story flow).
-- **Dépendance** : nécessite UI-001a livrée (scaffold Wails + frontend
-  React). Idéalement merge UI-001a avant de démarrer UI-001b.
+- **Dépendances** :
+  - **UI-001a** (scaffold Wails + frontend React) — déjà livrée
+  - **CORE-004** (Go listing/parsing) — à livrer avant UI-001b ;
+    extraite du scope UI-001b le 2026-05-01 pour permettre la
+    réutilisation par INT-002 / future CLI sans refactor
 - **Analyse partagée** : [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md).
-  Les décisions structurantes (D2 ListArtifacts dans `internal/artifacts`,
-  D11 async Claude check, D6 empty state init) sont déjà tranchées.
-- **Estimation** : ~1.5j (composants React 0.5j + bindings Go 0.5j +
-  ListArtifacts/ParseFrontmatter + tests 0.5j).
+  Les décisions structurantes (D11 async Claude check, D6 empty state
+  init) sont déjà tranchées. La D2 *"ListArtifacts dans
+  `internal/artifacts`"* a été honorée mais via la story dédiée
+  CORE-004.
+- **Estimation** : ~1j (composants React 0.5j + bindings Go Wails
+  + tests Go uiapp 0.5j). *Estimation réduite de 1.5j à 1j depuis
+  l'extract du Go core vers CORE-004.*
 - **Lien vers le canvas REASONS** (à venir) :
   `spdd/prompts/UI-001b-hub-viewer-claude-banner.md`
