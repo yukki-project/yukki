@@ -2,7 +2,7 @@
 id: CORE-004
 slug: list-and-parse-artifacts
 title: Listing & parsing des artefacts SPDD dans le cœur métier (Go-only, multi-consumer)
-status: draft
+status: done
 created: 2026-05-01
 updated: 2026-05-01
 owner: Thibaut Sannier

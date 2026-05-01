@@ -2,7 +2,7 @@
 id: CORE-002
 slug: isolate-business-core
 title: Isoler le cœur métier de la CLI pour permettre une exposition MCP future
-status: draft
+status: done
 created: 2026-05-01
 updated: 2026-05-01
 owner: Thibaut Sannier
