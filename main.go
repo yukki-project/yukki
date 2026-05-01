@@ -50,6 +50,7 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors: false,
 	}
 	root.AddCommand(newStoryCmd())
+	root.AddCommand(newUICmd())
 	return root
 }
 

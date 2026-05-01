@@ -1,0 +1,4 @@
+# Placeholder so that //go:embed all:dist (in frontend/embed.go) succeeds
+# when the frontend has not been built yet (first-time `go build ./...` in
+# static-checks CI). The real Vite bundle is produced by `wails build`
+# and is gitignored except for this file.

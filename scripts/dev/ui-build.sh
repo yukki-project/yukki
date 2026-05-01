@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# scripts/dev/ui-build.sh — build the yukki desktop binary (Wails) with all
+# build artefacts kept inside the repo (.gocache/, .gotmp/, build/bin/) so
+# a single Defender exclusion on the repo root covers everything.
+#
+# Workarounds layered in by default for the corporate-AV environment that
+# blocked CORE-001 + UI-001a local execution:
+#
+#   -tags mock        injects MockProvider — no need for `claude` on PATH
+#   -skipbindings     uses the hand-written wailsjs/ stubs instead of letting
+#                     Wails regenerate them (its helper Go binary in %TEMP%
+#                     gets quarantined by Defender). Once the AV exclusion
+#                     is in place, drop this flag to let Wails regenerate.
+#
+# See DEVELOPMENT.md "Si l'AV bloque malgré tout" + TICKET IT in TODO.md.
+#
+# Usage:
+#     scripts/dev/ui-build.sh                   # build, no launch
+#     scripts/dev/ui-build.sh -- <wails args>   # forward any extra wails flag
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
+export GOTMPDIR="${GOTMPDIR:-$repo_root/.gotmp}"
+export TMP="${TMP:-$repo_root/.gotmp}"
+export TEMP="${TEMP:-$repo_root/.gotmp}"
+
+mkdir -p "$GOCACHE" "$GOTMPDIR"
+
+echo ">> GOCACHE=$GOCACHE"
+echo ">> GOTMPDIR=$GOTMPDIR"
+echo ">> TMP=$TMP"
+
+# Detect host platform for `wails build -platform`
+case "$(uname -s)" in
+    Linux*)   platform="linux/amd64" ;;
+    Darwin*)  platform="darwin/universal" ;;
+    MINGW*|MSYS*|CYGWIN*) platform="windows/amd64" ;;
+    *)        platform="" ;;
+esac
+
+extra_args=()
+if [ "$#" -gt 0 ] && [ "$1" = "--" ]; then
+    shift
+    extra_args=("$@")
+fi
+
+echo ">> wails build -tags mock -skipbindings -platform ${platform:-auto} ${extra_args[*]}"
+
+if [ -n "$platform" ]; then
+    wails build -tags mock -skipbindings -platform "$platform" "${extra_args[@]}"
+else
+    wails build -tags mock -skipbindings "${extra_args[@]}"
+fi
+
+echo ""
+echo ">> Built. Binary at: $repo_root/build/bin/yukki-ui*"
+ls -la "$repo_root/build/bin/" 2>/dev/null || true

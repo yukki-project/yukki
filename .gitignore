@@ -23,3 +23,42 @@ coverage.html
 # OS
 .DS_Store
 Thumbs.db
+
+# Local-only working docs (vision drafts, scratch notes — not committed)
+/VISION.md
+/notes/
+
+# Wails / frontend artefacts
+/frontend/node_modules/
+# Vite build output. Keep .gitkeep so //go:embed all:frontend/dist
+# succeeds in static-checks CI before any wails build has run.
+/frontend/dist/*
+!/frontend/dist/.gitkeep
+# Auto-generated Wails bindings — committed as minimal stubs.
+#
+# Wails 2.12 reports "Generating bindings: Done" but skips regen
+# silently when the directory already exists (cache check). On a
+# fresh clone (CI runner), `wails build` triggers regen and would
+# overwrite. On a local dev machine where Defender quarantines the
+# Wails helper binary in %TEMP% (cf. TICKET IT in TODO.md), regen
+# fails silently and the committed stubs are what tsc + Vite/rollup
+# resolve against.
+#
+# Both .d.ts (types for tsc) and .js (runtime for Vite/rollup) are
+# committed. They are tiny (4-line Greet wrapper + minimal runtime).
+# Wails idempotent regen overwrites them when it does run; the
+# committed version is the post-regen state from the last successful
+# binding generation.
+#
+# Nothing in wailsjs/ is ignored except node_modules-style noise.
+/frontend/wailsjs/**/node_modules/
+# Wails final binary output (entire build/ dir, not just bin/).
+/build/
+
+# Wails / frontend caches written by `wails build` next to package.json:
+# md5 stamp file used to detect package.json changes, TS build-info,
+# and the JS-compiled vite.config (we keep vite.config.ts as source).
+/frontend/package.json.md5
+/frontend/*.tsbuildinfo
+/frontend/vite.config.d.ts
+/frontend/vite.config.js
