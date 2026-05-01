@@ -1,7 +1,7 @@
 ---
 id: UI-001
 slug: init-desktop-app-wails-react
-status: draft
+status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 covers-stories:
