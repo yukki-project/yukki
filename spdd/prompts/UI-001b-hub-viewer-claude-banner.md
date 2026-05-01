@@ -4,7 +4,7 @@ slug: hub-viewer-claude-banner
 story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
 analysis: spdd/analysis/UI-001b-hub-viewer-claude-banner.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: draft
+status: implemented
 created: 2026-05-01
 updated: 2026-05-01
 ---

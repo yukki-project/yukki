@@ -1,31 +1,57 @@
-import { useState } from 'react';
-import { Greet } from '../wailsjs/go/main/App';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { ClaudeBanner } from '@/components/hub/ClaudeBanner';
+import { HubList } from '@/components/hub/HubList';
+import { ProjectPicker } from '@/components/hub/ProjectPicker';
+import { Sidebar } from '@/components/hub/Sidebar';
+import { SidebarToggle } from '@/components/hub/SidebarToggle';
+import { StoryViewer } from '@/components/hub/StoryViewer';
+import { useClaudeStore } from '@/stores/claude';
+import { useProjectStore } from '@/stores/project';
+
+const NARROW_QUERY = '(max-width: 767px)';
 
 export default function App() {
-  const [greeting, setGreeting] = useState<string>('');
+  const projectDir = useProjectStore((s) => s.projectDir);
+  const refreshClaude = useClaudeStore((s) => s.refresh);
 
-  async function handleGreet() {
-    setGreeting(await Greet());
+  const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    void refreshClaude();
+  }, [refreshClaude]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia(NARROW_QUERY);
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
+      setCollapsed(e.matches);
+    onChange(mq);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  if (!projectDir) {
+    return <ProjectPicker />;
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-8">
-      <Card className="w-full max-w-md">
-        <CardContent className="space-y-4 p-6">
-          <h1 className="text-2xl font-bold">yukki — placeholder</h1>
-          <p className="text-sm text-muted-foreground">
-            UI-001b coming next. This is the UI-001a skeleton smoke test.
-          </p>
-          <Button onClick={handleGreet}>Greet</Button>
-          {greeting && (
-            <p data-testid="greeting" className="text-sm">
-              {greeting}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+    <main className="min-h-screen flex flex-col bg-background">
+      <ClaudeBanner />
+      <div className="flex flex-1 relative overflow-hidden">
+        <Sidebar collapsed={collapsed} onSelect={() => setCollapsed(true)} />
+        <div className="flex flex-1">
+          <div className="border-b md:border-0 px-2 py-1 absolute top-1 left-1 z-50">
+            <SidebarToggle
+              collapsed={collapsed}
+              onToggle={() => setCollapsed((c) => !c)}
+            />
+          </div>
+          <section className="flex flex-1">
+            <HubList className="w-1/2 lg:w-2/5 border-r" />
+            <StoryViewer className="flex-1" />
+          </section>
+        </div>
+      </div>
     </main>
   );
 }

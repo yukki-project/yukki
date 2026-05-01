@@ -83,8 +83,8 @@ func TestRunStory_InvalidPrefix(t *testing.T) {
 func TestRunStory_ProviderVersionFailureBlocks(t *testing.T) {
 	dir := t.TempDir()
 	mock := &provider.MockProvider{
-		VersionErr: provider.ErrNotFound,
-		Response:   stubStory,
+		CheckErr: provider.ErrNotFound,
+		Response: stubStory,
 	}
 	opts := newOpts(t, mock, dir, "desc", "STORY")
 	_, err := RunStory(context.Background(), opts)

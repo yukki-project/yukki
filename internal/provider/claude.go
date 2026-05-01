@@ -66,6 +66,27 @@ func (p *ClaudeProvider) CheckVersion(ctx context.Context) error {
 	return nil
 }
 
+// Version returns the trimmed stdout of `<binary> --version`. Returns
+// ErrNotFound if the binary is not on PATH and ErrVersionIncompatible on
+// subprocess failure or empty output.
+func (p *ClaudeProvider) Version(ctx context.Context) (string, error) {
+	if _, err := exec.LookPath(p.Binary); err != nil {
+		return "", fmt.Errorf("%w: %s", ErrNotFound, p.Binary)
+	}
+
+	cmd := exec.CommandContext(ctx, p.Binary, "--version")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("%w: %s --version: %v", ErrVersionIncompatible, p.Binary, err)
+	}
+
+	version := strings.TrimSpace(string(out))
+	if version == "" {
+		return "", fmt.Errorf("%w: %s --version returned empty output", ErrVersionIncompatible, p.Binary)
+	}
+	return version, nil
+}
+
 // Generate streams the prompt to `claude` and returns its stdout.
 //
 // A timeout (configurable via ClaudeProvider.Timeout, default 5 min) is
