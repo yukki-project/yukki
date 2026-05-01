@@ -3,7 +3,7 @@ id: CORE-002
 slug: isolate-business-core
 story: spdd/stories/CORE-002-isolate-business-core.md
 analysis: spdd/analysis/CORE-002-isolate-business-core.md
-status: implemented
+status: synced
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -17,6 +17,24 @@ updated: 2026-05-01
 > ajouté. La story formalise l'isolation déjà de facto en place via
 > un linter statique `depguard`, doc-packages enrichis et un schéma
 > d'architecture documenté.
+>
+> ## Changelog
+>
+> - **v1 — 2026-05-01** : canvas initial (6 Operations, status `draft`).
+> - **v2 — 2026-05-01** — `/spdd-generate` (commit `0223a69`). 5
+>   Operations O1-O5 livrées (O6 déjà appliquée via `22bfc6f`). Status
+>   passé `draft → implemented` après validation locale (`go build`,
+>   `go vet` clean ; `golangci-lint` non testé localement, validé en CI).
+> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+>   inchangé). Une seule dérive détectée et propagée dans Operations :
+>   l'O1 a inclus un **cleanup** non-mentionné dans v1 — la suppression
+>   des doc-packages dupliqués dans `prompt.go` (workflow),
+>   `templates.go` (templates) et `id.go` (artifacts), pour éviter que
+>   godoc affiche deux commentaires de package concaténés. Aucun
+>   changement de comportement (les fichiers concernés n'ont perdu que
+>   leur commentaire de tête, transformé en commentaire de file-level
+>   non-doc). Sections **R/E/A/N/Safeguards intactes** (aucun changement
+>   d'intention). Status passé `implemented → synced`.
 
 ---
 
@@ -240,6 +258,14 @@ sans refactor.
   alphabétiquement premier — `prompt.go`, `claude.go`, `templates.go`,
   `id.go`. Décision : `doc.go` dédié, plus visible et cohérent avec
   la convention Go.)*
+- **Cleanup associé** *(ajouté en v3 sync)* : 3 packages avaient déjà
+  un doc-package (`// Package X ...`) au-dessus de leur fichier
+  alphabétiquement premier (`prompt.go`, `templates.go`, `id.go`).
+  Ces commentaires sont **retirés** lors de la création des `doc.go`
+  dédiés, pour éviter que godoc concatène deux blocs de doc-package.
+  Le commentaire restant dans le fichier devient un file-level comment
+  non-doc (toujours informatif sur le rôle du fichier dans CORE-001).
+  `provider/` n'avait pas de doc-package préalable — pas de cleanup.
 - **Signature** :
   ```go
   // Package <name> is part of yukki's business core: callable from the
