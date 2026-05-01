@@ -54,8 +54,12 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: unit tests (cmd + internal, prod build)
-        run: go test -race -coverprofile=coverage-unit.out ./cmd/... ./internal/...
+      - name: unit tests (root + internal, prod build)
+        # `.` covers the package main at the repo root (main.go, ui.go,
+        # ui_prod.go, ui_prod_test.go), `./internal/...` covers the
+        # 5 internal packages (workflow, provider, templates, artifacts,
+        # uiapp, clilog).
+        run: go test -race -coverprofile=coverage-unit.out . ./internal/...
         shell: bash
 
       - name: unit tests (mock-tagged variant)
