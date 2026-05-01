@@ -2,7 +2,7 @@
 id: CORE-002
 slug: isolate-business-core
 story: spdd/stories/CORE-002-isolate-business-core.md
-status: draft
+status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -220,57 +220,93 @@ L'**audit** par grep ciblé sur les 4 packages cible (`internal/workflow`,
   `Provider`. INT-001 ajoutera juste un `provider.NewCopilot(logger)`
   sibling de `NewClaude`.
 
-## Décisions à prendre avant le canvas
+## Décisions tranchées (revue 2026-05-01)
 
-> Recommandations en italique. À valider/contester en revue.
+Les 11 décisions ont été tranchées en revue interactive. Recap :
 
-- [ ] **D1 — Forme du linter**.
-  *(Reco : script shell `scripts/dev/check-core-isolation.sh`,
-  invoqué depuis le step CI `static-checks`. Pure bash, pas de Go,
-  pas de dépendances. ~30 lignes. Si trop fragile, v2 = test Go qui
-  parse `go list -json` pour analyse plus robuste.)*
-- [ ] **D2 — Liste précise des "imports interdits"**.
-  *(Reco : v1 = `github.com/spf13/cobra`, `github.com/wailsapp/wails`,
-  `github.com/yukki-project/yukki/internal/uiapp`,
-  `github.com/yukki-project/yukki/frontend`. Strings exactes, pas
-  de pattern fuzzy.)*
-- [ ] **D3 — Liste précise des "packages du cœur" auditées**.
-  *(Reco : `internal/workflow`, `internal/provider`,
-  `internal/templates`, `internal/artifacts`. **Pas** `internal/clilog`
-  ni `internal/uiapp`. Documenté dans le commentaire de tête du
-  script.)*
-- [ ] **D4 — Exclusion `*_test.go` de l'audit**.
-  *(Reco : oui. Les tests peuvent légitimement importer `os`, `fmt`
-  pour des stubs ou helpers. Le linter cible les imports de production
-  uniquement.)*
-- [ ] **D5 — Forme du test-témoin**.
-  *(Reco : `tests/integration/core_isolation_test.go` à côté du
-  `story_integration_test.go` existant. Pas un nouveau dossier.
-  Pattern table-driven non requis ici, juste 1-2 cas qui exercent
-  `RunStory` end-to-end avec MockProvider.)*
-- [ ] **D6 — Doc-package : ton et structure**.
-  *(Reco : 1ère phrase mentionne *"part of yukki's business core,
-  callable from CLI, UI and (future) MCP server"* littéralement. Liste
-  d'invariants en bullets dessous. Cohérent avec les conventions
-  existantes des packages CORE-001.)*
-- [ ] **D7 — Schéma DEVELOPMENT.md : où exactement ?**
-  *(Reco : nouvelle section *## Architecture* après *## Stack*, avant
-  *## Build*. Schéma ASCII identique à celui du Background de la story.)*
-- [ ] **D8 — `INT-002` placement dans TODO.md**.
-  *(Reco : section *"Post-MVP"* à côté d'`INT-001 — Copilot CLI`.
-  Avec `depends-on: CORE-002` explicite. Pas dans *"En attente —
-  features projet"* puisque pas une priorité immédiate — c'est la
-  3ᵉ surface, après que la CLI et l'UI sont livrées.)*
-- [ ] **D9 — Note de swap d'ID dans TODO.md historique**.
-  *(Reco : ajouter une entrée dans *Historique de ce fichier* du
-  TODO.md datée 2026-05-01 mentionnant l'inversion CORE-002 ↔
-  CORE-003. Court, factuel.)*
-- [ ] **D10 — Ordre des Operations dans le canvas**.
-  *(Reco : O1 doc-package × 4, O2 script linter, O3 step CI, O4 test
-  d'intégration core-only, O5 schéma DEVELOPMENT.md, O6 entrée TODO
-  INT-002 + note swap. Ordre = de l'amont vers l'aval, ce qui
-  permet de découper le commit en morceaux atomiques.)*
-- [ ] **D11 — Coverage du test-témoin**.
-  *(Reco : pas un cible chiffrée. Le test démontre la *capacité*
-  d'usage isolé, pas un % de couverture. Les tests existants de
-  CORE-001 fournissent déjà la couverture métier.)*
+- [x] **D1 — Forme du linter** : **`golangci-lint` + linter `depguard`**.
+  Préparation OSS (DOC-001 attendra de toute façon golangci-lint),
+  bonus 30+ linters (govet, errcheck, staticcheck, gosec, misspell, …).
+  Step CI ajouté à `static-checks` via
+  `golangci/golangci-lint-action@v7`. Aucun script shell maison.
+- [x] **D2 — Forme de la règle** : **allow-list strict**
+  (`list-mode: strict`). On déclare ce que les 4 packages cœur
+  ont le droit d'importer : `$gostd` (stdlib), `gopkg.in/yaml.v3`,
+  les 4 packages cœur eux-mêmes (intra-cœur autorisé). Tout le
+  reste — y compris cobra/wails/uiapp/frontend implicitement —
+  est dénié.
+- [x] **D3 — Packages auditées** : **`internal/workflow`,
+  `internal/provider`, `internal/templates`, `internal/artifacts`**.
+  Le filtre `files:` de la règle depguard cible ces 4 packages.
+  `internal/clilog` (utility logging) et `internal/uiapp` (consommateur)
+  exclus.
+- [x] **D4 — Exclusion `*_test.go`** : **oui**. Les tests peuvent
+  légitimement importer `os`, `fmt`, `io` pour des stubs (cf.
+  `internal/provider/claude_test.go` qui build un faux binaire claude).
+  La règle depguard cible les imports de production uniquement.
+- [x] **D5 — Forme du test-témoin** : **annotation seule**, pas de
+  nouveau fichier. `tests/integration/story_integration_test.go`
+  existant gagne un commentaire de tête explicitant son rôle de
+  *living example* d'usage isolé du cœur. depguard fournit la
+  garantie statique ; le test sert de documentation exécutable.
+- [x] **D6 — Doc-package : ton et structure** : **1ʳᵉ phrase canonique**
+  *"Package X is part of yukki's business core: callable from the CLI
+  (root cmd), the Wails UI (internal/uiapp), and the (future) MCP
+  server (INT-002). It must not import cobra, wails, or any
+  UI-specific package."* + bullets d'invariants par package
+  (≥ 1 invariant par package).
+- [x] **D7 — Schéma DEVELOPMENT.md** : **nouvelle section
+  `## Architecture`** placée après `## Stack`, avant `## Build`.
+  Schéma ASCII (3 surfaces CLI/UI/MCP au-dessus du cœur unique) +
+  3 lignes de prose + lien vers `.golangci.yml`.
+- [x] **D8 — `INT-002` placement** : **section "Post-MVP"** à côté
+  d'`INT-001 — Provider Copilot CLI`. SDK retenu :
+  `github.com/modelcontextprotocol/go-sdk`. Sous-cmd `yukki mcp` en
+  stdio. Dépend explicitement de CORE-002. Clients cibles 2026 :
+  Claude Desktop, Cursor, Continue, OpenCode, Zed, Cody.
+- [x] **D9 — Note swap d'ID** : **pas d'entrée historique TODO.md**.
+  Les commits git + body des stories tracent suffisamment. TODO.md
+  reste tactique. *(Mise à jour du TODO appliquée commit `22bfc6f`.)*
+- [x] **D10 — Ordre Operations** : **amont → aval**. O1
+  doc-package × 4 → O2 `.golangci.yml` config → O3 step CI
+  golangci-lint → O4 annotation `story_integration_test.go` → O5
+  schéma DEVELOPMENT.md → O6 entrée TODO INT-002 (déjà appliquée).
+  Permet de découper le commit en 6 commits atomiques au moment du
+  `/spdd-generate` si voulu.
+- [x] **D11 — Imports transitifs** : **non vérifiés en v1**.
+  L'allow-list strict (D2=C) limite tellement les directs que le
+  risque transitif est quasi-nul. Reconsidérer en v2 si un leak
+  émerge en pratique.
+
+## Approche stratégique (mise à jour post-revue)
+
+1. **`golangci-lint` adopté en bonus de l'isolation** : la story livre
+   un `.golangci.yml` avec **uniquement** la règle `depguard` configurée
+   pour CORE-002. Les 30+ autres linters (govet, errcheck, staticcheck,
+   gosec, misspell, …) restent **désactivés par défaut** dans cette
+   story pour ne pas bruiter le scope. DOC-001 pourra activer plus
+   tard les linters complémentaires.
+2. **`list-mode: strict`** maximise la rigueur : impossible d'oublier
+   un import indésirable. Trade-off : maintenance — chaque ajout de
+   dep légitime (e.g. un futur `golang.org/x/term` côté cœur, peu
+   probable) demande une mise à jour de la allow-list.
+3. **Pas de refactor structurel** : le cœur est déjà isolé. La story
+   *formalise* avec depguard + doc + schéma. Aucune signature publique
+   modifiée. Aucun fichier déplacé.
+4. **6 Operations atomiques** (D10) ordonnées amont → aval, chacune
+   livrable indépendamment.
+
+## Modules impactés (mise à jour D1, D5, D7)
+
+| Module | Impact | Nature |
+|---|---|---|
+| `internal/workflow` | faible | doc-package étoffé (1ère phrase canonique + invariants) |
+| `internal/provider` | faible | idem |
+| `internal/templates` | faible | idem |
+| `internal/artifacts` | faible | idem |
+| `.golangci.yml` (racine) | **nouveau** | configuration du linter `depguard` (allow-list strict, 4 fichiers cibles) |
+| `.github/workflows/ci.yml` | faible | nouveau step `golangci-lint` ajouté à `static-checks` via `golangci/golangci-lint-action@v7` |
+| `tests/integration/story_integration_test.go` | faible | header de commentaire ajouté (rôle de *living example* isolé) |
+| `DEVELOPMENT.md` | faible | nouvelle section `## Architecture` (schéma ASCII + 3 lignes prose) |
+| `TODO.md` | faible | ✅ déjà mis à jour (CORE-002↔003 swap + INT-002 post-MVP) — commit `22bfc6f` |
+| `internal/uiapp`, racine package main, `frontend/`, `internal/clilog` | nul | aucun changement |
