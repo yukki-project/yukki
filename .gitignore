@@ -38,5 +38,13 @@ Thumbs.db
 # every `wails build` / `wails dev` — never committed (Invariant I3
 # of the UI-001a canvas).
 /frontend/wailsjs/
-# Wails final binary output.
-/build/bin/
+# Wails final binary output (entire build/ dir, not just bin/).
+/build/
+
+# Wails / frontend caches written by `wails build` next to package.json:
+# md5 stamp file used to detect package.json changes, TS build-info,
+# and the JS-compiled vite.config (we keep vite.config.ts as source).
+/frontend/package.json.md5
+/frontend/*.tsbuildinfo
+/frontend/vite.config.d.ts
+/frontend/vite.config.js

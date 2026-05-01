@@ -4,7 +4,7 @@ slug: app-skeleton-and-subcommand
 story: spdd/stories/UI-001a-app-skeleton-and-subcommand.md
 analysis: spdd/analysis/UI-001a-app-skeleton-and-subcommand.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: implemented
+status: synced
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -35,6 +35,27 @@ updated: 2026-05-01
 >   `unit-tests` mock-tagged : `./cmd/yukki/...` → `.`. Status passé
 >   `draft → implemented` après validation locale (6/6 uiapp + 2/2
 >   build-tag dual + workflow/templates/clilog/integration verts).
+> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+>   inchangé). 4 dérives détectées et propagées dans Structure +
+>   Operations :
+>   1. `cmd/yukki/embed.go` (jamais réellement créé en v1) → mini
+>      package `frontend/embed.go` car Go interdit `..` dans
+>      `//go:embed`. O5 enrichi.
+>   2. `scripts/dev/ui-build.{sh,bat}` ajoutés à O7 (wrappers
+>      AV-friendly avec `-tags mock -skipbindings`).
+>   3. Structure module `cmd/yukki` → `racine (package main)`.
+>   4. Schéma ASCII `cmd/yukki/main.go` → `main.go (racine)`.
+>   .gitignore enrichi (`/build/`, `frontend/*.tsbuildinfo`,
+>   `frontend/package.json.md5`, `frontend/vite.config.{d.ts,js}`,
+>   `frontend/dist/*` + `!/frontend/dist/.gitkeep`).
+>   `frontend/wailsjs/` stubs hand-written existent localement (AV
+>   workaround) mais restent gitignored — Invariant I3 préservé.
+>   Sections **R/E/A/N/Safeguards intactes** (aucun changement
+>   d'intention). Validation post-sync : binaire `yukki-ui.exe`
+>   buildé via `wails build -tags mock -skipbindings` (1m04s à froid,
+>   25s à chaud), exécution OK une fois exclusion Defender en place,
+>   AC1+AC2 confirmés visuellement (fenêtre placeholder + Greet
+>   round-trip). Status passé `implemented → synced`.
 
 ---
 
@@ -170,14 +191,16 @@ Un smoke test `Greet()` valide que les 4 ponts critiques fonctionnent
 
 | Module | Fichiers principaux | Nature du changement |
 |---|---|---|
-| `cmd/yukki` | `ui.go` (nouveau), `ui_mock.go` (nouveau, build tag `mock`), `ui_prod.go` (nouveau, build tag `!mock`) | création |
+| racine (package main) | `ui.go` (nouveau), `ui_mock.go` (nouveau, build tag `mock`), `ui_prod.go` (nouveau, build tag `!mock`) | création — package main vit à la racine, pas dans `cmd/<name>/` (Wails v2 exigence) |
 | `internal/uiapp` | `app.go` (nouveau), `app_test.go` (nouveau) | création package complet |
-| `frontend/` | `package.json`, `tsconfig.json`, `vite.config.ts`, `tailwind.config.js`, `postcss.config.js`, `components.json`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/lib/utils.ts`, `src/components/ui/{button,card}.tsx`, `src/styles/globals.css` | création projet Vite complet |
+| `frontend/` | `package.json`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`, `tailwind.config.js`, `postcss.config.js`, `components.json`, `index.html`, `embed.go` (package `frontend`, `//go:embed all:dist`), `src/main.tsx`, `src/App.tsx`, `src/lib/utils.ts`, `src/components/ui/{button,card}.tsx`, `src/styles/globals.css`, `dist/.gitkeep` | création projet Vite + mini-package Go d'embed |
 | racine | `wails.json` (nouveau) | création |
-| `.github/workflows/ci.yml` | ajout du job `ui-build` matrix 3 OS | modification |
-| `.gitignore` | + `frontend/node_modules/`, `frontend/dist/`, `frontend/wailsjs/`, `build/bin/` | modification |
-| `go.mod` / `go.sum` | + `github.com/wailsapp/wails/v2` (~15-20 deps transitives) | modification |
-| `DEVELOPMENT.md` | nouvelle section *"Développer l'UI"* | modification |
+| `scripts/dev/` | `ui-build.sh`, `ui-build.bat` (nouveaux) — wrappers AV-friendly avec `-tags mock -skipbindings` | création |
+| `.github/workflows/ci.yml` | ajout du job `ui-build` matrix 3 OS + step `unit-tests` mock-tagged | modification |
+| `.gitignore` | + `frontend/node_modules/`, `frontend/dist/*` (sauf `.gitkeep`), `frontend/wailsjs/`, `/build/`, `frontend/*.tsbuildinfo`, `frontend/package.json.md5`, `frontend/vite.config.{d.ts,js}` | modification |
+| `go.mod` / `go.sum` | + `github.com/wailsapp/wails/v2` v2.12.0 (~30 deps transitives) | modification |
+| `DEVELOPMENT.md` | nouvelle section *"Développer l'UI"* + sous-section *"Wrapper local Wails"* | modification |
+| `tests/e2e/e2e_test.go` | `go build "./cmd/yukki"` → `go build "."` | modification (ajustement chemin post-déplacement) |
 
 ### Schéma de flux — sous-cmd `yukki ui`
 
@@ -186,7 +209,7 @@ $ yukki ui
        │
        ▼
 ┌──────────────────────────┐
-│ cmd/yukki/main.go        │
+│ main.go (racine)         │
 │   newRootCmd()           │
 │     ├─ story  (CORE-001) │
 │     └─ ui     (UI-001a) ◄┼── newUICmd()
@@ -334,11 +357,16 @@ $ yukki ui
   - `wails.json` à la racine
   - `frontend/package.json`
   - `frontend/tsconfig.json` (`strict: true`)
+  - `frontend/tsconfig.node.json` (composite TS pour `vite.config.ts`)
   - `frontend/vite.config.ts`
   - `frontend/tailwind.config.js`
   - `frontend/postcss.config.js`
   - `frontend/components.json` (config shadcn)
   - `frontend/index.html`
+  - `frontend/embed.go` (package `frontend`, `//go:embed all:dist`) —
+    *post-implem* : Go interdisant les paths `..` dans `//go:embed`,
+    l'embed vit dans un mini-package frontend plutôt que `embed.go`
+    racine. Importé par `ui.go` via `frontend.Assets`.
 - **Comportement** :
   - `wails.json` :
     ```json
@@ -463,18 +491,24 @@ $ yukki ui
   ```
 - **Tests** : le job lui-même est le test (vert ↔ AC5).
 
-### O7 — `.gitignore` + `DEVELOPMENT.md`
+### O7 — `.gitignore` + `DEVELOPMENT.md` + scripts dev wrappers
 
-- **Module** : racine
+- **Module** : racine + `scripts/dev/`
 - **Fichiers** : `.gitignore` (modification), `DEVELOPMENT.md`
-  (modification)
+  (modification), `scripts/dev/ui-build.sh` (nouveau),
+  `scripts/dev/ui-build.bat` (nouveau)
 - **`.gitignore`** : ajouter
   ```
   # Wails / frontend artefacts
   /frontend/node_modules/
-  /frontend/dist/
+  /frontend/dist/*
+  !/frontend/dist/.gitkeep
   /frontend/wailsjs/
-  /build/bin/
+  /build/
+  /frontend/package.json.md5
+  /frontend/*.tsbuildinfo
+  /frontend/vite.config.d.ts
+  /frontend/vite.config.js
   ```
 - **`DEVELOPMENT.md`** : nouvelle section *"Dev de l'UI"* après la
   section *"CI"* :
@@ -484,7 +518,17 @@ $ yukki ui
   - `wails build` : build prod cross-platform.
   - Build tags `mock` vs prod : `wails dev -tags mock` pour
     développer le frontend sans Claude installé.
-- **Tests** : aucun.
+  - Sous-section *"Wrapper local Wails"* documentant
+    `scripts/dev/ui-build.{sh,bat}`.
+- **`scripts/dev/ui-build.{sh,bat}`** : wrappers AV-friendly miroir
+  du pattern existant `test-local.{sh,bat}`. Redirige `GOCACHE`,
+  `GOTMPDIR`, `TMP`, `TEMP` vers `<repo>/.gocache` et `.gotmp`,
+  ajoute `-tags mock -skipbindings` (skipbindings tant que le helper
+  binary de génération est quarantiné par Defender ; les stubs
+  hand-written dans `frontend/wailsjs/` non-committés font foi).
+  Détection plate-forme automatique côté `.sh` (Linux/Darwin/Windows),
+  `.bat` assume `windows/amd64`.
+- **Tests** : aucun (pure config + wrappers).
 
 ### O8 — Tests Go unit + tests build-tag dual
 
