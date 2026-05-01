@@ -34,10 +34,15 @@ Thumbs.db
 # succeeds in static-checks CI before any wails build has run.
 /frontend/dist/*
 !/frontend/dist/.gitkeep
-# Auto-generated TypeScript bindings for Go methods. Regenerated on
-# every `wails build` / `wails dev` — never committed (Invariant I3
-# of the UI-001a canvas).
-/frontend/wailsjs/
+# Auto-generated Wails bindings. The runtime .js files are regenerated
+# on every `wails build` / `wails dev`. The .d.ts files are committed
+# as TypeScript stubs so `tsc -b` succeeds in CI even if the local
+# `wails generate module` step silently fails (corporate AV
+# quarantines its helper binary in %TEMP%) — see TICKET IT in TODO.md.
+# Wails happily overwrites these stubs when the generator does run
+# successfully (idempotent regen).
+/frontend/wailsjs/**/*.js
+!/frontend/wailsjs/**/*.d.ts
 # Wails final binary output (entire build/ dir, not just bin/).
 /build/
 

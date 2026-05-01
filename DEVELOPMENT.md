@@ -161,8 +161,10 @@ Voir CLAUDE.md (sera extrait vers `spdd/methodology/commits.md` via
 
 - **Node.js 20+** (pour Vite + npm)
 - **Wails CLI** : `go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0`
-- **Linux uniquement** : `sudo apt-get install libwebkit2gtk-4.0-dev libgtk-3-dev`
-  (ou équivalent dnf/pacman)
+- **Linux uniquement** : `sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev`
+  (ou équivalent dnf/pacman). Sur Ubuntu < 24.04, utiliser
+  `libwebkit2gtk-4.0-dev` à la place. Le build CI passe le tag
+  `-tags webkit2_41` automatiquement quand il détecte un Ubuntu 24+.
 - Windows / macOS : Webview2 / WebKit déjà inclus par l'OS
 
 Vérifier l'install : `wails doctor` doit afficher tout en vert.
