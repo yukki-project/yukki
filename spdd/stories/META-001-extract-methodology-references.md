@@ -2,7 +2,7 @@
 id: META-001
 slug: extract-methodology-references
 title: Extraire les références méthodologiques des skills vers spdd/methodology/
-status: draft
+status: done
 created: 2026-04-30
 updated: 2026-04-30
 owner: Thibaut Sannier

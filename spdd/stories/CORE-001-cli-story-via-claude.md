@@ -2,7 +2,7 @@
 id: CORE-001
 slug: cli-story-via-claude
 title: Commande CLI `yukki story` génère une user story SPDD via Claude CLI
-status: reviewed
+status: done
 created: 2026-04-30
 updated: 2026-04-30
 owner: Thibaut Sannier

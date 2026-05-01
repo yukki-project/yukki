@@ -2,7 +2,7 @@
 id: META-002
 slug: backport-story-techniques
 title: Extraire SPIDR / INVEST / formulation des AC depuis /spdd-story vers spdd/methodology/
-status: draft
+status: done
 created: 2026-04-30
 updated: 2026-04-30
 owner: Thibaut Sannier
