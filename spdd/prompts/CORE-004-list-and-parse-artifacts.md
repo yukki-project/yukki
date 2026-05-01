@@ -3,7 +3,7 @@ id: CORE-004
 slug: list-and-parse-artifacts
 story: spdd/stories/CORE-004-list-and-parse-artifacts.md
 analysis: spdd/analysis/CORE-004-list-and-parse-artifacts.md
-status: implemented
+status: synced
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -16,6 +16,35 @@ updated: 2026-05-01
 > Story Go-only multi-consumer (UI-001b, futur INT-002 MCP, futur
 > CLI `yukki list`). Aucun changement de comportement applicatif —
 > ajout d'API publique au package `internal/artifacts`.
+>
+> ## Changelog
+>
+> - **v1 — 2026-05-01** : canvas initial (4 Operations, status `draft`).
+> - **v2 — 2026-05-01** — `/spdd-generate` (commit `b5ac922`).
+>   4 Operations livrées (parser.go, lister.go, tests, doc.go).
+>   Status `draft → implemented`. 22 nouveaux tests passent ; aucun
+>   test existant cassé (Invariant I7 préservé : signature publique
+>   de `ValidateFrontmatter` strictement préservée au déménagement).
+> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+>   inchangé). 4 dérives mineures détectées et propagées dans
+>   Operations :
+>   1. **O1** : 2 helpers internes non-exportés ajoutés
+>      (`matchLeadingDelim`, `indexClosingDelim`) qui factorisent la
+>      détection LF/CRLF — implémentation pure, exprime en code la
+>      détection décrite en prose dans le canvas v1.
+>   2. **O2** : tags `yaml:"id"`, `yaml:"slug"`, etc. effectivement
+>      apposés sur `Meta` (les Norms mentionnaient "optionnels" pour
+>      kebab-case = lowercase ; appliqués pour clarté de contrat).
+>   3. **O3** : +1 test bonus `TestAllowedKinds_ReturnsCopy` qui
+>      valide explicitement l'invariant I6 (mutation de la slice
+>      retournée n'affecte pas les appels suivants). +1 test
+>      `TestListArtifacts_IgnoresNonMD` (filtre `.md` extension).
+>   4. **O3** : `writer_test.go` ne retire pas simplement
+>      `TestValidateFrontmatter` mais ajoute un commentaire de
+>      redirection vers `parser_test.go` (meilleure DX pour les
+>      futurs lecteurs qui chercheraient la fonction).
+>   Sections **R/E/A/N/Safeguards intactes** (aucun changement
+>   d'intention). Status `implemented → synced`.
 
 ---
 
@@ -255,9 +284,17 @@ Consumer (UI-001b / yukki list / INT-002 MCP)
 
 - **Module** : `internal/artifacts`
 - **Fichiers** :
-  - `internal/artifacts/parser.go` (nouveau)
+  - `internal/artifacts/parser.go` (nouveau) — exporte `ParseFrontmatter[T]`,
+    `ValidateFrontmatter`, `ErrInvalidFrontmatter` ; helpers internes
+    non-exportés `matchLeadingDelim` (renvoie le newline LF/CRLF + sa
+    longueur byte) et `indexClosingDelim` (cherche `\n---\n` ou
+    `\r\n---\n` ou `\n---\r\n` ou `\r\n---\r\n` selon le leading
+    détecté + fallback robuste mixed-EOL). *Helpers ajoutés en v3
+    `/spdd-sync` pour factoriser la détection.*
   - `internal/artifacts/writer.go` (modification : retrait de
-    `ValidateFrontmatter`)
+    `ValidateFrontmatter` et `ErrInvalidFrontmatter` qui vivent
+    désormais dans `parser.go` ; `Writer.Write` continue de l'appeler
+    intra-package)
 - **Signature** :
   ```go
   // ParseFrontmatter decodes the YAML frontmatter block delimited
