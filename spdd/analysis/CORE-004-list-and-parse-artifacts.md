@@ -2,7 +2,7 @@
 id: CORE-004
 slug: list-and-parse-artifacts
 story: spdd/stories/CORE-004-list-and-parse-artifacts.md
-status: draft
+status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -220,53 +220,84 @@ if len(m) == 0 { ... }
 - **CL10** — Frontmatter avec multi-line strings (e.g. `description:
   | foo bar`) : yaml.v3 supporte. Pas un problème.
 
-## Décisions à prendre avant le canvas
+## Décisions tranchées (revue 2026-05-01)
 
-- [ ] **D1 — Tri par défaut**.
-  *(Reco : `updated` desc + fallback `id` lexico. Si pas de
-  `updated`, considérer `mtime` du fichier en dernier recours ?
-  Probablement non — KISS, frontmatter only.)*
-- [ ] **D2 — Localisation de `ParseFrontmatter`**.
-  *(Reco : nouveau fichier `internal/artifacts/parser.go`. La
-  logique existante de `ValidateFrontmatter` (writer.go:60-79) est
-  déplacée dans `parser.go`. `ValidateFrontmatter` reste dans
-  writer.go mais devient un wrapper de 3 lignes.)*
-- [ ] **D3 — Forme de la signature `Meta.Error`**.
-  *(Reco : champ `Error error` dans la struct. Cohérent avec le
-  pattern Go où on lit la valeur ET l'erreur ensemble. Alternatives
-  écartées : retourner `[]Meta + []error` (zip à faire), ou
-  `[]MetaResult` interface (lourd).)*
-- [ ] **D4 — Path absolu ou relatif dans `Meta.Path`**.
-  *(Reco : absolu via `filepath.Abs`. Le consumer peut faire `Rel`
-  si besoin. Si Abs échoue, fallback path relatif.)*
-- [ ] **D5 — Filtre des entrées non-régulières (dirs, symlinks)**.
-  *(Reco : `entry.Type().IsRegular()` côté V1, ignore dirs et
-  symlinks. Permet aux users de créer `spdd/stories/archive/` sans
-  être inclus dans le scan.)*
-- [ ] **D6 — Support EOL Windows (`\r\n`)**.
-  *(Reco : normaliser le `content` en remplaçant `\r\n` par `\n`
-  avant parse. Coût marginal, gain de portabilité notable.)*
-- [ ] **D7 — Whitelist `kind` exposée publiquement** ?
-  *(Reco : oui, fonction `AllowedKinds() []string` (ou variable
-  exportée `AllowedKinds`). UI-001b en aura besoin pour générer la
-  sidebar dynamiquement. Cohérent avec
-  `AllowedPrefixesString()` existant.)*
-- [ ] **D8 — Test optionnel d'intégration core-only après `RunStory`**
-  *(cf. story OQ "Annotation tests/integration/story_integration_test.go")*.
-  *(Reco : non en V1. Le test-témoin de CORE-002 + les tests unit
-  CORE-004 + les tests existants `story_integration_test.go`
-  couvrent. Ajouter un sous-test serait redondant.)*
-- [ ] **D9 — Sentinel `ErrInvalidKind` ou utiliser
-  `errors.New(...)` inline** ?
-  *(Reco : sentinel `ErrInvalidKind` exporté, cohérent avec
-  `ErrInvalidPrefix` et `ErrInvalidFrontmatter`. Permet
-  `errors.Is(err, ErrInvalidKind)` côté consumers.)*
-- [ ] **D10 — Doc-package : où mentionner `ListArtifacts`**.
-  *(Reco : ajouter un invariant dans
-  `internal/artifacts/doc.go` (ajouté en CORE-002) : *"ListArtifacts
-  is read-only and never modifies any file."* Cohérent avec les
-  autres invariants des 4 packages cœur.)*
-- [ ] **D11 — Forme du test pour les generics**.
-  *(Reco : tests table-driven sur `ParseFrontmatter[T]` en
-  instanciant 3 types concrets : `map[string]any`, `Meta`-shape, et
-  un struct minimal. Couvre les cas réels.)*
+Les 11 décisions ont été tranchées en revue interactive. Recap :
+
+- [x] **D1 — Tri par défaut** : **`updated` desc + fallback `id` lexico**.
+  Récent en haut (UX hub), déterministe sur les égalités.
+- [x] **D2 — Localisation de la logique frontmatter** : **tout dans
+  `parser.go`**. `ParseFrontmatter[T]` ET `ValidateFrontmatter` vivent
+  dans le nouveau fichier `internal/artifacts/parser.go`.
+  `writer.go` ne garde que `Writer` + son `Write`. Cohésion maximale,
+  zéro dispersion. La fonction `ValidateFrontmatter` est physiquement
+  déplacée mais sa signature publique reste **strictement identique**
+  (Invariant CORE-002 I2 préservé).
+- [x] **D3 — Erreurs partielles dans le scan** : **champ `Error error`
+  dans `Meta`**. `ListArtifacts` retourne une `[]Meta` complète ;
+  les entrées corrompues ont `Error != nil`. Consumer itère une
+  seule fois. Cohérent avec UI-001b AC5 (badge "invalid" sur ligne
+  corrompue).
+- [x] **D4 — `Meta.Path`** : **absolu via `filepath.Abs`**.
+  Fallback sur le path tel-quel si Abs échoue (rare). Consumer peut
+  faire `filepath.Rel` si besoin de relatif.
+- [x] **D5 — Filtre des entrées** : **`entry.Type().IsRegular()`**.
+  Ignore silencieusement les sous-dossiers (`archive/`) et les
+  symlinks. KISS V1, comportement attendu pour un listing à plat.
+- [x] **D6 — EOL Windows** : **délimiteurs étendus**, pas de mutation
+  du contenu. `ParseFrontmatter` accepte indifféremment `"---\n"` et
+  `"---\r\n"` comme délimiteur leading et trailing. Plus chirurgical
+  que le replace-all (préserve le contenu original pour éventuels
+  futurs hash-based caches).
+- [x] **D7 — Whitelist `kind`** : **fonction
+  `AllowedKinds() []string`** exportée qui retourne une **copie**
+  de la slice interne. Cohérent avec `AllowedPrefixesString()`
+  existant. UI-001b construira sa sidebar via cet appel.
+- [x] **D8 — Sous-test integration optionnel** : **non**. Tests unit
+  `lister_test.go` + tests `story_integration_test.go` existants
+  couvrent. Pas de redondance cross-feature.
+- [x] **D9 — Sentinel `ErrInvalidKind`** : **oui exporté**, cohérent
+  avec `ErrInvalidPrefix` (id.go) et `ErrInvalidFrontmatter`
+  (writer.go/parser.go). Permet `errors.Is(err, ErrInvalidKind)`.
+  Évolution future vers type `InvalidKindError` possible sans break.
+- [x] **D10 — Doc-package** : **ajouter un invariant** dans
+  `internal/artifacts/doc.go` (existant via CORE-002) :
+  *"ListArtifacts is read-only and never modifies any file. A
+  corrupted frontmatter never aborts the scan; the offending entry
+  carries the error in Meta.Error."*
+- [x] **D11 — Tests generics** : **table-driven sur 3 types
+  concrets** instanciés explicitement : `map[string]any`, `Meta`,
+  et `struct{ ID, Title string }` (struct minimal). Couvre champ
+  manquant (zero value), type incompatible (erreur YAML), champs
+  supplémentaires (ignorés silencieusement), frontmatter manquant.
+
+## Approche stratégique (mise à jour post-revue)
+
+Trois ajustements vs version pré-revue :
+
+1. **D2** : `ValidateFrontmatter` migre physiquement vers `parser.go`
+   (était : reste dans writer.go avec wrapper). Plus propre, pas de
+   dispersion frontmatter logic across deux fichiers. Signature
+   publique strictement inchangée — `writer_test.go` passe sans
+   modification, garantie de non-régression.
+2. **D6** : pas de mutation `\r\n → \n` du contenu (était reco initiale).
+   À la place, le test des délimiteurs accepte les 2 formes en parallèle.
+   Préserve le contenu original (utile si on ajoute un hash de
+   contenu plus tard, ou pour la lisibilité d'un dump debug).
+3. **D7** : `AllowedKinds()` (fonction) vs `AllowedKinds` (variable).
+   Fonction retourne copie → impossibilité de muter accidentellement
+   la liste depuis un consumer. Cohérent avec `AllowedPrefixesString()`.
+
+## Modules impactés (mise à jour D2)
+
+| Module | Impact | Nature |
+|---|---|---|
+| `internal/artifacts/lister.go` | **fort** | création — `Meta`, `ListArtifacts`, `ErrInvalidKind`, `AllowedKinds()` |
+| `internal/artifacts/parser.go` | **fort** | création — `ParseFrontmatter[T]` **+ déménagement de `ValidateFrontmatter` depuis writer.go** |
+| `internal/artifacts/writer.go` | faible | retrait de `ValidateFrontmatter` (déménagée) ; signature publique préservée car la fonction existe toujours dans le package, juste dans un autre fichier. `Writer.Write` continue de l'appeler en intra-package |
+| `internal/artifacts/lister_test.go` | **fort** | création — 7+ cas de test |
+| `internal/artifacts/parser_test.go` | **fort** | création — 4-5 cas de test, table-driven sur 3 types concrets |
+| `internal/artifacts/writer_test.go` | nul | aucun changement (non-régression preuve du déménagement de `ValidateFrontmatter`) |
+| `internal/artifacts/doc.go` | faible | ajout d'un invariant `ListArtifacts is read-only` |
+| `tests/integration/story_integration_test.go` | nul | aucun changement (D8) |
+| `go.mod`, `.golangci.yml`, `.github/workflows/ci.yml` | nul | aucun changement |
