@@ -4,7 +4,7 @@ slug: hub-viewer-claude-banner
 story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
 analysis: spdd/analysis/UI-001b-hub-viewer-claude-banner.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: reviewed
+status: implemented
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -960,3 +960,9 @@ SPDD vide via *Initialize SPDD here*.
   - Status remis à `reviewed` pour signaler que `/spdd-generate` doit
     régénérer (a minima O7) — les autres Operations sont déjà alignées
     par les fixes commités sur la branche `feature/UI-001b`.
+
+- **2026-05-01 — `front-matter`** — sync no-op : code et canvas alignés
+  sans dérive supplémentaire (les commits `c338cda`, `3b85c17`, `b8fe179`
+  ont précédé/accompagné le prompt-update). Status `reviewed →
+  implemented`. Pas de transition vers `synced` puisqu'aucun refactor
+  pur post-implémentation n'a été détecté.
