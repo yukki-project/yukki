@@ -108,12 +108,12 @@
     du Go core vers CORE-004 le 2026-05-01) — [story](spdd/stories/UI-001b-hub-viewer-claude-banner.md)
   - `UI-001c` — New Story flow (modal, `RunStory` binding, EventsEmit
     streaming, cancellation `OnShutdown`) (~1.5j) — [story](spdd/stories/UI-001c-new-story-flow.md)
-- ⬜ **UI-002** — Canvas REASONS éditable (React Flow v12, drag&drop des
+- ⬜ **UI-004** — Canvas REASONS éditable (React Flow v12, drag&drop des
   7 blocs R/E/A/S/O/N/S, save vers `spdd/prompts/<id>-<slug>.md`).
   Suite directe d'UI-001.
 - ⬜ **UI-003** — Wizard d'install Claude CLI au premier lancement de
   l'app (détection OS, lien vers binaires Anthropic, vérification post-install).
-- ⬜ **UI-004** — Theming light/dark/system + persistance des préférences
+- ⬜ **UI-002** — Theming light/dark/system + persistance des préférences
   utilisateur (`~/.config/yukki/prefs.json` ou équivalent OS).
 - ⬜ **UI-005** — Édition markdown des stories en UI + auto-refresh
   via fsnotify + streaming token-par-token de la sortie provider.
@@ -180,7 +180,7 @@ guide pédagogique avec schémas.
   **UI-001** redéfini en *fondation app desktop yukki* (Wails v2 +
   React + bindings Go, sous-cmd `yukki ui`). Stack figée : Wails v2 +
   React 18 + TypeScript + Vite + Tailwind + shadcn/ui + Zustand,
-  React Flow v12 réservé pour UI-002 (canvas éditable). Ajout de UI-002,
+  React Flow v12 réservé pour UI-004 (canvas éditable). Ajout de UI-002,
   UI-003, UI-004, UI-005 (filiation directe), promotion d'UI-001 de
   *post-MVP* à *en attente — features projet* (statut 🟡), ajout
   d'OPS-001 en post-MVP (signing binaires). 18 items au total.
@@ -194,3 +194,11 @@ guide pédagogique avec schémas.
   OnShutdown), Q6=A (NextID race accepté V1), Q7=A (EN-only V1)
   validés par utilisateur. 18 items toujours (le compte UI-001 ne
   change pas, juste son éclatement interne en filiation a/b/c).
+- **2026-05-01** — swap d'ID **UI-002 ↔ UI-004** pour aligner la
+  numérotation sur l'ordre de livraison réel : UI-002 devient
+  *Theming + prefs* (était UI-004, indépendant donc livrable plus
+  tôt), UI-004 devient *Canvas REASONS éditable* (était UI-002,
+  feature lourde qui dépend du hub UI-001b stable). UI-001a/b/c
+  (famille SPIDR) inchangée, UI-003 (wizard install) et UI-005
+  (markdown editing) inchangées. 18 items au total. Toutes
+  références cross-stories mises à jour (5 fichiers SPDD).

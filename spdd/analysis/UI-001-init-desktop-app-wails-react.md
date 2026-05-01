@@ -200,7 +200,7 @@ covers-stories:
     `zustand@4`, `clsx`, `tailwind-merge`
   - shadcn/ui : `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`,
     `@radix-ui/react-scroll-area`, `lucide-react` (icônes)
-  - Pas de React Flow / lipgloss / autres en V1 — réservé UI-002
+  - Pas de React Flow / lipgloss / autres en V1 — réservé UI-004
 - **Système requis pour l'utilisateur final** :
   - Windows 10 1803+ ou 11 (Webview2 préinstallé)
   - macOS 11+ (WebKit natif, pas de dep)

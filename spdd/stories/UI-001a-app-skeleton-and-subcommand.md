@@ -98,7 +98,7 @@ de la famille.
 - **Cancellation `OnShutdown`** = UI-001c
 - **`workflow.Progress` interface** = UI-001c (pas posée tant qu'aucun
   appel `RunStory` ne traverse l'UI)
-- **Theming light/dark, persistance prefs** = UI-004
+- **Theming light/dark, persistance prefs** = UI-002
 - **Édition markdown des stories** = UI-005
 - **Tests UI front (Playwright/Cypress)** : différé.
 - **Signing binaires Windows/macOS** = OPS-001 post-MVP.
@@ -172,7 +172,7 @@ de la famille.
   utilisateur 2026-05-01 *"elle est grosse cette story"*). Sœurs :
   [UI-001b-hub-viewer-claude-banner.md](UI-001b-hub-viewer-claude-banner.md)
   + [UI-001c-new-story-flow.md](UI-001c-new-story-flow.md). La V1 utilisateur
-  *"Hub + canvas editor"* nécessite UI-001a + 001b + 001c + UI-002 (canvas).
+  *"Hub + canvas editor"* nécessite UI-001a + 001b + 001c + UI-004 (canvas).
 - **Analyse partagée** : [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md)
   couvre la famille UI-001a/b/c. Les 16 décisions ont déjà été tranchées
   par l'utilisateur (Q1=B, Q2=A, Q3=A, Q4=A, Q5=A, Q6=A, Q7=A acceptées).

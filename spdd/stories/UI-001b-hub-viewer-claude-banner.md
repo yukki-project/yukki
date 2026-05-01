@@ -122,8 +122,8 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
 - **Cancellation `OnShutdown`** = UI-001c
 - **Édition markdown des stories** = UI-005 (le viewer reste read-only)
 - **Auto-refresh fsnotify** = UI-005
-- **Theming light/dark** = UI-004
-- **Persistance du dernier projet ouvert** = UI-004
+- **Theming light/dark** = UI-002
+- **Persistance du dernier projet ouvert** = UI-002
 - **Pagination / virtual scrolling pour > 200 stories** : différé (rare
   en V1)
 
@@ -210,7 +210,7 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   UX que skip silencieux.*
 - [ ] **OQ3 — Stockage du `projectDir` entre sessions** : persisté en
   V1 ou re-prompt à chaque ouverture ?
-  *Reco : V1 = re-prompt. Persistance OS-config = UI-004.*
+  *Reco : V1 = re-prompt. Persistance OS-config = UI-002.*
 - [ ] **OQ4 — Sidebar : 4 onglets fixes ou extensible ?** Future story
   pourrait ajouter *Methodology refs*, *Settings*, *Help*. La sidebar
   doit être *array of items* dans Zustand pour faciliter les ajouts.

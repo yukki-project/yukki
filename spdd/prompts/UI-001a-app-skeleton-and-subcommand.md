@@ -176,7 +176,7 @@ Un smoke test `Greet()` valide que les 4 ponts critiques fonctionnent
   duplication de la `main()`, friction utilisateur "lequel installer
   pour quoi". Q2 utilisateur retenue : un binaire, sous-cmd.
 - **Fyne / Gio / Tauri / Electron** — Fyne et Gio limitent le canvas
-  graphique futur (UI-002 React Flow). Tauri imposerait un rewrite
+  graphique futur (UI-004 React Flow). Tauri imposerait un rewrite
   Rust côté backend. Electron alourdit le binaire (~120 MB vs ~12 MB
   Wails) et impose Node runtime.
 - **Storybook ou Ladle pour développer les composants en iso** —
