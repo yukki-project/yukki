@@ -27,3 +27,16 @@ Thumbs.db
 # Local-only working docs (vision drafts, scratch notes — not committed)
 /VISION.md
 /notes/
+
+# Wails / frontend artefacts
+/frontend/node_modules/
+# Vite build output. Keep .gitkeep so //go:embed all:frontend/dist
+# succeeds in static-checks CI before any wails build has run.
+/frontend/dist/*
+!/frontend/dist/.gitkeep
+# Auto-generated TypeScript bindings for Go methods. Regenerated on
+# every `wails build` / `wails dev` — never committed (Invariant I3
+# of the UI-001a canvas).
+/frontend/wailsjs/
+# Wails final binary output.
+/build/bin/

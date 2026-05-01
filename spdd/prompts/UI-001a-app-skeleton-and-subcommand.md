@@ -4,7 +4,7 @@ slug: app-skeleton-and-subcommand
 story: spdd/stories/UI-001a-app-skeleton-and-subcommand.md
 analysis: spdd/analysis/UI-001a-app-skeleton-and-subcommand.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: draft
+status: implemented
 created: 2026-05-01
 updated: 2026-05-01
 ---

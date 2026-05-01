@@ -54,8 +54,16 @@ jobs:
           go-version: '1.22'
           cache: true
 
-      - name: unit tests (cmd + internal)
+      - name: unit tests (cmd + internal, prod build)
         run: go test -race -coverprofile=coverage-unit.out ./cmd/... ./internal/...
+        shell: bash
+
+      - name: unit tests (mock-tagged variant)
+        # Exercises ui_mock_test.go (//go:build mock). The prod variant
+        # above already covers ui_prod_test.go (//go:build !mock).
+        # Both are required to validate UI-001a invariant I1
+        # (build-tag swap of the provider factory).
+        run: go test -tags mock ./cmd/yukki/...
         shell: bash
 
       - uses: actions/upload-artifact@v4
@@ -115,3 +123,47 @@ jobs:
         # instruments the test process itself.
         run: go test -timeout 5m ./tests/e2e/...
         shell: bash
+
+  ui-build:
+    name: ui build (${{ matrix.os }})
+    needs: static-checks
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: install webkit2gtk (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libgtk-3-dev
+        shell: bash
+
+      - name: install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+        shell: bash
+
+      - name: wails build
+        run: wails build -platform ${{ matrix.os == 'ubuntu-latest' && 'linux/amd64' || matrix.os == 'macos-latest' && 'darwin/universal' || 'windows/amd64' }}
+        shell: bash
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yukki-ui-${{ matrix.os }}
+          path: build/bin/yukki-ui*
+          if-no-files-found: warn

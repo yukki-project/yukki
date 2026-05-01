@@ -7,10 +7,17 @@ voir [`spdd/README.md`](spdd/README.md) et
 
 ## Stack
 
+### Backend Go
 - **Go 1.22+** (le module est `github.com/yukki-project/yukki`)
 - **Cobra** v1.8.0 pour la CLI
 - **gopkg.in/yaml.v3** pour la validation de frontmatter
-- Aucune dépendance externe au-delà de stdlib + ces deux libs
+- **Wails v2.12.0** pour la sous-cmd `yukki ui` (UI-001a)
+
+### Frontend (sous `frontend/`)
+- **React 18** + **TypeScript 5** (strict mode) + **Vite 5**
+- **Tailwind CSS 3** + **shadcn/ui** (composants copy-paste dans `frontend/src/components/ui/`)
+- **Zustand** (state) + **lucide-react** (icônes)
+- Aucune lib UI lourde (pas de Material, pas de Bubble Tea — cf. canvas UI-001a Safeguards)
 
 ## Build
 
@@ -85,14 +92,31 @@ Cible SPDD pour les packages métier (`internal/`) : ≥ 70 %.
 
 ```
 yukki/
-├── cmd/yukki/                       binaire Cobra
+├── cmd/yukki/                       binaire Cobra (CLI + Wails sub-cmd)
+│   ├── main.go ui.go                CLI + sous-cmd `yukki ui`
+│   ├── ui_prod.go (default)         factory provider Claude
+│   ├── ui_mock.go (-tags mock)      factory provider Mock (dev)
+│   └── embed.go                     //go:embed all:frontend/dist
 ├── internal/
 │   ├── artifacts/                   id calculator + slug + writer
 │   ├── clilog/                      slog text/JSON
 │   ├── provider/                    Provider interface + Claude impl + Mock
 │   ├── templates/                   loader project-first + embed.FS fallback
 │   │   └── embedded/                copies des templates SPDD pour le binaire
+│   ├── uiapp/                       App struct exposée à Wails (UI-001a)
 │   └── workflow/                    StoryOptions + RunStory + structured prompt
+├── frontend/                        projet Vite (React 18 + TS + Tailwind + shadcn)
+│   ├── package.json tsconfig.json vite.config.ts
+│   ├── tailwind.config.js postcss.config.js components.json
+│   ├── index.html
+│   ├── src/
+│   │   ├── App.tsx main.tsx
+│   │   ├── components/ui/           primitives shadcn (button, card)
+│   │   ├── lib/utils.ts             cn() helper
+│   │   └── styles/globals.css       Tailwind + theme tokens
+│   ├── dist/.gitkeep                placeholder pour //go:embed (CI sans wails build)
+│   └── wailsjs/                     auto-généré (gitignored)
+├── wails.json                       config Wails (build/dev hooks)
 ├── tests/
 │   ├── integration/                 cross-package avec MockProvider
 │   └── e2e/
@@ -105,7 +129,7 @@ yukki/
 │   ├── README.md                    référence opérationnelle
 │   └── GUIDE.md                     synthèse pédagogique
 ├── scripts/dev/                     wrappers locaux (.sh + .bat)
-├── .github/workflows/ci.yml         CI multi-OS, 4 jobs
+├── .github/workflows/ci.yml         CI multi-OS, 5 jobs
 ├── CLAUDE.md                        guide pour agent IA
 ├── TODO.md                          backlog SPDD versionné
 └── DEVELOPMENT.md                   ce fichier
@@ -125,17 +149,60 @@ Voir CLAUDE.md (sera extrait vers `spdd/methodology/commits.md` via
 - Pas de `--amend`, pas de `--no-verify` (interdits par convention)
 - Messages multi-lignes via HEREDOC : voir l'historique git récent
 
+## Développer l'UI (sous-cmd `yukki ui`, Wails v2)
+
+### Prereqs
+
+- **Node.js 20+** (pour Vite + npm)
+- **Wails CLI** : `go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0`
+- **Linux uniquement** : `sudo apt-get install libwebkit2gtk-4.0-dev libgtk-3-dev`
+  (ou équivalent dnf/pacman)
+- Windows / macOS : Webview2 / WebKit déjà inclus par l'OS
+
+Vérifier l'install : `wails doctor` doit afficher tout en vert.
+
+### Workflow
+
+```bash
+# Mode dev avec HMR (Vite recharge le frontend, Wails recompile le Go)
+wails dev
+
+# Mode dev sans Claude installé (build tag mock injecte MockProvider)
+wails dev -tags mock
+
+# Build prod (binaire dans build/bin/yukki-ui[.exe|.app])
+wails build
+wails build -platform linux/amd64           # ou darwin/universal, windows/amd64
+```
+
+Sur Windows en environnement corporate, `wails dev` peut être bloqué
+par le scan AV (cf. § *Si l'AV bloque malgré tout* ci-dessus). Plan B :
+WSL ou attente du TICKET IT (exclusion Defender).
+
+### Build tags `mock` vs prod
+
+- **Sans tag** (défaut) : `cmd/yukki/ui_prod.go` injecte
+  `provider.NewClaude` → invocation réelle de Claude CLI.
+- **Avec tag `mock`** : `cmd/yukki/ui_mock.go` injecte un
+  `MockProvider` → développement frontend sans installer Claude
+  ni brûler de tokens.
+
+Le binaire prod **ne doit jamais embarquer le MockProvider** —
+garantie par les tests duals `cmd/yukki/ui_mock_test.go` /
+`ui_prod_test.go`.
+
 ## CI
 
-4 jobs sur GitHub Actions :
+5 jobs sur GitHub Actions :
 
 1. `static-checks` (Linux only) : `go vet`, `gofmt -l`, `go build`
-2. `unit-tests` (matrix Linux/macOS/Windows) : `go test ./internal/... ./cmd/...` avec `-race` et coverage
+2. `unit-tests` (matrix Linux/macOS/Windows) : `go test ./internal/... ./cmd/...` avec `-race` et coverage **+** un step `-tags mock` pour exercer `ui_mock_test.go`
 3. `integration-tests` (matrix Linux/macOS/Windows) : `go test ./tests/integration/...` avec `-race` et coverage
 4. `e2e-tests` (matrix Linux/macOS/Windows) : `go test ./tests/e2e/...` (sans `-race` car les tests forkent le binaire)
+5. `ui-build` (matrix Linux/macOS/Windows) : `wails build -platform <os>`, upload du binaire en artefact
 
-`unit-tests`, `integration-tests` et `e2e-tests` dépendent de
-`static-checks` (`needs:`) pour fail-fast.
+`unit-tests`, `integration-tests`, `e2e-tests` et `ui-build` dépendent
+de `static-checks` (`needs:`) pour fail-fast.
 
 ## Pour un agent IA qui débarque
 
