@@ -22,9 +22,14 @@ voir [`spdd/README.md`](spdd/README.md) et
 ## Build
 
 ```bash
-go build ./cmd/yukki     # produit ./yukki(.exe) à la racine
-go build ./...            # build tout (binaires + tests)
+go build .          # produit ./yukki(.exe) à la racine
+go build ./...      # build tout (binaires + packages)
 ```
+
+**Note layout** : le package `main` (entrée du binaire) vit **à la
+racine du repo** (`main.go`, `ui.go`, etc.), pas dans `cmd/yukki/`.
+Cette convention est imposée par Wails v2 dont le générateur de
+bindings TypeScript scanne le dossier où vit `wails.json`.
 
 ## Tests
 
@@ -32,7 +37,7 @@ Le projet a **trois tiers de tests** :
 
 | Tiers | Localisation | Contenu | Commande |
 |---|---|---|---|
-| **Unit** | `internal/<pkg>/*_test.go`, `cmd/yukki/main_test.go` | un seul package, mocks aux frontières | `go test ./internal/... ./cmd/...` |
+| **Unit** | `internal/<pkg>/*_test.go`, `main_test.go`, `ui_*_test.go` (racine) | un seul package, mocks aux frontières | `go test ./internal/... .` |
 | **Integration** | `tests/integration/` | plusieurs packages internes collaborant, MockProvider, file system réel | `go test ./tests/integration/...` |
 | **End-to-End (E2E)** | `tests/e2e/` | build + run du binaire `yukki` avec un faux `claude` | `go test ./tests/e2e/...` |
 
@@ -92,11 +97,12 @@ Cible SPDD pour les packages métier (`internal/`) : ≥ 70 %.
 
 ```
 yukki/
-├── cmd/yukki/                       binaire Cobra (CLI + Wails sub-cmd)
-│   ├── main.go ui.go                CLI + sous-cmd `yukki ui`
-│   ├── ui_prod.go (default)         factory provider Claude
-│   ├── ui_mock.go (-tags mock)      factory provider Mock (dev)
-│   └── embed.go                     //go:embed all:frontend/dist
+├── main.go ui.go                    package main à la racine (Wails v2 exige
+│                                    que le main package vive là où réside
+│                                    wails.json) — CLI Cobra + sous-cmd `yukki ui`
+├── ui_prod.go (default)             factory provider Claude
+├── ui_mock.go (-tags mock)          factory provider Mock (dev)
+├── main_test.go ui_*_test.go        tests unit + tests build-tag dual
 ├── internal/
 │   ├── artifacts/                   id calculator + slug + writer
 │   ├── clilog/                      slog text/JSON
@@ -181,15 +187,14 @@ WSL ou attente du TICKET IT (exclusion Defender).
 
 ### Build tags `mock` vs prod
 
-- **Sans tag** (défaut) : `cmd/yukki/ui_prod.go` injecte
+- **Sans tag** (défaut) : `ui_prod.go` (racine) injecte
   `provider.NewClaude` → invocation réelle de Claude CLI.
-- **Avec tag `mock`** : `cmd/yukki/ui_mock.go` injecte un
+- **Avec tag `mock`** : `ui_mock.go` injecte un
   `MockProvider` → développement frontend sans installer Claude
   ni brûler de tokens.
 
 Le binaire prod **ne doit jamais embarquer le MockProvider** —
-garantie par les tests duals `cmd/yukki/ui_mock_test.go` /
-`ui_prod_test.go`.
+garantie par les tests duals `ui_mock_test.go` / `ui_prod_test.go`.
 
 ## CI
 

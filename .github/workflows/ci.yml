@@ -63,7 +63,7 @@ jobs:
         # above already covers ui_prod_test.go (//go:build !mock).
         # Both are required to validate UI-001a invariant I1
         # (build-tag swap of the provider factory).
-        run: go test -tags mock ./cmd/yukki/...
+        run: go test -tags mock .
         shell: bash
 
       - uses: actions/upload-artifact@v4

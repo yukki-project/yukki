@@ -48,7 +48,7 @@ func mustBuild(t *testing.T) binaries {
 			t.Fatalf("go build %s: %v", pkg, err)
 		}
 	}
-	build(yukkiBin, "./cmd/yukki")
+	build(yukkiBin, ".")
 	build(fakeBin, "./tests/e2e/fakeclaude")
 
 	return binaries{yukki: yukkiBin, fakeClaude: fakeBin, pathEntry: binDir}

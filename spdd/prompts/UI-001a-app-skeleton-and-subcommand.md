@@ -18,6 +18,23 @@ updated: 2026-05-01
 > story ne livre **aucune feature utilisateur** ; elle pose le scaffold
 > Wails + frontend + CI sur lequel UI-001b (hub viewer) et UI-001c
 > (new story flow) construiront.
+>
+> ## Changelog
+>
+> - **v1 — 2026-05-01** : canvas initial (8 Operations, status `draft`).
+> - **v2 — 2026-05-01** : déviation pendant `/spdd-generate`. Wails v2
+>   exige que le package `main` (et donc `main.go`) vive **à la racine
+>   du repo** (à côté de `wails.json`) — son générateur de bindings
+>   TypeScript scanne ce dossier et plante avec
+>   `no Go files in C:\workspace\yukki` si le main est sous `cmd/yukki/`.
+>   Tous les fichiers package main ont migré : `cmd/yukki/{main,ui,
+>   ui_mock,ui_prod,*_test}.go` → racine. `internal/uiapp/`,
+>   `frontend/`, `wails.json` inchangés. Tests `ui_mock_test.go` /
+>   `ui_prod_test.go` toujours OK (Invariant I1 préservé). E2E test
+>   ajusté : `go build "./cmd/yukki"` → `go build "."`. CI step
+>   `unit-tests` mock-tagged : `./cmd/yukki/...` → `.`. Status passé
+>   `draft → implemented` après validation locale (6/6 uiapp + 2/2
+>   build-tag dual + workflow/templates/clilog/integration verts).
 
 ---
 
@@ -86,7 +103,7 @@ Un smoke test `Greet()` valide que les 4 ponts critiques fonctionnent
 
 ### Integration points
 
-- **Wails v2 runtime** — `wails.Run(opts)` dans `cmd/yukki/ui.go`,
+- **Wails v2 runtime** — `wails.Run(opts)` dans `ui.go (racine)`,
   fenêtre native gérée par Wails (Webview2 sur Windows, WebKit sur
   macOS/Linux)
 - **Cobra** — `newUICmd()` enregistré dans `newRootCmd()` à côté du
@@ -120,7 +137,7 @@ Un smoke test `Greet()` valide que les 4 ponts critiques fonctionnent
 
 - **D1 / `internal/uiapp`** comme home du package App.
 - **D4 / Build tags `mock` (présent) / `!mock` (absent)** : factory
-  `newProvider()` dans `cmd/yukki/ui_mock.go` + `ui_prod.go`. Pas de
+  `newProvider()` dans `ui_mock.go (racine)` + `ui_prod.go`. Pas de
   flag CLI, pas d'env var.
 - **D9 / shadcn/ui** comme component lib (CLI init, copy-paste dans
   `frontend/src/components/ui/`).
@@ -128,7 +145,7 @@ Un smoke test `Greet()` valide que les 4 ponts critiques fonctionnent
 - **D-A3 / TypeScript strict mode** ON dans `tsconfig.json`.
 - **D-A5 / CI caching** via `actions/cache@v4` sur `~/go/pkg/mod`,
   `~/.cache/go-build`, `frontend/node_modules`.
-- **D-A7 / `cmd/yukki/ui.go`** (pas `cmd_ui.go`).
+- **D-A7 / `ui.go (racine)`** (pas `cmd_ui.go`).
 - **D-A9 / Erreur Wails sans display** mappée vers `exitIO` (3) via
   `mapErrorToExitCode`.
 
@@ -177,7 +194,7 @@ $ yukki ui
              │
              ▼ RunE
 ┌──────────────────────────────────────┐
-│ cmd/yukki/ui.go                      │
+│ ui.go (racine)                      │
 │   provider := newProvider(logger) ◄──┼── ui_mock.go OU ui_prod.go
 │   app := uiapp.NewApp(provider, log) │   (selon build tag)
 │   wails.Run(options.App{             │
@@ -210,7 +227,7 @@ $ yukki ui
 ### O1 — Sous-commande Cobra `ui`
 
 - **Module** : `cmd/yukki`
-- **Fichier** : `cmd/yukki/ui.go` (nouveau)
+- **Fichier** : `ui.go (racine)` (nouveau)
 - **Signature** :
   ```go
   func newUICmd() *cobra.Command
@@ -248,8 +265,8 @@ $ yukki ui
 ### O2 — Factory provider build-tagged
 
 - **Module** : `cmd/yukki`
-- **Fichiers** : `cmd/yukki/ui_mock.go` (nouveau, build tag `mock`),
-  `cmd/yukki/ui_prod.go` (nouveau, build tag `!mock`)
+- **Fichiers** : `ui_mock.go (racine)` (nouveau, build tag `mock`),
+  `ui_prod.go (racine)` (nouveau, build tag `!mock`)
 - **Signature** (identique dans les deux fichiers) :
   ```go
   func newProvider(logger *slog.Logger) provider.Provider
