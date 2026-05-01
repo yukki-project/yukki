@@ -34,6 +34,20 @@ jobs:
           fi
         shell: bash
 
+      - name: golangci-lint (depguard core isolation)
+        # Enforces the CORE-002 architectural boundary: the 4 business-
+        # core packages (internal/{workflow,provider,templates,artifacts})
+        # cannot import cobra, wails, internal/uiapp, or any UI package.
+        # See .golangci.yml for the full rule definition.
+        #
+        # Pinned to action v6 because it supports golangci-lint v1.x
+        # (action v7+ requires golangci-lint v2.x and v2-format config).
+        # Bump to v9 + v2-format config will be handled in DOC-001.
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.62
+          args: --timeout=3m
+
       - name: build
         run: go build -v ./...
 

@@ -1,7 +1,7 @@
-// Package workflow orchestrates the SPDD steps invoked by yukki commands.
-//
-// Implements O6 of the CORE-001 canvas: BuildStructuredPrompt and RunStory.
 package workflow
+
+// Implements O6 of the CORE-001 canvas: BuildStructuredPrompt.
+// Package-level documentation lives in doc.go (CORE-002).
 
 import (
 	_ "embed"

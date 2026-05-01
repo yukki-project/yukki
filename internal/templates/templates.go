@@ -1,10 +1,9 @@
-// Package templates loads the SPDD artifact templates with a project-first,
-// embed-fallback strategy.
-//
+package templates
+
 // Implements O3 of the CORE-001 canvas: 4 templates (story, analysis,
 // canvas-reasons, tests) are embedded in the binary; the project-level
 // templates/<name>.md takes priority when present.
-package templates
+// Package-level documentation lives in doc.go (CORE-002).
 
 import (
 	"embed"
