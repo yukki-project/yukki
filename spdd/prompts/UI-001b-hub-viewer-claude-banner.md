@@ -4,7 +4,7 @@ slug: hub-viewer-claude-banner
 story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
 analysis: spdd/analysis/UI-001b-hub-viewer-claude-banner.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: implemented
+status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -19,6 +19,12 @@ updated: 2026-05-01
 > **D-B5** (ajout `Provider.Version`) qui touche le cœur CORE-001
 > et **D-B9** (layout responsive sidebar collapsable < 768px) qui
 > ajoute +0.2j au scope frontend.
+>
+> **D-B13** *(ajout 2026-05-01, `/spdd-prompt-update`)* : le
+> `<StoryViewer>` extrait le frontmatter YAML du contenu et le rend
+> séparément en header structuré (titre, badges, listes), tandis que
+> le body markdown est rendu en dessous. Parser maison ; pas de dep
+> `js-yaml`.
 
 ---
 
@@ -41,23 +47,28 @@ SPDD vide via *Initialize SPDD here*.
       `MockProvider.Version` retourne `"mock-1.0"` ou `m.VersionErr`
 - [ ] `CheckVersion` signature **strictement préservée** (Invariant
       CORE-002 I2) — pas de break public sur l'existant
+- [ ] `MockProvider` réorganisé : `CheckErr error` (ex-`VersionErr`,
+      drive `CheckVersion`) + `VersionVal string` + `VersionErr error`
+      (drive `Version`). Rename test-double interne — l'interface
+      Provider reste inchangée.
 - [ ] `internal/uiapp/app.go` étendu :
       - 3 nouveaux champs : `projectDir string`, `loader *templates.Loader`,
         `writer *artifacts.Writer`
       - 1 nouveau type : `type ClaudeStatus struct { Available bool;
         Version, Err string }`
-      - 5 nouvelles méthodes bindées : `SelectProject`,
-        `ListArtifacts(kind string)`, `GetClaudeStatus(ctx)`,
-        `InitializeSPDD(dir string)`, `ReadArtifact(path string)`
-- [ ] `App.SelectProject` ouvre `runtime.OpenDirectoryDialog`,
-      retourne `""` proprement si annulé, met à jour `projectDir`
-      + reconstruit `loader`+`writer`
+      - 6 nouvelles méthodes bindées : `SelectProject() (string, error)`,
+        `AllowedKinds() []string`, `ListArtifacts(kind string) ([]Meta, error)`,
+        `GetClaudeStatus() ClaudeStatus`, `InitializeSPDD(dir string) error`,
+        `ReadArtifact(path string) (string, error)`
+- [ ] `App.SelectProject` ouvre `runtime.OpenDirectoryDialog`
+      (passe `a.ctx` interne), retourne `""` proprement si annulé,
+      met à jour `projectDir` + reconstruit `loader`+`writer`
 - [ ] `App.ListArtifacts(kind)` valide le `kind` via
       `artifacts.AllowedKinds()` puis délègue à
       `artifacts.ListArtifacts(projectDir, kind)`. Erreur claire si
       `projectDir` vide.
-- [ ] `App.GetClaudeStatus(ctx)` mappe `provider.CheckVersion` +
-      `Version` vers les 3 champs `ClaudeStatus`
+- [ ] `App.GetClaudeStatus()` mappe `provider.CheckVersion` +
+      `Version` (en utilisant `a.ctx`) vers les 3 champs `ClaudeStatus`
 - [ ] `App.InitializeSPDD(dir)` crée 6 dossiers
       (`stories, analysis, prompts, tests, methodology, templates`)
       + copie 4 templates depuis `embed.FS` vers
@@ -70,7 +81,10 @@ SPDD vide via *Initialize SPDD here*.
 - [ ] Tests Go étendus dans `internal/uiapp/app_test.go` (5 groupes
       de sous-fonctions, ~15-20 tests table-driven)
 - [ ] `frontend/wailsjs/go/main/App.{d.ts,js}` stubs hand-written
-      mis à jour pour les 6 nouvelles méthodes (5 bindings + AllowedKinds)
+      mis à jour pour les 6 nouvelles méthodes ; runtime path =
+      `window.go.uiapp.App.<method>` (Wails dérive le namespace du
+      package du struct bindé `*uiapp.App`, **pas** du `package main`
+      qui héberge `wails.Run`)
 - [ ] `frontend/package.json` gagne `react-markdown` et `remark-gfm`
 - [ ] 3 stores Zustand créés dans `frontend/src/stores/` :
       `project.ts`, `artifacts.ts`, `claude.ts`
@@ -79,9 +93,16 @@ SPDD vide via *Initialize SPDD here*.
       `StoryViewer`, `ClaudeBanner`
 - [ ] `frontend/src/App.tsx` refactoré en layout 3-zones (top banner,
       left sidebar, main content), **responsive** : sidebar collapsable
-      manuellement + auto-collapse < 768px de largeur de fenêtre
-- [ ] StoryViewer rend le markdown via `react-markdown` + `remark-gfm`
-      avec `disallowedElements={['script', 'iframe', 'object', 'embed']}`
+      manuellement + auto-collapse < 768px de largeur de fenêtre.
+      State `collapsed` lifté dans `App` pour piloter `<Sidebar
+      collapsed onSelect>` et `<SidebarToggle collapsed onToggle>`
+- [ ] StoryViewer **extrait le frontmatter YAML** (parser maison
+      key:value + listes simples) et rend un **header graphique
+      structuré** (titre, pills `id`/`status`/`updated`/`owner`/…,
+      definition-list pour les listes type `modules`/`depends-on`).
+      Le body (post-`---`) est rendu via `react-markdown` + `remark-gfm`
+      avec `disallowedElements={['script', 'iframe', 'object', 'embed']}`.
+      Aucune dep YAML tierce ajoutée.
 - [ ] Auto-refresh post-`InitializeSPDD` : le store
       `useArtifactsStore.refresh()` est invoqué automatiquement
 - [ ] Aucune régression : tests existants UI-001a + CORE-001/002/004
@@ -98,7 +119,7 @@ SPDD vide via *Initialize SPDD here*.
 
 | Nom | Description | Champs / Méthodes clés | Cycle de vie |
 |---|---|---|---|
-| `App` (étendu UI-001a) | Struct Wails Bind exposée au front. Devient stateful (projectDir + loader + writer mutables) | + 5 nouvelles méthodes bindées | recréé à chaque lancement `yukki ui` |
+| `App` (étendu UI-001a) | Struct Wails Bind exposée au front. Devient stateful (projectDir + loader + writer mutables) | + 6 nouvelles méthodes bindées (signatures sans `ctx` — utilisent `a.ctx` interne posé par `OnStartup`, voir D-B5b) | recréé à chaque lancement `yukki ui` |
 | `ClaudeStatus` (nouveau, exporté) | Vue typée du résultat `CheckVersion` + `Version` à destination du banner UI | `Available bool, Version string, Err string` | construit à chaque appel `GetClaudeStatus` |
 | `Provider` (étendu CORE-001) | Interface du LLM CLI abstraite. Gagne 1 méthode `Version` | `Name`, `CheckVersion`, **`Version`**, `Generate` | inchangé |
 | `Meta` (CORE-004) | Vue typée d'un artefact listé | `ID, Slug, Title, Status, Updated, Path, Error` | construit par `ListArtifacts` |
@@ -113,6 +134,7 @@ SPDD vide via *Initialize SPDD here*.
 | `Kind` | Une des 4 valeurs `AllowedKinds()` | `string` (intra-cœur) |
 | `AbsolutePath` | Chemin absolu d'un artefact | `string` |
 | `MarkdownContent` | Texte markdown brut d'un artefact | `string` |
+| `Frontmatter` (UI-only) | Vue parsée du bloc YAML frontmatter, scindé en scalaires + listes pour rendu structuré dans `<StoryViewer>` | `{ scalars: Record<string,string>; lists: Record<string,string[]> }` (TS) |
 
 ### Invariants UI-001b
 
@@ -127,6 +149,12 @@ SPDD vide via *Initialize SPDD here*.
 - **I3** — `App.SelectProject` retourne `(string, error)` où une
   annulation utilisateur renvoie `("", nil)` (pas une erreur).
   Permet au front de distinguer `cancelled` de `failed`.
+- **I3b** — Les méthodes Wails-bindées `SelectProject` et
+  `GetClaudeStatus` n'acceptent **pas** de paramètre `context.Context`.
+  Wails 2.12 ne ré-injecte pas auto le ctx (contre-doc) ; il le
+  compterait comme un arg JS et lèverait
+  `received 0 arguments to method ..., expected 1` au premier appel.
+  Le ctx utilisé en interne reste celui posé par `OnStartup` (`a.ctx`).
 - **I4** — `App.InitializeSPDD` est idempotent : appel répété sur
   un dossier déjà initialisé n'échoue pas et n'altère pas le
   contenu existant des dossiers (sauf overwrite des templates copiés
@@ -202,6 +230,27 @@ SPDD vide via *Initialize SPDD here*.
 - **D-B10** : Tests Go ~15-20 dans `app_test.go` étendu, table-driven
 - **D-B11** : Auto-refresh post-`InitializeSPDD`
 - **D-B12** : `ClaudeStatus{Available, Version, Err}` 3 champs
+- **D-B5b** *(découverte runtime 2026-05-01)* : Wails 2.12 ne
+  ré-injecte pas automatiquement `context.Context` pour les méthodes
+  bindées (contre-doc). `SelectProject(ctx)` et `GetClaudeStatus(ctx)`
+  doivent abandonner le paramètre ctx ; les méthodes utilisent `a.ctx`
+  posé par `OnStartup`. Pas de changement comportemental côté JS
+  (le runtime context utilisé reste celui de la session UI).
+- **D-B8b** *(découverte runtime 2026-05-01)* : le runtime path
+  des bindings est `window.go.uiapp.App.<method>` — Wails dérive le
+  namespace du package du struct bindé (`*uiapp.App` → `uiapp`),
+  pas du `package main` qui héberge `wails.Run`. Les stubs
+  hand-written restent à `frontend/wailsjs/go/main/App.{d.ts,js}`
+  (location de fichier sans impact runtime), seul le path interne
+  passe par `uiapp`.
+- **D-B13** *(ajout 2026-05-01, prompt-update)* : `<StoryViewer>`
+  extrait le frontmatter YAML du markdown lu et le rend en header
+  graphique structuré (titre `<h1>`, pills colorées pour
+  `id/status/updated/owner/...`, definition-list pour les valeurs
+  array type `modules/depends-on/sibling-stories`). Le body
+  post-frontmatter est ensuite rendu via `react-markdown` + `remark-gfm`.
+  Parser maison ~30 lignes (regex sur `---\n...\n---\n` puis
+  ligne par ligne `key:` ou `  - item`), pas de dep `js-yaml`.
 
 ### Alternatives écartées
 
@@ -221,6 +270,17 @@ SPDD vide via *Initialize SPDD here*.
   au profit de B (responsive). +0.2j frontend.
 - **Auto-régen `wailsjs/`** — bloqué par AV Defender (cf. CORE-002).
   D-B8 hand-write.
+- **`js-yaml` côté frontend pour parser le frontmatter** — ajoute
+  ~10KB gzipped, override de Safeguard "pas de dep tierce au-delà
+  de react-markdown + remark-gfm". D-B13 retient un parser maison
+  scalaire + listes simples, suffisant pour le format SPDD.
+- **Rendre tout le contenu (frontmatter inclus) brut via
+  react-markdown** — ce que la première impl a fait : remark-gfm
+  rendait la frontmatter comme un thematic-break + texte plat,
+  illisible. Visuellement inutilisable. Justifie D-B13.
+- **Conserver `ctx context.Context` sur méthodes Wails-bindées
+  pour cohérence Go-idiomatique** — incompatible Wails 2.12
+  runtime ; D-B5b acte le compromis.
 
 ---
 
@@ -232,12 +292,12 @@ SPDD vide via *Initialize SPDD here*.
 |---|---|---|
 | `internal/provider/provider.go` | interface `Provider` | + méthode `Version(ctx) (string, error)` |
 | `internal/provider/claude.go` | `ClaudeProvider` | implémentation `Version` (parse `claude --version`) |
-| `internal/provider/mock.go` | `MockProvider` | + champ `VersionErr error` + méthode `Version` |
+| `internal/provider/mock.go` | `MockProvider` | renommage `VersionErr → CheckErr` (drive `CheckVersion`) ; ajout `VersionVal string` + `VersionErr error` (drive `Version`) ; nouvelle méthode `Version` |
 | `internal/provider/provider_test.go` + `claude_test.go` + `mock_test.go` | tests | + cas pour `Version` ; aucun changement aux tests `CheckVersion` existants |
-| `internal/uiapp/app.go` | `App` | + 3 champs (`projectDir`, `loader`, `writer`) + 1 type (`ClaudeStatus`) + 6 méthodes (`SelectProject`, `ListArtifacts`, `AllowedKinds`, `GetClaudeStatus`, `InitializeSPDD`, `ReadArtifact`) |
+| `internal/uiapp/app.go` | `App` | + 3 champs (`projectDir`, `loader`, `writer`) + 1 type (`ClaudeStatus`) + 6 méthodes (`SelectProject() (string, error)`, `AllowedKinds() []string`, `ListArtifacts(kind) ([]Meta, error)`, `GetClaudeStatus() ClaudeStatus`, `InitializeSPDD(dir) error`, `ReadArtifact(path) (string, error)`) ; signatures sans `ctx` (D-B5b) ; `openDirectoryDialog` indirection package-level pour testabilité |
 | `internal/uiapp/app_test.go` | tests | + 15-20 tests table-driven sur les 5 nouvelles méthodes |
-| `frontend/wailsjs/go/main/App.d.ts` | stubs TS | + 6 export function declarations |
-| `frontend/wailsjs/go/main/App.js` | stubs JS | + 6 wrapper functions |
+| `frontend/wailsjs/go/main/App.d.ts` | stubs TS | + 6 export function declarations + interfaces `Meta`, `ClaudeStatus` |
+| `frontend/wailsjs/go/main/App.js` | stubs JS | + 6 wrapper functions ; runtime path = `window.go.uiapp.App.<method>` (D-B8b) |
 | `frontend/package.json` | deps | + `react-markdown@^9`, `remark-gfm@^4` |
 | `frontend/src/stores/project.ts` | nouveau | Zustand store `useProjectStore` |
 | `frontend/src/stores/artifacts.ts` | nouveau | Zustand store `useArtifactsStore` |
@@ -246,10 +306,10 @@ SPDD vide via *Initialize SPDD here*.
 | `frontend/src/components/hub/Sidebar.tsx` | nouveau | nav 4 kinds (depuis `AllowedKinds`) + responsive |
 | `frontend/src/components/hub/SidebarToggle.tsx` | nouveau | bouton ←/→ pour collapsable manuel (D-B9) |
 | `frontend/src/components/hub/HubList.tsx` | nouveau | tableau `Meta` avec badges + click row |
-| `frontend/src/components/hub/StoryViewer.tsx` | nouveau | rend markdown via `react-markdown` + `remark-gfm` |
+| `frontend/src/components/hub/StoryViewer.tsx` | nouveau | parser frontmatter maison + sub-component `<FrontmatterHeader>` (titre + pills + dl) + body via `react-markdown` + `remark-gfm` (D-B13) |
 | `frontend/src/components/hub/ClaudeBanner.tsx` | nouveau | banner conditionnel non-bloquant |
 | `frontend/src/lib/api.ts` | nouveau | wrappers thin sur les bindings |
-| `frontend/src/App.tsx` | refactor | layout 3-zones responsive (top-banner / left-sidebar / main-content), driven par stores |
+| `frontend/src/App.tsx` | refactor | layout 3-zones responsive (top-banner / left-sidebar / main-content), driven par stores ; state local `collapsed` lifté pour piloter `<Sidebar collapsed onSelect>` et `<SidebarToggle collapsed onToggle>` |
 | `cmd/yukki`, autres modules, CI, `.golangci.yml`, `TODO.md` | nul | aucun changement |
 
 ### Schéma de flux — Hub viewer
@@ -321,17 +381,23 @@ SPDD vide via *Initialize SPDD here*.
   // Dans claude.go
   func (p *ClaudeProvider) Version(ctx context.Context) (string, error)
 
-  // Dans mock.go
+  // Dans mock.go — restructuration des champs d'erreur :
+  //   - `VersionErr` historique (drive CheckVersion) → renommé `CheckErr`
+  //   - `VersionVal`/`VersionErr` nouveaux → drive Version
   type MockProvider struct {
-      NameVal     string
-      Response    string
-      Err         error
-      VersionVal  string  // NOUVEAU, default "mock-1.0" si vide
-      VersionErr  error   // NOUVEAU
-      // ... existants
+      NameVal    string
+      Response   string
+      Err        error    // drive Generate (existant)
+      CheckErr   error    // drive CheckVersion (renommé depuis VersionErr)
+      VersionVal string   // drive Version (NOUVEAU, default "mock-1.0")
+      VersionErr error    // drive Version (NOUVEAU)
+      Calls      []string
   }
   func (m *MockProvider) Version(ctx context.Context) (string, error)
   ```
+  Le rename `VersionErr → CheckErr` est interne au test-double ;
+  l'interface `Provider` reste inchangée. Un seul site d'usage
+  externe (`internal/workflow/story_test.go`) doit suivre le rename.
 - **Comportement `ClaudeProvider.Version`** :
   1. Vérifie `exec.LookPath(p.Binary)` (sinon retourne `"", ErrNotFound`)
   2. `exec.CommandContext(ctx, p.Binary, "--version")`
@@ -376,11 +442,13 @@ SPDD vide via *Initialize SPDD here*.
       writer     *artifacts.Writer        // NOUVEAU
   }
 
-  // 6 nouvelles méthodes bindées (PascalCase obligatoire pour Wails)
-  func (a *App) SelectProject(ctx context.Context) (string, error)
+  // 6 nouvelles méthodes bindées (PascalCase obligatoire pour Wails ;
+  // pas de paramètre context.Context — D-B5b ; les méthodes utilisent
+  // a.ctx posé par OnStartup)
+  func (a *App) SelectProject() (string, error)
   func (a *App) AllowedKinds() []string
   func (a *App) ListArtifacts(kind string) ([]artifacts.Meta, error)
-  func (a *App) GetClaudeStatus(ctx context.Context) ClaudeStatus
+  func (a *App) GetClaudeStatus() ClaudeStatus
   func (a *App) InitializeSPDD(dir string) error
   func (a *App) ReadArtifact(path string) (string, error)
   ```
@@ -399,12 +467,14 @@ SPDD vide via *Initialize SPDD here*.
   2. Délègue à `artifacts.ListArtifacts(a.projectDir, kind)`
   3. Retourne le résultat tel quel (incluant `ErrInvalidKind`)
 - **Comportement `GetClaudeStatus`** :
-  1. `err := a.provider.CheckVersion(ctx)`
-  2. Si `err != nil` (typiquement `ErrNotFound` ou `ErrVersionIncompatible`),
+  1. `ctx := a.ctx` ; si nil (méthode appelée hors lifecycle Wails),
+     fallback `context.Background()`
+  2. `err := a.provider.CheckVersion(ctx)`
+  3. Si `err != nil` (typiquement `ErrNotFound` ou `ErrVersionIncompatible`),
      retourne `ClaudeStatus{Available: false, Err: err.Error()}`
-  3. Sinon : `version, vErr := a.provider.Version(ctx)`
-  4. Si `vErr != nil`, retourne `ClaudeStatus{Available: true, Version: "", Err: vErr.Error()}`
-  5. Sinon retourne `ClaudeStatus{Available: true, Version: version, Err: ""}`
+  4. Sinon : `version, vErr := a.provider.Version(ctx)`
+  5. Si `vErr != nil`, retourne `ClaudeStatus{Available: true, Version: "", Err: vErr.Error()}`
+  6. Sinon retourne `ClaudeStatus{Available: true, Version: version, Err: ""}`
 - **Comportement `InitializeSPDD`** :
   1. Pour chaque dir dans `[stories, analysis, prompts, tests, methodology, templates]` :
      `os.MkdirAll(filepath.Join(dir, "spdd", subdir), 0o755)`
@@ -499,31 +569,34 @@ SPDD vide via *Initialize SPDD here*.
       Err: string;
   }
   ```
-- **Contenu `App.js`** (ajout aux exports existants) :
+- **Contenu `App.js`** (ajout aux exports existants ; runtime path
+  `window.go.uiapp.App.<method>` — Wails 2.12 dérive le namespace
+  du package du struct bindé `*uiapp.App`, **pas** du `package main`
+  de `wails.Run`) :
   ```javascript
   // @ts-check
   // AV-WORKAROUND STUB — see App.d.ts.
 
   export function Greet() {
-    return window['go']['main']['App']['Greet']();
+    return window['go']['uiapp']['App']['Greet']();
   }
   export function SelectProject() {
-    return window['go']['main']['App']['SelectProject']();
+    return window['go']['uiapp']['App']['SelectProject']();
   }
   export function AllowedKinds() {
-    return window['go']['main']['App']['AllowedKinds']();
+    return window['go']['uiapp']['App']['AllowedKinds']();
   }
   export function ListArtifacts(kind) {
-    return window['go']['main']['App']['ListArtifacts'](kind);
+    return window['go']['uiapp']['App']['ListArtifacts'](kind);
   }
   export function GetClaudeStatus() {
-    return window['go']['main']['App']['GetClaudeStatus']();
+    return window['go']['uiapp']['App']['GetClaudeStatus']();
   }
   export function InitializeSPDD(dir) {
-    return window['go']['main']['App']['InitializeSPDD'](dir);
+    return window['go']['uiapp']['App']['InitializeSPDD'](dir);
   }
   export function ReadArtifact(path) {
-    return window['go']['main']['App']['ReadArtifact'](path);
+    return window['go']['uiapp']['App']['ReadArtifact'](path);
   }
   ```
 - **Tests** : aucun ; validation via `tsc -b` lors de `wails build`.
@@ -640,9 +713,11 @@ SPDD vide via *Initialize SPDD here*.
     **Responsive** : auto-collapse via Tailwind `lg:translate-x-0
     -translate-x-full` < 768px (D-B9).
   - `frontend/src/components/hub/SidebarToggle.tsx` — bouton
-    icône ←/→ (lucide-react `ChevronLeft`/`ChevronRight`) qui
-    flip un state local `collapsed` et applique la classe Tailwind
-    correspondante au `<aside>` parent.
+    icône ←/→ (lucide-react `ChevronLeft`/`ChevronRight`).
+    **Stateless** : reçoit `collapsed: boolean` et `onToggle: ()=>void`
+    en props, ne stocke rien. State `collapsed` est lifté dans
+    `App.tsx` (cf. O8) pour rester source-of-truth unique partagée
+    avec `<Sidebar collapsed onSelect>`.
   - `frontend/src/components/hub/HubList.tsx` — tableau (`<table>`
     + Tailwind grid) des `useArtifactsStore.items`. Colonnes :
     `id`, `title`, `status` (badge coloré : draft=gris, reviewed=
@@ -651,20 +726,40 @@ SPDD vide via *Initialize SPDD here*.
     `setSelectedPath(item.Path)` qui ouvre `<StoryViewer />`.
     Si `item.Error`, affiche un badge rouge "invalid" + tooltip avec
     le message d'erreur.
-  - `frontend/src/components/hub/StoryViewer.tsx` — panneau read-only.
-    Lit `useArtifactsStore.selectedPath`, appelle
-    `await ReadArtifact(path)`, rend via `react-markdown` :
-    ```tsx
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      disallowedElements={['script', 'iframe', 'object', 'embed']}
-      unwrapDisallowed
-    >
-      {content}
-    </ReactMarkdown>
-    ```
-    Si erreur de lecture (path traversal ou file not exist), affiche
-    un message d'erreur clair.
+  - `frontend/src/components/hub/StoryViewer.tsx` — panneau read-only
+    en deux zones (D-B13). Lit `useArtifactsStore.selectedPath`,
+    appelle `await ReadArtifact(path)`, puis :
+    1. **Parser frontmatter** local (~30 lignes, regex
+       `^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$`). Distingue
+       scalaires (`key: value`) et listes (`key:` suivie de
+       `  - item`). Quotes `'`/`"` strippées si entourantes.
+       Pas de YAML imbriqué profond, suffisant pour le format SPDD.
+       Aucune dep tierce ; `eval`/`Function` interdits.
+    2. **`<FrontmatterHeader meta title>`** (sub-component) : rend
+       au-dessus du body, sur un fond `bg-muted/20` séparé par un
+       `border-b` :
+       - `<h1>` avec le `title` du frontmatter (gros, semibold)
+       - Pills compactes pour les scalaires dans l'ordre
+         `id, slug, status, updated, created, owner` puis tout
+         autre scalaire alphabétique. Pill `status` colorée selon
+         valeur (palette STATUS_BADGE existante de `<HubList>`).
+         Autres pills : `<key>: <value>` en monospace.
+       - `<dl>` 2 cols pour les listes (`modules`, `depends-on`,
+         `sibling-stories`, …) : chaque valeur en chip mono-spaced.
+    3. **Body** : `body` (post-`---`) rendu via `react-markdown` :
+       ```tsx
+       <ReactMarkdown
+         remarkPlugins={[remarkGfm]}
+         disallowedElements={['script', 'iframe', 'object', 'embed']}
+         unwrapDisallowed
+       >
+         {body}
+       </ReactMarkdown>
+       ```
+    4. Si pas de frontmatter (regex ne match pas), rend
+       `body = content` brut, header n'apparaît pas.
+    5. Si erreur de lecture (path traversal ou file not exist),
+       affiche un message d'erreur clair à la place du contenu.
   - `frontend/src/components/hub/ClaudeBanner.tsx` — banner persistant
     en haut de `<App />`, affiché ssi
     `useClaudeStore.status.Available === false`. Texte :
@@ -683,26 +778,40 @@ SPDD vide via *Initialize SPDD here*.
 - **Module** : `frontend/src/App.tsx` (refactor complet)
 - **Fichier** : `frontend/src/App.tsx`
 - **Comportement** :
-  1. Au mount (`useEffect` avec `[]`), invoque `useClaudeStore.refresh()`
-     en async (non-bloquant pour le rendu)
-  2. Si `useProjectStore.projectDir === ''`, render `<ProjectPicker />`
+  1. State local `[collapsed, setCollapsed] = useState(false)` —
+     source-of-truth unique, partagée avec `<Sidebar>` et
+     `<SidebarToggle>`.
+  2. Au mount (`useEffect` avec `[refreshClaude]`), invoque
+     `useClaudeStore.refresh()` en async (non-bloquant pour le rendu)
+  3. `useEffect` responsive : `window.matchMedia('(max-width: 767px)')`
+     auto-positionne `collapsed` (true < 768px, false >= 768px).
+     Listener `change` pour suivre les resize.
+  4. Si `useProjectStore.projectDir === ''`, render `<ProjectPicker />`
      (full-screen)
-  3. Sinon render le layout hub :
+  5. Sinon render le layout hub :
      ```tsx
-     <main className="min-h-screen flex flex-col">
-       <ClaudeBanner />  {/* top, conditionnel */}
-       <div className="flex flex-1 relative">
-         <Sidebar />  {/* responsive : full < 768px = drawer */}
-         <SidebarToggle />  {/* bouton flottant */}
-         <section className="flex-1 flex">
-           <HubList className="w-1/2 lg:w-2/5 border-r" />
-           <StoryViewer className="flex-1" />
-         </section>
+     <main className="min-h-screen flex flex-col bg-background">
+       <ClaudeBanner />
+       <div className="flex flex-1 relative overflow-hidden">
+         <Sidebar collapsed={collapsed} onSelect={() => setCollapsed(true)} />
+         <div className="flex flex-1">
+           <div className="absolute top-1 left-1 z-50">
+             <SidebarToggle
+               collapsed={collapsed}
+               onToggle={() => setCollapsed(c => !c)}
+             />
+           </div>
+           <section className="flex flex-1">
+             <HubList className="w-1/2 lg:w-2/5 border-r" />
+             <StoryViewer className="flex-1" />
+           </section>
+         </div>
        </div>
      </main>
      ```
-  4. Hooks responsive : `useEffect` qui écoute `window.matchMedia('(max-width: 767px)')`
-     pour auto-collapse la Sidebar
+  6. `<Sidebar>` reçoit `collapsed` (Tailwind `-translate-x-full`
+     si true) + `onSelect` (callback fermeture auto en mode drawer
+     mobile après pick d'un kind).
 - **Tests** : validation manuelle via `wails dev -tags mock` :
   - Resize window de 1280 → 600 px : sidebar passe en drawer
   - Toggle manuel via SidebarToggle
@@ -738,6 +847,12 @@ SPDD vide via *Initialize SPDD here*.
 - **react-markdown config** : `remarkPlugins={[remarkGfm]}`,
   `disallowedElements`, `unwrapDisallowed`. Pas d'override de
   composants markdown en V1 (rendu HTML standard).
+- **Frontmatter parser** (`<StoryViewer>`) : implémentation maison
+  scalaire + listes simples (regex + split de lignes). Format SPDD
+  est volontairement plat ; pas besoin de gestion YAML complète
+  (anchors, refs, mappings imbriqués). Aucun `eval`/`Function`/`new
+  Function`. Si un format YAML plus riche émerge un jour, ouvrir
+  une nouvelle story (re-discutera la dep `js-yaml`).
 - **Zustand** : 1 store par concern (3 stores). Pas de mega-store.
   Pas d'imports croisés entre stores (Invariant I6).
 - **Tests UI** : aucun en V1 (Playwright/Cypress = post-MVP).
@@ -787,7 +902,13 @@ SPDD vide via *Initialize SPDD here*.
     que TODO inline.
 - **Pas de dépendance npm tierce au-delà des 2 ajoutées**
   - `react-markdown` + `remark-gfm` uniquement. Refusé : `marked`,
-    `mdx-bundler`, `dompurify`, etc.
+    `mdx-bundler`, `dompurify`, `js-yaml`, etc.
+- **Frontmatter parser sans évaluation dynamique**
+  - Le parser maison du `<StoryViewer>` ne doit jamais utiliser
+    `eval`, `Function`, `new Function`, ni invoquer un parser YAML
+    arbitraire chargé au runtime. Sa surface d'attaque doit rester
+    nulle même si un fichier markdown contient du contenu hostile
+    en frontmatter.
 - **Pas de logging frontend bavard**
   - Les stores ne loggent pas via `console.log`. Erreurs stockées
     dans `error` field du store, affichées par les composants
@@ -811,3 +932,31 @@ SPDD vide via *Initialize SPDD here*.
   - `main.tsx`, `globals.css`, `lib/utils.ts`, `components/ui/*`
     restent intacts. Le scope UI-001b est strictement additif sur
     le scaffold UI-001a.
+
+---
+
+## Changelog
+
+- **2026-05-01 — `R, E, A, S, O1, O2, O4, O7, O8, N, Safeguards`** —
+  prompt-update post-implémentation pour intégrer :
+  - **D-B13 (comportemental)** : `<StoryViewer>` extrait le frontmatter
+    YAML et le rend en header structuré (titre, pills colorées,
+    definition-list pour les listes), body markdown séparé. Parser
+    maison ~30 lignes, pas de dep `js-yaml`. Nouveau Safeguard
+    "frontmatter parser sans évaluation dynamique".
+  - **D-B5b (refactor contraint Wails 2.12)** : `SelectProject` et
+    `GetClaudeStatus` perdent le paramètre `ctx context.Context` ;
+    utilisent `a.ctx` posé par `OnStartup`. Wails 2.12 ne ré-injecte
+    pas auto le ctx (contre-doc). Nouvel invariant I3b.
+  - **D-B8b (refactor)** : runtime path stub `window.go.uiapp.App`
+    (et non `main`) — Wails dérive le namespace du package du struct
+    bindé.
+  - **MockProvider rename** : `VersionErr → CheckErr` (drive
+    CheckVersion) ; nouveaux `VersionVal/VersionErr` pour `Version`.
+    Rename interne au test-double, interface `Provider` inchangée.
+  - **State `collapsed` lifté dans `App.tsx`** (O8) : props
+    `collapsed`/`onToggle` sur `<SidebarToggle>` ; `collapsed`/`onSelect`
+    sur `<Sidebar>`. Source-of-truth unique partagée.
+  - Status remis à `reviewed` pour signaler que `/spdd-generate` doit
+    régénérer (a minima O7) — les autres Operations sont déjà alignées
+    par les fixes commités sur la branche `feature/UI-001b`.
