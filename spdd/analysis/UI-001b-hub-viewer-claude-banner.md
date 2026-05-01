@@ -3,7 +3,7 @@ id: UI-001b
 slug: hub-viewer-claude-banner
 story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
 parent-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: draft
+status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 ---
@@ -280,10 +280,70 @@ updated: 2026-05-01
   React) : on doit éviter le hammering. Reco useEffect avec dependency
   array vide → 1 fois au mount.
 
-## Décisions à prendre avant le canvas
+## Décisions tranchées (revue 2026-05-01)
 
-> Recommandations en italique. Validation/contestation en revue
-> avant `/spdd-reasons-canvas`.
+Les 12 décisions ont été tranchées en revue interactive. Recap :
+
+- [x] **D-B1 = A** — Forme du binding listing : **1 méthode
+  `App.ListArtifacts(kind string) ([]artifacts.Meta, error)`** paramétrée.
+  Validation côté Go via `slices.Contains(AllowedKinds(), kind)`.
+  Cohérent avec la signature CORE-004.
+- [x] **D-B2 = A** — Binding `App.ReadArtifact(path string) (string, error)`
+  ajouté. **Garde anti path-traversal obligatoire** :
+  `strings.HasPrefix(absPath, filepath.Join(projectDir, "spdd"))`.
+- [x] **D-B3 = A** — Sidebar lit `App.AllowedKinds() []string` (binding
+  qui délègue à `artifacts.AllowedKinds()` de CORE-004). Une seule
+  source de vérité, DRY.
+- [x] **D-B4 = A** — `InitializeSPDD` crée **6 dossiers** :
+  `spdd/{stories, analysis, prompts, tests, methodology, templates}/`
+  + copie 4 templates depuis `embed.FS` vers `spdd/templates/`.
+- [x] **D-B5 = A** — Ajouter `Provider.Version(ctx) (string, error)`
+  comme méthode sœur de `CheckVersion`, sans break public.
+  `ClaudeProvider` parse `claude --version`, `MockProvider` retourne
+  `"mock-1.0"`. Modification d'interface `provider.Provider` (passe de
+  3 à 4 méthodes).
+- [x] **D-B6 = A** — Lib markdown : **`react-markdown` + `remark-gfm`**.
+  Tableaux, strike, task lists, autolink. ~80kb brotli.
+- [x] **D-B7 = A** — Protection XSS :
+  `disallowedElements={['script', 'iframe', 'object', 'embed']}` +
+  `unwrapDisallowed`. Double-sécurité au-dessus du
+  `skipHtml` implicite par défaut.
+- [x] **D-B8 = A** — **Hand-écrire les stubs** dans
+  `frontend/wailsjs/go/main/App.{d.ts,js}` pour les 5 nouvelles
+  méthodes (cohérent avec workaround AV CORE-002). ~10 lignes par
+  méthode.
+- [x] **D-B9 = B** — **Layout responsive avec sidebar collapsable**
+  ⚠️ (vs reco initiale A non-responsive). Sidebar collapsable
+  manuellement (toggle ←/→) + auto-collapse en dessous de 768px de
+  largeur de fenêtre. Breakpoints Tailwind. **Impact estimation :
+  +0.2j sur le scope frontend** (composant `<SidebarToggle />` +
+  responsive layout sur `<App />`).
+- [x] **D-B10 = A** — Tests Go dans `internal/uiapp/app_test.go`
+  étendu (~15-20 tests table-driven) :
+  - `TestApp_SelectProject_*` (mock Wails runtime, validate path,
+    loader+writer reconstruits)
+  - `TestApp_ListArtifacts_*` (delegation, kind invalide, projectDir
+    vide)
+  - `TestApp_GetClaudeStatus_*` (3 cas : Available/ErrNotFound/
+    ErrVersionIncompatible)
+  - `TestApp_InitializeSPDD_*` (idempotent, 6 dossiers + 4 templates,
+    échec read-only)
+  - `TestApp_ReadArtifact_*` (succès, path traversal bloqué, fichier
+    inexistant)
+- [x] **D-B11 = A** — Auto-refresh post-`InitializeSPDD` : le store
+  `useArtifactsStore.refresh()` est appelé automatiquement après
+  succès. Sidebar passe de empty state à 4 onglets actifs.
+- [x] **D-B12 = A** — `ClaudeStatus{Available bool, Version string, Err string}`
+  — 3 champs distincts. JSON ↔ TS direct mapping. Frontend fait
+  `if (status.Available) {...}` proprement.
+
+### Impact estimation post-revue
+
+D-B9 = B (responsive) ajoute **+0.2j** au frontend (toggle sidebar +
+breakpoints + tests visuels manuels). Estimation totale UI-001b
+révisée : **~1.2j** (vs ~1j initial).
+
+### Décisions originales (avant revue, conservées pour traçabilité)
 
 - [ ] **D-B1 — Forme du binding listing** *(OQ5 story)*.
   *(Reco : 1 méthode `App.ListArtifacts(kind string) ([]artifacts.Meta, error)`
