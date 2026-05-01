@@ -72,14 +72,23 @@
 
 ## En attente — features projet
 
-- ⬜ **CORE-002** — Découpage SPIDR axe **P** (Paths) en 6 stories
+- ⬜ **CORE-002** — Isoler le cœur métier de la CLI pour permettre une
+  exposition MCP future. Audit + linter `golangci-lint`/`depguard`
+  (allow-list strict) sur `internal/{workflow,provider,templates,
+  artifacts}`, doc-package enrichie, schéma d'architecture dans
+  `DEVELOPMENT.md`. Story rédigée en
+  [`spdd/stories/CORE-002-isolate-business-core.md`](spdd/stories/CORE-002-isolate-business-core.md),
+  analyse en
+  [`spdd/analysis/CORE-002-isolate-business-core.md`](spdd/analysis/CORE-002-isolate-business-core.md).
+  Prérequis explicite de `INT-002` (post-MVP, serveur MCP).
+- ⬜ **CORE-003** — Découpage SPIDR axe **P** (Paths) en 6 stories
   filles, une par commande SPDD restante :
-  - `CORE-002a` — `yukki analysis`
-  - `CORE-002b` — `yukki reasons-canvas`
-  - `CORE-002c` — `yukki generate`
-  - `CORE-002d` — `yukki api-test`
-  - `CORE-002e` — `yukki prompt-update`
-  - `CORE-002f` — `yukki sync`
+  - `CORE-003a` — `yukki analysis`
+  - `CORE-003b` — `yukki reasons-canvas`
+  - `CORE-003c` — `yukki generate`
+  - `CORE-003d` — `yukki api-test`
+  - `CORE-003e` — `yukki prompt-update`
+  - `CORE-003f` — `yukki sync`
 - 🟡 **UI-001** — Initialiser l'app desktop yukki — Wails v2 + React 18
   + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Splittée
   SPIDR axe **I** (Interface) en 3 stories filles
@@ -105,6 +114,12 @@
 ## Post-MVP
 
 - ⬜ **INT-001** — Provider Copilot CLI alternatif à Claude CLI
+- ⬜ **INT-002** — Serveur MCP exposant les tools yukki (`yukki.story`,
+  puis `yukki.analysis`, etc.) via le SDK
+  [github.com/modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk).
+  Sous-cmd `yukki mcp` qui démarre le serveur en stdio. **Dépend de
+  CORE-002** (cœur métier isolé). Clients cibles : Claude Desktop,
+  Cursor, Continue, OpenCode, Zed, Cody.
 - ⬜ **OPS-001** — Signing binaires (Authenticode Windows / notarization
   Apple) pour distribuer l'app desktop sans déclencher Defender SmartScreen
   / Gatekeeper.
