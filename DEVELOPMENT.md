@@ -181,6 +181,31 @@ wails build
 wails build -platform linux/amd64           # ou darwin/universal, windows/amd64
 ```
 
+### Wrapper local Wails (cache + tempdir dans le repo, AV-friendly)
+
+Mêmes raisons que pour les tests : sur Windows corporate, le helper
+binary que Wails build dans `%TEMP%` se fait quarantaine par Defender
+(`Access is denied` sur l'`a.out.exe` de la phase *Generating bindings*).
+Le wrapper `scripts/dev/ui-build.{sh,bat}` redirige `GOCACHE`,
+`GOTMPDIR`, `TMP` et `TEMP` vers `<repo>/.gocache` et `<repo>/.gotmp`,
+ajoute `-tags mock` et `-skipbindings` (qui réutilise les stubs
+hand-written dans `frontend/wailsjs/` au lieu de relancer la
+génération AV-bloquée).
+
+```bash
+# Linux / macOS / WSL
+scripts/dev/ui-build.sh
+scripts/dev/ui-build.sh -- -clean             # forwarder n'importe quel flag wails
+
+# Windows (cmd ou PowerShell)
+scripts\dev\ui-build.bat
+scripts\dev\ui-build.bat -clean
+```
+
+Une fois le TICKET IT (exclusion Defender) en place, retirer
+`-skipbindings` du wrapper pour laisser Wails régénérer les bindings
+TypeScript proprement.
+
 Sur Windows en environnement corporate, `wails dev` peut être bloqué
 par le scan AV (cf. § *Si l'AV bloque malgré tout* ci-dessus). Plan B :
 WSL ou attente du TICKET IT (exclusion Defender).
