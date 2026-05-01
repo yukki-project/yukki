@@ -63,30 +63,10 @@ func TestWriter_Write_InvalidFrontmatter(t *testing.T) {
 	}
 }
 
-func TestValidateFrontmatter(t *testing.T) {
-	cases := []struct {
-		name    string
-		in      string
-		wantErr bool
-	}{
-		{"valid", validStory, false},
-		{"missing leading", "no frontmatter\n---\n---\n", true},
-		{"missing closing", "---\nid: X\nsomething", true},
-		{"empty mapping", "---\n\n---\n\nbody\n", true},
-		{"malformed yaml", "---\nid: : :\n---\n\nbody\n", true},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateFrontmatter(tc.in)
-			if tc.wantErr && err == nil {
-				t.Fatalf("expected error for %q", tc.name)
-			}
-			if !tc.wantErr && err != nil {
-				t.Fatalf("expected no error for %q, got %v", tc.name, err)
-			}
-		})
-	}
-}
+// TestValidateFrontmatter has moved to parser_test.go (CORE-004 D2):
+// the function itself is now defined in parser.go. The signature is
+// preserved so writer.go's Writer.Write keeps calling it intra-package
+// without any import or behavioural change.
 
 func TestWriter_Write_EmptyIdOrSlug(t *testing.T) {
 	w := NewWriter(t.TempDir())

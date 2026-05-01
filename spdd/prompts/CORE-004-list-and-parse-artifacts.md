@@ -3,7 +3,7 @@ id: CORE-004
 slug: list-and-parse-artifacts
 story: spdd/stories/CORE-004-list-and-parse-artifacts.md
 analysis: spdd/analysis/CORE-004-list-and-parse-artifacts.md
-status: draft
+status: implemented
 created: 2026-05-01
 updated: 2026-05-01
 ---
