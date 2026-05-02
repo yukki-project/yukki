@@ -27,8 +27,10 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"gopkg.in/yaml.v3"
 
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/provider"
@@ -347,5 +349,121 @@ func (a *App) SuggestedPrefixes() []string {
 	out := make([]string, len(artifacts.AllowedPrefixes))
 	copy(out, artifacts.AllowedPrefixes)
 	sort.Strings(out)
+	return out
+}
+
+// UpdateArtifactStatus mutates the `status:` field of the SPDD artifact
+// at `path`, validating the transition against the SPDD progression
+// rules (forward 1 step or downgrade 1 step, see
+// artifacts.IsValidTransition). Also bumps `updated:` to today's date.
+// Other front-matter fields and the body markdown are preserved
+// untouched (yaml.Node round-trip preserves key order + comments).
+// UI-008 binding.
+func (a *App) UpdateArtifactStatus(path, newStatus string) error {
+	if !strings.HasSuffix(path, ".md") {
+		return fmt.Errorf("not a markdown file: %s", path)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read artifact: %w", err)
+	}
+	content := string(raw)
+
+	if !strings.HasPrefix(content, "---") {
+		return fmt.Errorf("missing front-matter delimiter")
+	}
+	rest := content[3:]
+	if strings.HasPrefix(rest, "\n") || strings.HasPrefix(rest, "\r\n") {
+		// strip the newline right after opening ---
+		if strings.HasPrefix(rest, "\r\n") {
+			rest = rest[2:]
+		} else {
+			rest = rest[1:]
+		}
+	}
+	end := strings.Index(rest, "\n---")
+	if end == -1 {
+		return fmt.Errorf("malformed front-matter: no closing ---")
+	}
+	yamlPart := rest[:end]
+	bodyOffset := 3 + (len(content) - 3 - len(rest)) + end + 4
+	body := content[bodyOffset:]
+
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(yamlPart), &root); err != nil {
+		return fmt.Errorf("parse front-matter: %w", err)
+	}
+	if root.Kind != yaml.DocumentNode || len(root.Content) == 0 {
+		return fmt.Errorf("unexpected yaml structure")
+	}
+	mapping := root.Content[0]
+	if mapping.Kind != yaml.MappingNode {
+		return fmt.Errorf("front-matter is not a yaml mapping")
+	}
+
+	var statusNode, updatedNode *yaml.Node
+	for i := 0; i+1 < len(mapping.Content); i += 2 {
+		key := mapping.Content[i]
+		val := mapping.Content[i+1]
+		switch key.Value {
+		case "status":
+			statusNode = val
+		case "updated":
+			updatedNode = val
+		}
+	}
+	if statusNode == nil {
+		return fmt.Errorf("front-matter has no status field")
+	}
+
+	current := artifacts.Status(statusNode.Value)
+	target := artifacts.Status(newStatus)
+	if !artifacts.IsValidTransition(current, target) {
+		return fmt.Errorf("invalid status transition: %s → %s", current, target)
+	}
+
+	statusNode.Value = newStatus
+	today := time.Now().Format("2006-01-02")
+	if updatedNode != nil {
+		updatedNode.Value = today
+	} else {
+		mapping.Content = append(mapping.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "updated", Tag: "!!str"},
+			&yaml.Node{Kind: yaml.ScalarNode, Value: today, Tag: "!!str"},
+		)
+	}
+
+	newYaml, err := yaml.Marshal(mapping)
+	if err != nil {
+		return fmt.Errorf("marshal front-matter: %w", err)
+	}
+	final := "---\n" + strings.TrimRight(string(newYaml), "\n") + "\n---" + body
+
+	// Atomic write : temp + rename.
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, []byte(final), 0o644); err != nil {
+		return fmt.Errorf("write temp: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("atomic rename: %w", err)
+	}
+	if a.logger != nil {
+		a.logger.Info("artifact status updated", "path", path, "from", current, "to", newStatus)
+	}
+	return nil
+}
+
+// AllowedTransitions returns the list of statuses reachable from
+// `currentStatus` (current itself + forward + backward 1 step).
+// Used by the frontend to grey out invalid items in the status
+// DropdownMenu (UI-008).
+func (a *App) AllowedTransitions(currentStatus string) []string {
+	list := artifacts.AllowedTransitions(artifacts.Status(currentStatus))
+	out := make([]string, len(list))
+	for i, s := range list {
+		out[i] = string(s)
+	}
 	return out
 }

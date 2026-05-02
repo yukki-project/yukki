@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useArtifactsStore } from './artifacts';
 
-export type ShellMode = 'stories' | 'analysis' | 'prompts' | 'tests' | 'settings';
+export type ShellMode = 'stories' | 'analysis' | 'prompts' | 'tests' | 'settings' | 'workflow';
 
+// 'workflow' volontairement non inclus : le mode workflow ne touche pas
+// useArtifactsStore.setKind (Invariant I3 UI-006 + I2 UI-008).
 const SPDD_KINDS: ShellMode[] = ['stories', 'analysis', 'prompts', 'tests'];
 
 interface ShellState {

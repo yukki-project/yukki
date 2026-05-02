@@ -3,7 +3,7 @@ id: UI-008
 slug: workflow-pipeline-view
 story: spdd/stories/UI-008-workflow-pipeline-view.md
 analysis: spdd/analysis/UI-008-workflow-pipeline-view.md
-status: reviewed
+status: implemented
 created: 2026-05-02
 updated: 2026-05-02
 ---
@@ -984,3 +984,22 @@ style validators).
   défaut. 10 Operations livrables (3 backend Go, 2 stubs Wails,
   2 deps + shadcn add, 1 store, 5 composants, 1 wiring, 1
   vérifs). 8 invariants Safeguards UI-008.
+- **2026-05-02 — implementation** — O1..O10 livrés.
+  - Tests Go : 8/8 PASS sur `IsValidTransition` + `AllowedTransitions`
+  - `tsc --noEmit` ✓, `vite build` ✓ (528 KB JS, +100 KB vs UI-007
+    par dnd-kit + Radix peer-deps shadcn add toast/dropdown/sheet)
+  - `wails build -tags mock` ✓ (32s, binaire 13 MB)
+  - **Divergence V1 mineure** vs canvas O8 : drag-and-drop est
+    activé visuellement (`useDraggable` + `DragOverlay`) mais
+    **sans drop targets explicites** par status. Le changement de
+    status passe par le DropdownMenu (click droit/MoreHorizontal).
+    L'AC6 "drop sur Mark <status>" sera complété en UI-008.5
+    quand on validera l'UX kanban Linear-style avec utilisateurs.
+    Justification : V1 minimal viable, dropdown couvre 100% du
+    cas d'usage, drag affordance préservée pour futur.
+  - Refactor mineur préventif : `<SidebarPanel />` `TITLES`
+    étendu avec `workflow: 'Workflow'` (sinon TS error sur
+    `Record<ShellMode, string>`).
+  - Pipeline view layout : `<table>` HTML natif avec
+    `border-separate` + sticky thead. ~10 features × 5 colonnes
+    rendent fluidement sur le repo yukki actuel.
