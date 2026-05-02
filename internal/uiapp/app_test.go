@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"sync"
+	"sort"
 	"testing"
 	"time"
 
@@ -15,10 +15,29 @@ import (
 
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/provider"
+	"github.com/yukki-project/yukki/internal/templates"
 )
 
 func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+// cfgLoaderAndWriter wires the App's loader and writer as SelectProject
+// would (templates rooted at projectDir, stories writer rooted at
+// <projectDir>/spdd/stories), so RunStory can run end-to-end.
+func cfgLoaderAndWriter(t *testing.T, app *App, projectDir string) {
+	t.Helper()
+	app.loader = templates.NewLoader(projectDir)
+	app.writer = artifacts.NewWriter(filepath.Join(projectDir, "spdd", "stories"))
+}
+
+// captureEmits silences the package-level emitEvent during the test
+// (replaces it with a no-op that ignores arguments). Restored at cleanup.
+func captureEmits(t *testing.T) {
+	t.Helper()
+	prev := emitEvent
+	emitEvent = func(ctx context.Context, name string, payload ...any) {}
+	t.Cleanup(func() { emitEvent = prev })
 }
 
 func TestNewApp_AssignsDeps(t *testing.T) {
@@ -35,15 +54,6 @@ func TestNewApp_AssignsDeps(t *testing.T) {
 	}
 	if app.ctx != nil {
 		t.Fatalf("expected ctx to be nil before OnStartup, got %v", app.ctx)
-	}
-}
-
-func TestApp_Greet_ReturnsLiteral(t *testing.T) {
-	app := NewApp(&provider.MockProvider{}, newTestLogger())
-
-	const want = "hello from yukki backend"
-	if got := app.Greet(); got != want {
-		t.Fatalf("Greet() = %q, want %q", got, want)
 	}
 }
 
@@ -78,23 +88,6 @@ func TestApp_OnShutdown_CancelsContext(t *testing.T) {
 	case <-time.After(100 * time.Millisecond):
 		t.Fatalf("ctx should be Done after OnShutdown")
 	}
-}
-
-func TestApp_Greet_Concurrent(t *testing.T) {
-	app := NewApp(&provider.MockProvider{}, newTestLogger())
-
-	const goroutines = 100
-	var wg sync.WaitGroup
-	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
-		go func() {
-			defer wg.Done()
-			if got := app.Greet(); got != "hello from yukki backend" {
-				t.Errorf("concurrent Greet() returned %q", got)
-			}
-		}()
-	}
-	wg.Wait()
 }
 
 func TestApp_OnShutdown_BeforeStartup_NoPanic(t *testing.T) {
@@ -364,5 +357,180 @@ func TestApp_ReadArtifact_NoProject(t *testing.T) {
 	_, err := app.ReadArtifact("/anywhere/spdd/x.md")
 	if err == nil {
 		t.Fatal("expected error when no project selected")
+	}
+}
+
+// --- RunStory / AbortRunning / SuggestedPrefixes (UI-001c O4) ---------
+
+const stubStoryUIC = `---
+id: STORY-001
+slug: stub-story
+title: Stub Story
+status: draft
+created: 2026-04-30
+updated: 2026-04-30
+---
+
+# Stub Story
+
+Body.
+`
+
+func TestApp_RunStory_NoProject(t *testing.T) {
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.OnStartup(context.Background())
+	_, err := app.RunStory("desc", "STORY", false)
+	if err == nil {
+		t.Fatal("expected error when projectDir is empty")
+	}
+}
+
+func TestApp_RunStory_AlreadyRunning(t *testing.T) {
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.OnStartup(context.Background())
+	app.projectDir = t.TempDir()
+	app.running.Store(true) // simulate in-flight generation
+
+	_, err := app.RunStory("desc", "STORY", false)
+	if !errors.Is(err, ErrAlreadyRunning) {
+		t.Fatalf("expected ErrAlreadyRunning, got %v", err)
+	}
+}
+
+// runStoryHappyPath wires real loader+writer so workflow.RunStory works
+// end-to-end with a MockProvider returning stubStoryUIC.
+func runStoryHappyPath(t *testing.T, mock *provider.MockProvider) (*App, string) {
+	t.Helper()
+	dir := t.TempDir()
+	app := NewApp(mock, newTestLogger())
+	app.OnStartup(context.Background())
+	app.projectDir = dir
+	// Configure as SelectProject would: loader rooted at projectDir,
+	// writer rooted at <projectDir>/spdd/stories.
+	cfgLoaderAndWriter(t, app, dir)
+	return app, dir
+}
+
+func TestApp_RunStory_Success(t *testing.T) {
+	mock := &provider.MockProvider{Response: stubStoryUIC}
+	app, dir := runStoryHappyPath(t, mock)
+
+	// silence Wails events during this test (no real runtime)
+	captureEmits(t)
+
+	path, err := app.RunStory("any description", "STORY", false)
+	if err != nil {
+		t.Fatalf("RunStory: %v", err)
+	}
+	if path == "" {
+		t.Fatal("expected non-empty path")
+	}
+	if app.running.Load() {
+		t.Fatal("running flag should be reset to false after return")
+	}
+	if app.runStoryCancel != nil {
+		t.Fatal("runStoryCancel should be reset to nil after return")
+	}
+	expected := filepath.Join(dir, "spdd", "stories", "STORY-001-stub-story.md")
+	if path != expected {
+		t.Fatalf("path = %q, want %q", path, expected)
+	}
+}
+
+func TestApp_RunStory_AbortMidFlight(t *testing.T) {
+	mock := &provider.MockProvider{
+		Response:   stubStoryUIC,
+		BlockUntil: make(chan struct{}),
+	}
+	app, _ := runStoryHappyPath(t, mock)
+	captureEmits(t)
+
+	type result struct {
+		path string
+		err  error
+	}
+	done := make(chan result, 1)
+	go func() {
+		path, err := app.RunStory("desc", "STORY", false)
+		done <- result{path, err}
+	}()
+
+	// wait until runStoryCancel is set, then abort
+	deadline := time.Now().Add(time.Second)
+	for app.runStoryCancel == nil && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if app.runStoryCancel == nil {
+		t.Fatal("runStoryCancel never set within 1s")
+	}
+	if err := app.AbortRunning(); err != nil {
+		t.Fatalf("AbortRunning: %v", err)
+	}
+
+	select {
+	case r := <-done:
+		if !errors.Is(r.err, context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", r.err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("RunStory did not return after AbortRunning")
+	}
+	if app.running.Load() {
+		t.Fatal("running flag should be reset to false after abort")
+	}
+}
+
+func TestApp_RunStory_ShutdownDuringGeneration(t *testing.T) {
+	mock := &provider.MockProvider{
+		Response:   stubStoryUIC,
+		BlockUntil: make(chan struct{}),
+	}
+	app, _ := runStoryHappyPath(t, mock)
+	captureEmits(t)
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := app.RunStory("desc", "STORY", false)
+		done <- err
+	}()
+
+	deadline := time.Now().Add(time.Second)
+	for app.runStoryCancel == nil && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	app.OnShutdown(context.Background())
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("RunStory did not return after OnShutdown")
+	}
+}
+
+func TestApp_AbortRunning_NothingToAbort(t *testing.T) {
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.OnStartup(context.Background())
+	if err := app.AbortRunning(); err != nil {
+		t.Fatalf("AbortRunning with no in-flight generation: %v", err)
+	}
+}
+
+func TestApp_SuggestedPrefixes_Sorted_Distinct(t *testing.T) {
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	got := app.SuggestedPrefixes()
+	if len(got) != len(artifacts.AllowedPrefixes) {
+		t.Fatalf("len = %d, want %d", len(got), len(artifacts.AllowedPrefixes))
+	}
+	if !sort.StringsAreSorted(got) {
+		t.Fatalf("expected sorted, got %v", got)
+	}
+	// must not mutate the source slice
+	source := artifacts.AllowedPrefixes
+	got[0] = "ZZZZ"
+	if source[0] == "ZZZZ" {
+		t.Fatal("SuggestedPrefixes mutated artifacts.AllowedPrefixes")
 	}
 }

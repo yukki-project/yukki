@@ -62,6 +62,87 @@ func TestRunStory_HappyPath(t *testing.T) {
 	}
 }
 
+// fakeProgress captures Start and End calls for assertion.
+type fakeProgress struct {
+	starts []string
+	ends   []struct {
+		path string
+		err  error
+	}
+}
+
+func (f *fakeProgress) Start(label string) {
+	f.starts = append(f.starts, label)
+}
+func (f *fakeProgress) End(path string, err error) {
+	f.ends = append(f.ends, struct {
+		path string
+		err  error
+	}{path, err})
+}
+
+func TestRunStory_NoopProgressFallback(t *testing.T) {
+	// With Progress=nil, RunStory must behave exactly like the existing
+	// happy path (no panic, no behavior change).
+	dir := t.TempDir()
+	mock := &provider.MockProvider{Response: stubStory}
+	opts := newOpts(t, mock, dir, "desc", "STORY")
+	opts.Progress = nil
+
+	path, err := RunStory(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("RunStory with nil Progress: %v", err)
+	}
+	if path == "" {
+		t.Fatal("expected non-empty path")
+	}
+}
+
+func TestRunStory_ProgressEmitsStartAndEndOnSuccess(t *testing.T) {
+	dir := t.TempDir()
+	mock := &provider.MockProvider{Response: stubStory}
+	prog := &fakeProgress{}
+	opts := newOpts(t, mock, dir, "desc", "STORY")
+	opts.Progress = prog
+
+	path, err := RunStory(context.Background(), opts)
+	if err != nil {
+		t.Fatalf("RunStory: %v", err)
+	}
+	if len(prog.starts) != 1 || prog.starts[0] != "Asking Claude" {
+		t.Fatalf("expected 1 Start(\"Asking Claude\"), got %v", prog.starts)
+	}
+	if len(prog.ends) != 1 {
+		t.Fatalf("expected 1 End call, got %d", len(prog.ends))
+	}
+	if prog.ends[0].path != path || prog.ends[0].err != nil {
+		t.Fatalf("End mismatch: got (%q, %v), want (%q, nil)", prog.ends[0].path, prog.ends[0].err, path)
+	}
+}
+
+func TestRunStory_ProgressEmitsEndOnFailure(t *testing.T) {
+	dir := t.TempDir()
+	mock := &provider.MockProvider{Err: errors.New("boom")}
+	prog := &fakeProgress{}
+	opts := newOpts(t, mock, dir, "desc", "STORY")
+	opts.Progress = prog
+
+	_, err := RunStory(context.Background(), opts)
+	if err == nil {
+		t.Fatal("expected error from MockProvider")
+	}
+	// Start was called (we reached Generate)
+	if len(prog.starts) != 1 {
+		t.Fatalf("expected Start called once, got %d", len(prog.starts))
+	}
+	if len(prog.ends) != 1 {
+		t.Fatalf("expected End called once, got %d", len(prog.ends))
+	}
+	if prog.ends[0].err == nil || prog.ends[0].path != "" {
+		t.Fatalf("End mismatch on failure: got (%q, %v)", prog.ends[0].path, prog.ends[0].err)
+	}
+}
+
 func TestRunStory_EmptyDescription(t *testing.T) {
 	dir := t.TempDir()
 	opts := newOpts(t, &provider.MockProvider{}, dir, "   ", "STORY")

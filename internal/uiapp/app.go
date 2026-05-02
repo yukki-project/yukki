@@ -2,13 +2,18 @@
 // desktop window.
 //
 // O3 of the UI-001a canvas: minimal struct + NewApp factory + lifecycle
-// hooks (OnStartup / OnShutdown) + Greet() smoke test method.
+// hooks (OnStartup / OnShutdown). The smoke-test Greet() method was
+// removed in UI-001c (D-C11) — RunStory(mock) covers a broader smoke
+// path.
 //
 // O2 of the UI-001b canvas extends App with project state (projectDir,
 // loader, writer) and 6 bindings consumed by the hub UI (SelectProject,
 // AllowedKinds, ListArtifacts, GetClaudeStatus, InitializeSPDD,
-// ReadArtifact). The Provider interface is now consumed via
-// GetClaudeStatus.
+// ReadArtifact).
+//
+// O4 of the UI-001c canvas extends App with generation state (running
+// atomic.Bool, runStoryCancel context.CancelFunc) and 3 bindings for
+// the writing flow (RunStory, AbortRunning, SuggestedPrefixes).
 package uiapp
 
 import (
@@ -18,14 +23,21 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync/atomic"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/provider"
 	"github.com/yukki-project/yukki/internal/templates"
+	"github.com/yukki-project/yukki/internal/workflow"
 )
+
+// ErrAlreadyRunning is returned by App.RunStory when a previous
+// generation is still in progress on this App instance.
+var ErrAlreadyRunning = errors.New("a generation is already running")
 
 // openDirectoryDialog is a package-level indirection over
 // runtime.OpenDirectoryDialog so unit tests can replace it without spinning
@@ -67,6 +79,16 @@ type App struct {
 	projectDir string
 	loader     *templates.Loader
 	writer     *artifacts.Writer
+
+	// running gates concurrent RunStory calls. Swap(true) at start,
+	// Store(false) at defer. ErrAlreadyRunning is returned if Swap
+	// returns true (a generation is already in progress).
+	running atomic.Bool
+
+	// runStoryCancel is the cancel function of the per-generation
+	// sub-context derived from a.ctx. AbortRunning calls this. Reset
+	// to nil on RunStory return.
+	runStoryCancel context.CancelFunc
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.
@@ -100,15 +122,8 @@ func (a *App) OnShutdown(ctx context.Context) {
 	}
 }
 
-// Greet is the smoke-test binding exposed to the frontend in UI-001a.
-// Returns a fixed string; calling it from the frontend confirms the
-// Cobra → wails.Run → frontend → bindings round-trip works end-to-end.
-//
-// Per D-A6 of the UI-001a delta analysis, this method survives in
-// UI-001b inside an "About → Run smoke test" menu — do not remove.
-func (a *App) Greet() string {
-	return "hello from yukki backend"
-}
+// (Greet was removed in UI-001c per D-C11 — RunStory with MockProvider
+// covers a broader smoke path.)
 
 // SelectProject opens a native directory-picker dialog and, on a
 // non-empty selection, updates the App's projectDir / loader / writer.
@@ -250,4 +265,68 @@ func (a *App) ReadArtifact(path string) (string, error) {
 		return "", fmt.Errorf("read %s: %w", absPath, err)
 	}
 	return string(data), nil
+}
+
+// RunStory orchestrates workflow.RunStory with a uiProgress sink that
+// emits Wails events. Refuses to run if no project is selected or if
+// another generation is already in progress (ErrAlreadyRunning).
+//
+// The per-generation context is derived from a.ctx so OnShutdown
+// cancels the subprocess `claude` (via exec.CommandContext); the
+// derived cancel is also exposed via AbortRunning so the user can
+// abandon without closing the window.
+//
+// No ctx parameter (Wails 2.12 D-B5b — runtime does not auto-inject).
+func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, error) {
+	if a.projectDir == "" {
+		return "", errors.New("no project selected")
+	}
+	if a.running.Swap(true) {
+		return "", ErrAlreadyRunning
+	}
+	defer a.running.Store(false)
+
+	parent := a.ctx
+	if parent == nil {
+		parent = context.Background()
+	}
+	runStoryCtx, cancel := context.WithCancel(parent)
+	a.runStoryCancel = cancel
+	defer func() {
+		a.runStoryCancel = nil
+		cancel()
+	}()
+
+	prog := newUiProgress(runStoryCtx, a.logger)
+	opts := workflow.StoryOptions{
+		Description:    description,
+		Prefix:         prefix,
+		StrictPrefix:   strictPrefix,
+		Logger:         a.logger,
+		Provider:       a.provider,
+		TemplateLoader: a.loader,
+		Writer:         a.writer,
+		Progress:       prog,
+	}
+	return workflow.RunStory(runStoryCtx, opts)
+}
+
+// AbortRunning cancels the in-flight generation, if any. Idempotent
+// no-op if nothing is running. Distinct from OnShutdown so the user
+// can abandon without closing the window (D-C3).
+func (a *App) AbortRunning() error {
+	if a.runStoryCancel != nil {
+		a.runStoryCancel()
+	}
+	return nil
+}
+
+// SuggestedPrefixes returns a sorted copy of artifacts.AllowedPrefixes
+// for the prefix combo of the New Story modal. The slice is independent
+// of the package-level variable (no mutation risk).
+func (a *App) SuggestedPrefixes() []string {
+	out := make([]string, len(artifacts.AllowedPrefixes))
+	copy(out, artifacts.AllowedPrefixes)
+	sort.Strings(out)
+	return out
 }

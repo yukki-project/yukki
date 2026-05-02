@@ -12,6 +12,12 @@ type MockProvider struct {
 	VersionVal string
 	VersionErr error
 	Calls      []string
+
+	// BlockUntil, when non-nil, makes Generate wait for either the
+	// channel to be closed (or sent-on) or the context to be cancelled
+	// before returning. Used by UI-001c tests to drive cancellation
+	// deterministically. nil = unchanged UI-001b behavior.
+	BlockUntil chan struct{}
 }
 
 // Name returns NameVal or "mock" if empty.
@@ -40,9 +46,19 @@ func (m *MockProvider) Version(ctx context.Context) (string, error) {
 	return "mock-1.0", nil
 }
 
-// Generate records the prompt and returns Response, Err.
+// Generate records the prompt and returns Response, Err. If BlockUntil
+// is non-nil, blocks until the channel is closed/received-from or the
+// context is cancelled, whichever comes first.
 func (m *MockProvider) Generate(ctx context.Context, prompt string) (string, error) {
 	m.Calls = append(m.Calls, prompt)
+	if m.BlockUntil != nil {
+		select {
+		case <-m.BlockUntil:
+			// released by test, proceed to return Response/Err
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+	}
 	if m.Err != nil {
 		return "", m.Err
 	}

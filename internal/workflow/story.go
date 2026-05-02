@@ -17,6 +17,28 @@ import (
 // (no argument and no piped stdin).
 var ErrEmptyDescription = errors.New("empty description")
 
+// Progress reports lifecycle events of a long-running workflow operation
+// (Provider.Generate). Implementations must be safe to call from the
+// workflow goroutine. nil-safe via noopProgress fallback in StoryOptions.
+//
+// Defined in internal/workflow (not internal/uiapp) so the dependency
+// arrow stays one-way (uiapp → workflow). depguard CORE-002 forbids the
+// reverse import.
+type Progress interface {
+	// Start signals the beginning of a labelled phase ("Asking Claude").
+	Start(label string)
+	// End signals completion. path is the absolute path of the produced
+	// artifact on success, "" on failure. err is nil on success.
+	End(path string, err error)
+}
+
+// noopProgress is the zero-value fallback used when StoryOptions.Progress
+// is nil. Methods are no-ops.
+type noopProgress struct{}
+
+func (noopProgress) Start(label string)         {}
+func (noopProgress) End(path string, err error) {}
+
 // StoryOptions bundles the dependencies and parameters for RunStory.
 type StoryOptions struct {
 	Description    string
@@ -26,6 +48,11 @@ type StoryOptions struct {
 	Provider       provider.Provider
 	TemplateLoader *templates.Loader
 	Writer         *artifacts.Writer
+
+	// Progress is an optional sink for lifecycle events. nil = noop.
+	// Set by UI consumers (uiapp.uiProgress) to surface the start/end
+	// of Provider.Generate as Wails events. CLI callers leave it nil.
+	Progress Progress
 }
 
 // RunStory executes the `yukki story` workflow:
@@ -37,8 +64,19 @@ type StoryOptions struct {
 //  6. derive the slug from the generated title
 //  7. write the file via atomic rename (with frontmatter validation)
 //
-// Returns the absolute path of the created story file.
-func RunStory(ctx context.Context, opts StoryOptions) (string, error) {
+// Returns the absolute path of the created story file. If
+// opts.Progress is non-nil, Start("Asking Claude") is called before
+// Provider.Generate and End(path, err) is called on every return path
+// (success and failure). nil Progress falls back to noopProgress.
+func RunStory(ctx context.Context, opts StoryOptions) (path string, err error) {
+	progress := opts.Progress
+	if progress == nil {
+		progress = noopProgress{}
+	}
+	defer func() {
+		progress.End(path, err)
+	}()
+
 	if strings.TrimSpace(opts.Description) == "" {
 		return "", ErrEmptyDescription
 	}
@@ -68,6 +106,8 @@ func RunStory(ctx context.Context, opts StoryOptions) (string, error) {
 		opts.Logger.Debug("prompt built", "id", id, "prompt_bytes", len(prompt))
 	}
 
+	progress.Start("Asking Claude")
+
 	output, err := opts.Provider.Generate(ctx, prompt)
 	if err != nil {
 		return "", err
@@ -79,7 +119,7 @@ func RunStory(ctx context.Context, opts StoryOptions) (string, error) {
 		slug = "untitled"
 	}
 
-	path, err := opts.Writer.Write(id, slug, output)
+	path, err = opts.Writer.Write(id, slug, output)
 	if err != nil {
 		return "", err
 	}
