@@ -2,7 +2,7 @@
 id: UI-006
 slug: shell-vscode-layout
 title: Shell VS Code-style — activity bar + sidebar collapsable + theming Kiro-inspired
-status: draft
+status: reviewed
 created: 2026-05-02
 updated: 2026-05-02
 owner: Thibaut Sannier
@@ -207,34 +207,25 @@ panneau droit séparé, accent violet sur les éléments actifs.
   *"Settings panel — UI-007 (à venir)"*. Pas de fonctionnalité
   réelle. Aucun crash.
 
-## Open Questions
+## Open Questions — toutes tranchées en revue 2026-05-02
 
-- [ ] **OQ1 — Activity bar à droite ou à gauche ?**
-  *(Reco : à gauche, conforme VS Code / Cursor / Zed. Le panneau droit
-  serait pour un futur "outline" ou "session" panel.)*
-- [ ] **OQ2 — Position du bouton Settings : bas de l'activity bar ou
-  en dehors ?**
-  *(Reco : bas, séparé du reste par un espace. Pattern VS Code.)*
-- [ ] **OQ3 — Tooltip d'activity bar : library shadcn ou custom CSS ?**
-  *(Reco : `npx shadcn add tooltip` — Radix-based, accessible,
-  cohérent avec Dialog UI-001c.)*
-- [ ] **OQ4 — Icônes : lucide-react existant suffit, ou besoin
-  d'icônes plus expressives (heroicons, tabler) ?**
-  *(Reco : lucide-react — déjà déps UI-001a, cohérent. Iconographie
-  validée à la revue du canvas.)*
-- [ ] **OQ5 — Persistance prefs : localStorage côté front ou
-  binding Go côté backend (`App.SaveUIPrefs`) ?**
-  *(Reco : localStorage en V1 — pas de besoin cross-projet, latence
-  zéro. Backend prefs = futur si on en a vraiment besoin.)*
-- [ ] **OQ6 — Animation collapse : largeur 0px (full collapse) ou
-  reste à ~24px (peek) ?**
-  *(Reco : full collapse à 0 — VS Code le fait. L'utilisateur
-  rouvre via l'activity bar, simple et clair.)*
-- [ ] **OQ7 — La palette Kiro doit-elle s'appliquer aussi au
-  `<NewStoryModal />` Dialog ?**
-  *(Reco : oui, cohérence visuelle. Les surfaces shadcn héritent du
-  theme via les variables CSS — il suffit de les modifier dans
-  `globals.css`, pas chaque composant.)*
+- [x] **OQ1 → A** : activity bar à **gauche**, conforme VS Code /
+  Cursor / Zed. Le panneau droit reste réservé pour un futur
+  "outline" / "session" panel.
+- [x] **OQ2 → A** : *Settings* en **bas** de l'activity bar, séparé
+  du reste par un espace. Pattern VS Code.
+- [x] **OQ3 → A** : tooltips via `npx shadcn add tooltip` (Radix,
+  accessible, cohérent avec Dialog UI-001c).
+- [x] **OQ4 → A** : icônes **lucide-react** (déjà déps UI-001a).
+  Mapping retenu : Stories `BookOpen`, Analyses `Lightbulb`, Canvas
+  `FileText`, Tests `CheckSquare`, Settings `Cog` ou `Settings`.
+- [x] **OQ5 → A** : persistance des prefs UI en **localStorage**
+  côté front. Pas de binding Go nouveau.
+- [x] **OQ6 → A** : animation collapse **full à 0px**. L'utilisateur
+  rouvre via l'activity bar.
+- [x] **OQ7 → A** : palette Kiro **s'applique aussi** au
+  `<NewStoryModal />` et au reste des surfaces shadcn via les
+  variables CSS de `globals.css` (héritage automatique).
 
 ## Notes
 
