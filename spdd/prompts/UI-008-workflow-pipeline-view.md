@@ -44,11 +44,18 @@ style validators).
       place du `<StoryViewer />`) quand `activeMode === 'workflow'`.
       Header sticky 5 colonnes (`Story` / `Analysis` / `Canvas` /
       `Implementation` / `Tests`), body lignes par `id` distinct.
-- [ ] **Cellules** : remplie = `<WorkflowCard />` avec `id`, slug
-      tronqué, badge status (réutilise `STATUS_BADGE` exporté
-      depuis `HubList.tsx`), date `updated`. Vide débloquée =
-      bouton `Plus`. Vide bloquée par gating = icône `Lock` grisée
-      avec tooltip "Complete previous stage first".
+- [ ] **Cellules** : pour chaque ligne, **une seule cellule
+      active** = celle de l'étape la plus avancée atteinte par
+      la feature (max index dans `KINDS = ['stories', 'analysis',
+      'prompts', 'tests']` où `row.cells[kind]` existe). Cellule
+      active = `<WorkflowCard />` avec `id`, slug tronqué, badge
+      status (`STATUS_BADGE` exporté depuis `HubList.tsx`), date
+      `updated`. Cellules avant l'active (étapes passées) =
+      placeholder discret `—`. Cellule immédiatement après
+      l'active = bouton `Plus` cliquable **si** status active
+      ≥ `reviewed` (gating progressif), sinon vide. Cellules
+      plus loin = vides (pas de Lock, on n'expose que la
+      prochaine action accessible).
 - [ ] **Click sur carte** → ouvre `<WorkflowDrawer />` (Sheet
       shadcn, drawer droit ~600px) avec `<StoryViewer />` à
       l'intérieur. Close au click hors / `Escape`.
@@ -212,17 +219,21 @@ style validators).
 > **un 6ᵉ store Zustand `useWorkflowStore` qui agrège les 4 kinds
 > en parallèle et indexe par `id`, un nouveau composant
 > `<WorkflowPipeline />` rendu en main content quand
-> `activeMode='workflow'`, du drag-and-drop accessible via dnd-kit
-> avec optimistic update, du gating canonique côté Go (nouveau
-> fichier `internal/artifacts/status.go` + 2 bindings
+> `activeMode='workflow'`, un rendu de ligne minimaliste
+> (une seule cellule active par feature, l'étape la plus avancée,
+> + un bouton `Plus` sur l'étape immédiatement suivante si gating
+> ouvert), du drag-and-drop accessible via dnd-kit avec
+> optimistic update, du gating canonique côté Go (nouveau fichier
+> `internal/artifacts/status.go` + 2 bindings
 > `UpdateArtifactStatus` / `AllowedTransitions`), et la règle
 > métier consommée par le frontend via la binding pour éviter
-> toute duplication**, plutôt que **(a) garder la navigation
-> par-kind et faire évoluer HubList**, **(b) implémenter le gating
-> côté frontend uniquement (risque de divergence)**, ou
-> **(c) introduire un store mega-state qui agrège tous les
-> artefacts en remplacement d'`useArtifactsStore`**, pour atteindre
-> **une vue Linear-style familiarité immédiate, gating Jira-style
+> toute duplication**, plutôt que **(a) afficher toutes les
+> cellules cross-kind en parallèle (visuellement chargé pour
+> peu d'info — l'historique est consultable via le viewer
+> markdown)**, **(b) garder la navigation par-kind et faire
+> évoluer HubList**, ou **(c) introduire un store mega-state**,
+> pour atteindre **une vue Linear-style minimaliste qui ne montre
+> que l'état courant + la prochaine action, gating Jira-style
 > robuste (validators backend), et zéro régression sur le hub
 > existant**, en acceptant **(a) une nouvelle dépendance
 > `@dnd-kit` ~14 KB gzip, (b) 3 nouveaux composants shadcn
@@ -735,18 +746,32 @@ style validators).
      - Body : `rows.map(row => <WorkflowRow row={row} />)`.
      - `<WorkflowDrawer />` rendu en dehors du tableau.
      - `<DragOverlay>` rendu au niveau `<DndContext>` enfant.
-  2. **`<WorkflowRow />`** :
+  2. **`<WorkflowRow />`** (rendu minimaliste révisé 2026-05-02) :
      - Props `{ row: WorkflowRow }`.
-     - Render 5 cellules : 4 `kind` + 1 dérivée Implementation.
-     - Pour chaque kind :
-       - `row.cells[kind]` existe → `<WorkflowCard artifact={...} kind={kind} />`
-       - Sinon : cellule vide. Gating calcule si débloqué (cell
-         précédente avec status ≥ reviewed) → bouton `Plus`
-         (ouvre `<CreateNextStageModal />`) ou icône `Lock`.
-     - Cellule "Implementation" :
+     - Calcule `mostAdvancedKind` = max index dans
+       `KINDS = ['stories', 'analysis', 'prompts', 'tests']` où
+       `row.cells[kind]` existe. Si aucune cellule → la ligne
+       n'est pas rendue (cas théorique, ne devrait pas arriver).
+     - Pour chaque kind, l'index `i` détermine le rendu :
+       - `i < mostAdvancedIdx` : cellule **passée**. Rendue
+         comme placeholder discret `—` centré, `text-muted-foreground`,
+         pas de carte, pas de Lock.
+       - `i === mostAdvancedIdx` : cellule **active**.
+         `<WorkflowCard artifact={row.cells[kind]} kind={kind} />`.
+       - `i === mostAdvancedIdx + 1` : cellule **prochaine action**.
+         Si `row.cells[mostAdvancedKind].Status` ∈ {reviewed,
+         accepted, implemented, synced} → bouton `Plus` cliquable
+         (gating ouvert) qui ouvre `<CreateNextStageModal />`.
+         Sinon (status = draft) → cellule vide.
+       - `i > mostAdvancedIdx + 1` : cellule **lointaine**.
+         Vide (pas de Lock, pas de Plus, on n'expose que la
+         prochaine action accessible).
+     - Cellule "Implementation" (5ᵉ colonne dérivée, à droite
+       de la colonne `Tests`) :
        - Si `row.cells.prompts?.Status === 'implemented' || === 'synced'` →
          badge `Implemented` vert.
-       - Sinon : marker neutre.
+       - Sinon : vide (pas de marker neutre redondant avec les
+         placeholders `—`).
   3. **`<WorkflowCard />`** :
      - Props `{ artifact: Meta, kind: string }`.
      - `useDraggable({ id: artifact.Path })` — pickup.
@@ -1003,3 +1028,14 @@ style validators).
   - Pipeline view layout : `<table>` HTML natif avec
     `border-separate` + sticky thead. ~10 features × 5 colonnes
     rendent fluidement sur le repo yukki actuel.
+- **2026-05-02 — `R — DoD` + `A — Approach` + `O8`** —
+  changement de comportement révisé post-implémentation :
+  rendu minimaliste de `<WorkflowRow />`. Désormais une seule
+  cellule active par ligne (l'étape la plus avancée), cellules
+  passées en `—` discret, cellule `+1` avec `Plus` si gating
+  ouvert, le reste vide. Justification UX : visuellement plus
+  lisible, l'historique reste accessible via le viewer markdown
+  au click sur la cellule active. Sections d'intention non
+  touchées (E / N / Safeguards). Status canvas : implemented
+  → reviewed (signal que le code n'est plus aligné, à
+  régénérer via /spdd-generate ciblé sur O8).

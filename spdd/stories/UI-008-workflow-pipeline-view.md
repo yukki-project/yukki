@@ -7,11 +7,11 @@ created: 2026-05-02
 updated: 2026-05-02
 owner: Thibaut Sannier
 modules:
-  - frontend
-  - root
+    - frontend
+    - root
 depends-on:
-  - UI-006-shell-vscode-layout
-  - UI-007-custom-titlebar-dark
+    - UI-006-shell-vscode-layout
+    - UI-007-custom-titlebar-dark
 ---
 
 # Vue pipeline SPDD — progression d'une feature à travers les étapes
@@ -82,12 +82,23 @@ ultérieure câblera l'appel direct).
     (groupement transverse aux 4 kinds). L'ordre par défaut est
     chronologique inverse (id le plus récent en haut, basé sur
     `updated:` du front-matter).
-  - Cellule (ligne × colonne) :
-    - Vide → cellule grisée avec icône `Lock` ou `Plus` selon
-      gating (cf. règles AC).
-    - Remplie → carte compacte avec : `id`, `slug` tronqué,
-      badge status coloré (draft/reviewed/accepted/implemented/synced),
-      et la date `updated`.
+  - **Une seule cellule active par ligne** = celle de l'**étape
+    la plus avancée** atteinte par la feature. Si la feature
+    a une analyse mais pas de canvas, l'analyse est la cellule
+    active. Si elle a un canvas implémenté, c'est lui. Cellule
+    active = carte compacte avec `id`, `slug` tronqué, badge
+    status coloré (draft/reviewed/accepted/implemented/synced),
+    date `updated`.
+  - **Cellules avant l'étape active** (étapes déjà passées) :
+    rendues comme un placeholder discret `—` (juste une ligne
+    horizontale grise). Pas de carte, pas de Lock. L'historique
+    reste lisible via le viewer markdown.
+  - **Cellule immédiatement après l'étape active** : si le
+    status de l'active est ≥ `reviewed` (gating), bouton `Plus`
+    cliquable pour créer la prochaine étape. Sinon vide.
+  - **Cellules plus loin** que l'étape active+1 : vides (pas
+    de Lock, pas de Plus — on ne montre que la prochaine action
+    accessible).
 - **Click sur une carte** → ouvre l'artefact dans le viewer en
   side panel (réutilise le `<StoryViewer />` actuel adapté pour
   s'afficher en overlay/drawer quand mode = workflow). Click hors
@@ -212,29 +223,36 @@ ultérieure câblera l'appel direct).
   `spdd/`. Au moins UI-001a, UI-001b, UI-001c, UI-006, UI-007
   sont visibles si le repo yukki est ouvert.
 
-### AC3 — Cartes affichent status badge coloré
+### AC3 — Une seule cellule active par feature (étape la plus avancée)
 
-- **Given** la vue pipeline ouverte
-- **When** je regarde une cellule remplie
-- **Then** elle affiche `id`, `slug` tronqué, et un badge coloré
-  selon le status :
-  - `draft` → gris (`bg-muted text-muted-foreground`)
-  - `reviewed` → bleu (`bg-blue-500/15 text-blue-300`)
-  - `accepted` → violet (`bg-purple-500/15 text-purple-300`)
-  - `implemented` → vert (`bg-green-500/15 text-green-300`)
-  - `synced` → teal (`bg-teal-500/15 text-teal-300`)
-  - (couleurs cohérentes avec `STATUS_BADGE` de `<HubList />`)
-
-### AC4 — Cellules vides montrent gating
-
-- **Given** une feature `UI-008` qui n'a qu'une story
-  (pas d'analyse ni de canvas)
+- **Given** la vue pipeline ouverte avec une feature qui a story
+  + analysis + canvas implémenté (ex. UI-007)
 - **When** je regarde sa ligne
-- **Then** la cellule colonne `Analysis` affiche un bouton
-  `Plus` cliquable (status story = `draft` ou plus, gating non
-  atteint car prerequisite story.draft existe). Les colonnes
-  `Canvas` / `Implementation` / `Tests` affichent un icône `Lock`
-  grisé avec tooltip "Complete previous stage first" (gating).
+- **Then** **seule** la cellule colonne `Canvas` affiche une
+  carte (= étape la plus avancée). Les colonnes `Story` et
+  `Analysis` montrent un placeholder discret `—` (passées). La
+  colonne `Implementation` montre `✓ implemented`. La colonne
+  `Tests` est vide.
+- La carte active affiche `id`, `slug` tronqué, et un badge
+  coloré selon le status (mapping `STATUS_BADGE` cohérent avec
+  `<HubList />`) : draft=gris, reviewed=bleu, accepted=violet,
+  implemented=vert, synced=teal.
+
+### AC4 — Bouton "Plus" uniquement sur l'étape immédiatement
+suivante (gating progressif)
+
+- **Given** une feature qui n'a qu'une story (UI-008 elle-même
+  au début)
+- **When** je regarde sa ligne
+- **Then** :
+  - cellule `Story` (= étape active) → carte avec status badge
+  - cellule `Analysis` (= étape immédiatement suivante) → bouton
+    `Plus` cliquable **si** la story a status ≥ `reviewed`
+    (gating progressif) ; sinon vide
+  - cellules `Canvas` / `Tests` → vides (pas de Lock, pas de Plus,
+    on n'expose que la prochaine action accessible)
+  - cellule `Implementation` → vide tant que canvas absent ou
+    pas en status `implemented`
 
 ### AC5 — Click sur carte ouvre le viewer en panel
 

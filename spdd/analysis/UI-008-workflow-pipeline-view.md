@@ -16,6 +16,14 @@ updated: 2026-05-02
 > Jira-style). Cette analyse complète avec les décisions
 > architecturales secondaires (D-D1..D-D8) révélées par le scan
 > du code existant.
+>
+> **Note 2026-05-02 (post-implem)** : la stratégie de rendu des
+> cellules a été simplifiée — désormais **une seule cellule
+> active par ligne** (l'étape la plus avancée), les cellules
+> antérieures rendent un placeholder `—`, la cellule `+1`
+> rend un `Plus` si gating ouvert, le reste est vide. Pas
+> d'impact sur les D-D existantes ; impact uniquement sur
+> O8 (WorkflowRow). Cf. canvas changelog.
 
 ## Mots-clés métier extraits
 

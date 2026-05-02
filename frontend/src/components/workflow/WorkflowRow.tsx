@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Lock, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkflowCard } from './WorkflowCard';
 import { CreateNextStageModal } from './CreateNextStageModal';
 import {
   IMPLEMENTATION_LABEL,
   KINDS,
-  previousStageOf,
   type StageKind,
 } from './stages';
 import { type WorkflowRow as WorkflowRowType } from '@/stores/workflow';
@@ -15,29 +14,36 @@ interface WorkflowRowProps {
   row: WorkflowRowType;
 }
 
-const REVIEWED_OR_BEYOND = new Set(['reviewed', 'accepted', 'implemented', 'synced']);
+const REVIEWED_OR_BEYOND = new Set([
+  'reviewed',
+  'accepted',
+  'implemented',
+  'synced',
+]);
 
-function canCreateStage(row: WorkflowRowType, target: StageKind): boolean {
-  const prev = previousStageOf(target);
-  if (!prev) return true; // 'stories' has no prerequisite
-  const prevCell = row.cells[prev];
-  return !!prevCell && REVIEWED_OR_BEYOND.has(prevCell.Status);
+function mostAdvancedIndex(row: WorkflowRowType): number {
+  let last = -1;
+  KINDS.forEach((kind, i) => {
+    if (row.cells[kind]) last = i;
+  });
+  return last;
 }
 
 export function WorkflowRow({ row }: WorkflowRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [targetKind, setTargetKind] = useState<StageKind>('analysis');
 
-  function openCreate(target: StageKind) {
-    setTargetKind(target);
+  const activeIdx = mostAdvancedIndex(row);
+  const activeKind = activeIdx >= 0 ? KINDS[activeIdx] : null;
+  const activeCell = activeKind ? row.cells[activeKind] : null;
+  const gatingOpen =
+    !!activeCell && REVIEWED_OR_BEYOND.has(activeCell.Status);
+  const sourceArtifact = activeCell ?? null;
+
+  function openCreate(kind: StageKind) {
+    setTargetKind(kind);
     setModalOpen(true);
   }
-
-  // Source artifact for the modal: the cell of the stage immediately before target.
-  const sourceArtifact = (() => {
-    const prev = previousStageOf(targetKind);
-    return prev ? row.cells[prev] ?? null : null;
-  })();
 
   const promptsCell = row.cells.prompts;
   const isImplemented =
@@ -50,59 +56,65 @@ export function WorkflowRow({ row }: WorkflowRowProps) {
         <th className="sticky left-0 z-10 w-32 bg-card px-3 py-2 text-left text-xs font-mono text-muted-foreground border-r border-border">
           {row.id}
         </th>
-        {KINDS.map((kind) => {
-          const cell = row.cells[kind];
-          if (cell) {
+        {KINDS.map((kind, i) => {
+          // Active cell : show the card.
+          if (i === activeIdx) {
             return (
               <td key={kind} className="p-2 align-top">
-                <WorkflowCard artifact={cell} kind={kind} />
+                <WorkflowCard artifact={row.cells[kind]!} kind={kind} />
               </td>
             );
           }
-          const unlocked = canCreateStage(row, kind);
-          return (
-            <td key={kind} className="p-2 align-top">
-              <button
-                type="button"
-                disabled={!unlocked}
-                onClick={() => unlocked && openCreate(kind)}
-                title={
-                  unlocked
-                    ? `Create ${kind}`
-                    : 'Complete previous stage first (status must be ≥ reviewed)'
-                }
-                className={cn(
-                  'flex h-16 w-full items-center justify-center rounded-md border border-dashed',
-                  unlocked
-                    ? 'border-primary/40 text-primary hover:bg-primary/10'
-                    : 'border-border text-muted-foreground/50 cursor-not-allowed',
-                )}
+          // Past cell : discreet placeholder.
+          if (i < activeIdx) {
+            return (
+              <td
+                key={kind}
+                className="p-2 align-middle text-center text-muted-foreground/40"
               >
-                {unlocked ? (
-                  <Plus className="h-4 w-4" />
-                ) : (
-                  <Lock className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </td>
-          );
+                —
+              </td>
+            );
+          }
+          // Next-action cell : Plus if gating open.
+          if (i === activeIdx + 1) {
+            return (
+              <td key={kind} className="p-2 align-top">
+                <button
+                  type="button"
+                  disabled={!gatingOpen}
+                  onClick={() => gatingOpen && openCreate(kind)}
+                  title={
+                    gatingOpen
+                      ? `Create ${kind}`
+                      : 'Mark previous stage as reviewed first'
+                  }
+                  className={cn(
+                    'flex h-16 w-full items-center justify-center rounded-md border border-dashed',
+                    gatingOpen
+                      ? 'border-primary/40 text-primary hover:bg-primary/10'
+                      : 'border-transparent text-muted-foreground/30 cursor-not-allowed',
+                  )}
+                >
+                  {gatingOpen && <Plus className="h-4 w-4" />}
+                </button>
+              </td>
+            );
+          }
+          // Far future cell : empty.
+          return <td key={kind} className="p-2 align-top" />;
         })}
         <td className="p-2 align-top">
-          <div
-            className={cn(
-              'flex h-16 w-full items-center justify-center rounded-md border text-xs',
-              isImplemented
-                ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-300'
-                : 'border-border text-muted-foreground/50',
-            )}
-            title={
-              isImplemented
-                ? `${IMPLEMENTATION_LABEL} ✓`
-                : `${IMPLEMENTATION_LABEL} pending`
-            }
-          >
-            {isImplemented ? '✓ implemented' : '—'}
-          </div>
+          {isImplemented ? (
+            <div
+              className="flex h-16 w-full items-center justify-center rounded-md border border-green-500/40 bg-green-500/10 text-xs text-green-700 dark:text-green-300"
+              title={`${IMPLEMENTATION_LABEL} ✓`}
+            >
+              ✓ implemented
+            </div>
+          ) : (
+            <div className="h-16" />
+          )}
         </td>
       </tr>
       <CreateNextStageModal
