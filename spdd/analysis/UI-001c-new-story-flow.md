@@ -3,7 +3,7 @@ id: UI-001c
 slug: new-story-flow
 story: spdd/stories/UI-001c-new-story-flow.md
 parent-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: draft
+status: reviewed
 created: 2026-05-02
 updated: 2026-05-02
 ---
