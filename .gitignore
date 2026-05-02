@@ -28,6 +28,16 @@ Thumbs.db
 /VISION.md
 /notes/
 
+# SPDD research review — local-only working corpus, not committed
+# (~50 000 mots produits par 14 agents Claude pour préparer SPDD v2 ;
+# matériel de réflexion personnel, ne doit pas vivre dans l'historique
+# du dépôt).
+/spdd/research/
+
+# PDF locaux générés depuis du markdown — sources versionnées, pas
+# les rendus.
+*.pdf
+
 # Wails / frontend artefacts
 /frontend/node_modules/
 # Vite build output. Keep .gitkeep so //go:embed all:frontend/dist
