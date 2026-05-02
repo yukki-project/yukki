@@ -2,12 +2,13 @@
 id: UI-007
 slug: custom-titlebar-dark
 title: Custom title bar minimaliste intégré au theming yukki dark
-status: draft
+status: reviewed
 created: 2026-05-02
 updated: 2026-05-02
 owner: yukki-frontend
 modules:
   - frontend
+  - root
 depends-on:
   - UI-006-shell-vscode-layout
 ---
@@ -44,14 +45,19 @@ HTML/CSS qui hérite du theming applicatif. UI-007 fait pareil pour yukki.
   premier dans le `<main>` de App.tsx (au-dessus du ClaudeBanner).
 - **Zone de drag** Wails (`--wails-draggable: drag`) couvrant la majorité
   de la barre titre — permet de déplacer la fenêtre par souris.
-- 3 boutons fenêtre **à droite**, convention Windows :
+- 3 boutons fenêtre **à droite**, convention Windows / VS Code :
   **minimize**, **maximize / restore**, **close**. Icônes lucide-react
   ou SVG inline minimalistes, palette yukki dark (hover discret sauf
   close → rouge destructive yukki).
 - **Double-clic** sur la zone drag → toggle maximize/restore (convention
   Windows native conservée).
-- Logo + label "yukki" à gauche de la barre titre, en `text-muted-foreground`
-  ou équivalent — densité visuelle légère.
+- **Logo yukki** (lapin, fichier `frontend/src/assets/yukki-logo.png`,
+  64×64 source affichée 20×20 dans la barre) **+ label "yukki"** à
+  gauche de la barre titre, label en `text-xs text-muted-foreground` —
+  densité visuelle légère.
+- **Wails app icon** (`build/appicon.png`, 1254×1254 PNG full-res) :
+  remplace l'icône par défaut Wails — utilisée pour la taskbar
+  Windows, Alt-Tab, et l'installer généré par `wails build`.
 - Bindings Wails minimalistes côté Go : `WindowMinimise`,
   `WindowToggleMaximise`, `WindowClose` (déjà disponibles dans
   `wailsjs/runtime` — pas de nouvelle binding métier à écrire).
@@ -150,38 +156,34 @@ HTML/CSS qui hérite du theming applicatif. UI-007 fait pareil pour yukki.
   changement de comportement. La title bar custom n'occulte pas le
   ClaudeBanner ni l'activity bar.
 
-## Open Questions
+## Open Questions — toutes tranchées en revue 2026-05-02
 
-- [ ] **OQ1** — Position des boutons fenêtre : à droite (convention Windows,
-      cohérent UI-006 / VS Code / Cursor) ou à gauche (convention macOS
-      pour ressembler à un IDE Mac) ?
-      — Reco **A** : à droite (Windows-first, le dev tourne sur Windows).
-- [ ] **OQ2** — Identité de gauche : label texte "yukki" simple, icône
-      SVG, ou label + icône ?
-      — Reco **A** : label texte simple "yukki" en `text-xs text-muted-foreground`,
-      pas d'icône en V1 (pas de logo SVG validé).
-- [ ] **OQ3** — Hauteur exacte de la title bar : 32px (Cursor / VS Code)
-      ou 28px (Discord / plus dense) ?
-      — Reco **A** : 32px (cohérent activity bar 52px et lisibilité du
-      texte yukki + boutons cliquables sans précision millimétrique).
-- [ ] **OQ4** — Logo applicatif yukki côté Wails (taskbar, alt-tab,
-      icône window) : on garde celui par défaut Wails pour V1, ou on
-      en fournit un yukki-friendly maintenant ?
-      — Reco **A** : on garde Wails default, story icône dédiée plus
-      tard si besoin.
-- [ ] **OQ5** — Boutons fenêtre cibles macOS/Linux (cas où un dev y
-      builderait yukki) : on conditionne par GOOS pour cacher la title
-      bar custom et laisser la chrome native, ou on impose la même
-      title bar custom partout ?
-      — Reco **A** : title bar custom partout (one-look), accepte que
-      Mac perde les boutons macOS gauche en V1 — UI-007.5 / OS-aware
-      en story future.
-- [ ] **OQ6** — Comportement quand la fenêtre est maximisée : on garde
-      la title bar custom au top (logique frameless) ou on rétrécit /
-      cache pour gagner du place ?
-      — Reco **A** : on garde, c'est ce que font VS Code / Cursor ;
-      cacher la title bar maximisée nécessiterait un mode séparé qui
-      détourne du minimalisme demandé.
+> Direction validée : **orienté VS Code** — quand un choix existe entre
+> conventions OS multiples, on suit VS Code en priorité.
+
+- [x] **OQ1 → A** : boutons fenêtre **à droite**, convention Windows /
+      VS Code / Cursor / Zed. Cohérent avec l'env de dev courant et
+      avec la barre des tâches Windows juste en dessous.
+- [x] **OQ2 → B** : **logo yukki + label "yukki"** à gauche de la
+      barre. Logo lapin fourni par l'utilisateur, sauvé en
+      `frontend/src/assets/yukki-logo.png` (64×64 redimensionné à 20px
+      dans le rendu). Label texte en `text-xs text-muted-foreground`
+      à droite du logo.
+- [x] **OQ3 → A** : hauteur **32px**, comme VS Code / Cursor. Lisibilité
+      texte + boutons cliquables sans précision millimétrique.
+- [x] **OQ4 → B** : **logo yukki en app icon Wails**. Le PNG full-res
+      (1254×1254) est sauvé en `build/appicon.png` — utilisé par
+      `wails build` pour la taskbar Windows, Alt-Tab, et l'installer
+      généré.
+- [x] **OQ5 → A** : title bar custom **partout V1** (Windows + Mac +
+      Linux). One-look type VS Code (qui fait pareil sur les 3 OS).
+      Mac users perdent les boutons natifs gauche en V1 — story
+      OS-aware (UI-007.5) si ça remonte en feedback.
+- [x] **OQ6 → A** : title bar **toujours visible** quand la fenêtre est
+      maximisée. Convention VS Code / Cursor / Zed. Cacher en
+      maximized ferait sortir du minimalisme et compliquerait l'UX
+      (sortir de plein écran demanderait un raccourci ou un move
+      souris en haut).
 
 ## Notes
 
@@ -194,9 +196,14 @@ HTML/CSS qui hérite du theming applicatif. UI-007 fait pareil pour yukki.
   `WindowMinimise()`, `WindowToggleMaximise()`, `WindowIsMaximised()`,
   `Quit()` ou `WindowClose()`.
 - Touche les Safeguards UI-006 : I5 (Backend Go = 0 changement) **est
-  levé** ici — `wails.json` et `main.go` sont modifiés (création de
-  `WindowOptions{Frameless: true, ...}`). À tracer dans l'analyse +
-  canvas UI-007.
+  levé** ici — `wails.json` et `main.go` (ou `ui.go`) sont modifiés
+  (création de `WindowOptions{Frameless: true, ...}` côté Go,
+  référence à `build/appicon.png`). À tracer dans l'analyse + canvas
+  UI-007.
+- Logo yukki : fourni par l'utilisateur le 2026-05-02 (PNG 1254×1254,
+  fond pêche arrondi, lapin). Sauvé en `build/appicon.png` (full-res
+  pour Wails) et `frontend/src/assets/yukki-logo.png` (64×64 pour
+  rendu HiDPI dans la title bar à 20px).
 - Risques pressentis (à creuser en `/spdd-analysis`) :
   - DPI scaling Windows + fenêtre frameless : bordures, snap zones.
   - Comportement maximize sur écran multi-moniteur (collage bords).
