@@ -1,7 +1,11 @@
-import { AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, Plus } from 'lucide-react';
 import { type Meta } from '../../../wailsjs/go/main/App';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
+import { useProjectStore } from '@/stores/project';
+import { NewStoryModal } from './NewStoryModal';
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -22,12 +26,26 @@ export function HubList({ className }: HubListProps) {
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
   const setSelectedPath = useArtifactsStore((s) => s.setSelectedPath);
   const kind = useArtifactsStore((s) => s.kind);
+  const projectDir = useProjectStore((s) => s.projectDir);
+
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
 
   return (
     <section className={cn('flex flex-col overflow-y-auto', className)} aria-label="Artefact list">
-      <header className="sticky top-0 bg-background border-b px-4 py-2 text-sm font-semibold capitalize">
-        {kind}
-        <span className="ml-2 text-xs text-muted-foreground">{items.length} item(s)</span>
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-background border-b px-4 py-2">
+        <div className="text-sm font-semibold capitalize">
+          {kind}
+          <span className="ml-2 text-xs text-muted-foreground">{items.length} item(s)</span>
+        </div>
+        {kind === 'stories' && (
+          <Button
+            size="sm"
+            onClick={() => setModalOpen(true)}
+            disabled={!projectDir}
+          >
+            <Plus className="mr-2 h-3 w-3" /> New Story
+          </Button>
+        )}
       </header>
       {error && (
         <div className="m-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -89,6 +107,7 @@ export function HubList({ className }: HubListProps) {
           </tbody>
         </table>
       )}
+      <NewStoryModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
   );
 }
