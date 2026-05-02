@@ -77,11 +77,26 @@ ultérieure câblera l'appel direct).
     **Canvas** / **Implementation** / **Tests**, qui correspondent
     aux 4 kinds SPDD (`stories`, `analysis`, `prompts`, `tests`)
     + un 5ᵉ marker "Implementation" déduit du status `implemented`
-    du canvas (pas un kind séparé).
+    du canvas (pas un kind séparé). **Pas de colonne "Feature"** —
+    l'`id` est déjà visible dans la `<WorkflowCard />` active,
+    inutile de doubler avec une colonne sticky qui crée un gros
+    scroll horizontal.
   - Lignes : **une par `id` distinct** trouvé dans le repo
-    (groupement transverse aux 4 kinds). L'ordre par défaut est
-    chronologique inverse (id le plus récent en haut, basé sur
-    `updated:` du front-matter).
+    (groupement transverse aux 4 kinds). L'ordre est piloté par
+    un champ `priority: int` (optionnel) sur le front-matter de
+    la **story** : tri ascending (priority 1 = en haut),
+    `priority: 0` ou champ absent = sort à la fin.
+    Tie-break : `updated desc` (cohérent avec UI-006).
+  - **Sur la gauche de chaque ligne** :
+    - Un petit numéro de position (`1.`, `2.`, ...) en
+      `text-muted-foreground/50` font-mono — feedback visuel
+      sur l'ordre actuel.
+    - Une drag handle (icône `GripVertical` lucide-react),
+      visible au hover, qui permet de drag-and-drop la ligne
+      verticalement pour réordonner. Pattern `dnd-kit
+      useSortable` sur les rows, distinct du
+      `useDraggable` existant sur les cards (handle dédié
+      pour éviter la confusion).
   - **Une seule cellule active par ligne** = celle de l'**étape
     la plus avancée** atteinte par la feature. Si la feature
     a une analyse mais pas de canvas, l'analyse est la cellule
@@ -133,24 +148,42 @@ ultérieure câblera l'appel direct).
     le menu UI (cohérence belt-and-suspenders).
   - Cellule verrouillée → curseur `not-allowed`, tooltip explicite,
     impossible d'y déposer une carte par drag.
-- **Backend Go** : nouvelle binding `UpdateArtifactStatus(path,
-  newStatus) error` qui :
-  1. Lit l'artefact via `artifacts.ParseArtifact` existant.
-  2. Valide la transition (`draft → reviewed`, `reviewed →
-     accepted`, ..., `implemented → synced`). Refuse les skips.
-  3. Réécrit le front-matter en place avec le nouveau status
-     et `updated` à la date du jour.
-  4. Retourne l'erreur ou `nil`.
-  - Tests unitaires Go pour les transitions valides + invalides
-    + gating cross-stage.
+- **Backend Go** :
+  - Nouvelle binding `UpdateArtifactStatus(path, newStatus) error` qui :
+    1. Lit l'artefact via `artifacts.ParseArtifact` existant.
+    2. Valide la transition (`draft → reviewed`, `reviewed →
+       accepted`, ..., `implemented → synced`). Refuse les skips.
+    3. Réécrit le front-matter en place avec le nouveau status
+       et `updated` à la date du jour.
+    4. Retourne l'erreur ou `nil`.
+    - Tests unitaires Go pour les transitions valides + invalides
+      + gating cross-stage.
+  - Nouvelle binding `UpdateArtifactPriority(path, priority int) error`
+    (mirror de `UpdateArtifactStatus` mais pour le champ `priority:`).
+    Pas de validation métier (priorité = entier libre, conventionnellement
+    >= 1, mais on accepte 0 = unset). Atomic write via `yaml.Node`
+    round-trip comme `UpdateArtifactStatus` (préserve les autres
+    champs). Bumpe `updated` à la date du jour aussi.
+  - **Extension de `Meta`** dans `internal/artifacts/lister.go` :
+    ajout du champ `Priority int yaml:"priority,omitempty"`. Si
+    le YAML n'a pas le champ, default 0 = unset.
 - **Frontend store** : nouveau `useWorkflowStore` (6ᵉ store,
   Invariant I6 d'UI-001b) qui :
   - Agrège les `Meta` de tous les kinds (4 appels parallèles à
     `ListArtifacts`).
   - Indexe par `id` pour produire les rows du pipeline.
   - Calcule l'état de gating (verrou cellule N+1).
+  - **Trie les rows par `row.cells.stories?.Priority` ascending**
+    (avec `0`/absent → `Infinity`, donc fin de liste), tie-break
+    `updated desc`.
   - Expose `advanceStatus(path, newStatus)` qui appelle la
     nouvelle binding Go et rafraîchit l'index.
+  - Expose `reorderRows(fromIdx, toIdx)` qui calcule le nouvel
+    ordre visuel post-drop, **renumérote** les priorités de
+    toutes les rows visibles (1..N), et batch-call
+    `UpdateArtifactPriority` pour chaque row dont la priorité
+    a changé. Optimistic update + rollback sur erreur (pattern
+    cohérent avec `advanceStatus`).
 - **Accessibilité** :
   - Tab navigue entre les cartes ; arrow keys déplacent dans la
     grille (left/right entre colonnes, up/down entre rows).
@@ -213,15 +246,19 @@ ultérieure câblera l'appel direct).
 - **Then** une 5ᵉ icône `Workflow` (lucide-react) est visible
   entre `Tests` et `Settings`. Tooltip "Workflow" au hover.
 
-### AC2 — Vue pipeline rendue avec swim-lanes
+### AC2 — Vue pipeline rendue avec swim-lanes (sans colonne Feature)
 
 - **Given** je clique sur l'icône `Workflow`
 - **When** la sidebar bascule sur ce mode
-- **Then** le main content affiche un tableau avec 5 colonnes
-  (Story / Analysis / Canvas / Implementation / Tests) en header
-  sticky, et une ligne par `id` SPDD distinct trouvé dans
-  `spdd/`. Au moins UI-001a, UI-001b, UI-001c, UI-006, UI-007
-  sont visibles si le repo yukki est ouvert.
+- **Then** le main content affiche un tableau avec **5 colonnes
+  uniquement** (Story / Analysis / Canvas / Implementation /
+  Tests) en header sticky. **Pas de colonne "Feature" ou "ID"
+  sticky leftmost** (l'`id` apparaît dans la cellule active de
+  chaque ligne, inutile de doubler). Une ligne par `id` SPDD
+  distinct trouvé dans `spdd/`. Au moins UI-001a, UI-001b,
+  UI-001c, UI-006, UI-007 sont visibles si le repo yukki est
+  ouvert. **Pas de scroll horizontal nécessaire** sur une
+  fenêtre de largeur normale (≥ 1200px).
 
 ### AC3 — Une seule cellule active par feature (étape la plus avancée)
 
@@ -338,6 +375,41 @@ suivante (gating progressif)
     keys déplacent l'overlay, `Space` ou `Enter` drop, `Escape`
     cancel
   - chaque transition annoncée dans une live region ARIA
+
+### AC12 — Drag-to-reorder des lignes via drag handle
+
+- **Given** la vue pipeline avec 3+ features visibles
+- **When** je drag-and-drop une ligne (depuis la drag handle
+  `GripVertical` à gauche) au-dessus ou en-dessous d'une autre
+- **Then** :
+  - la ligne se déplace visuellement à la nouvelle position
+    (animation 150ms ease-out)
+  - les priorités de toutes les rows visibles sont **renumérotées**
+    de `1` à `N` selon le nouvel ordre visuel (lazy : assigne
+    aussi des priorités aux rows qui n'en avaient pas)
+  - la binding Go `UpdateArtifactPriority(storyPath, priority)`
+    est appelée pour chaque row dont la priorité a changé
+  - le numéro de position visible à gauche de chaque ligne
+    (`1.`, `2.`, `3.`, ...) reflète l'ordre nouveau
+  - un toast court ("Reordered N items", 2s) confirme
+
+### AC13 — Numéro de position visible et tri par priority
+
+- **Given** la vue pipeline ouverte avec features ayant des
+  priorités diverses (ou toutes à 0 par défaut)
+- **When** je regarde la colonne gauche
+- **Then** chaque ligne affiche un petit numéro de position
+  (`1.`, `2.`, `3.`, ...) en `text-muted-foreground/50`
+  font-mono, **basé sur l'ordre visuel actuel** (rows triées
+  par `priority asc, updated desc`).
+- **And** sur première ouverture (toutes les stories ont
+  `priority: 0` par défaut, pas de champ dans le YAML), l'ordre
+  est entièrement piloté par `updated desc` — les numéros
+  reflètent juste cet ordre.
+- **And** dès que l'utilisateur fait un premier reorder
+  (AC12), toutes les rows visibles reçoivent une priorité
+  explicite (1..N), persistée dans le front-matter de leur
+  story respective (`priority: 1`, `priority: 2`, ...).
 
 ## Open Questions — toutes tranchées en revue 2026-05-02
 

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import {
   AllowedTransitions,
   ListArtifacts,
+  UpdateArtifactPriority,
   UpdateArtifactStatus,
   type Meta,
 } from '../../wailsjs/go/main/App';
@@ -24,9 +25,26 @@ interface WorkflowState {
 
   loadAll: () => Promise<void>;
   advanceStatus: (path: string, newStatus: string) => Promise<void>;
+  reorderRows: (fromIdx: number, toIdx: number) => Promise<void>;
   openDrawer: (path: string) => void;
   closeDrawer: () => void;
   getAllowed: (currentStatus: string) => Promise<string[]>;
+}
+
+function rowPriority(row: WorkflowRow): number {
+  const p = row.cells.stories?.Priority ?? 0;
+  return p > 0 ? p : Number.POSITIVE_INFINITY;
+}
+
+function sortRows(rows: WorkflowRow[]): WorkflowRow[] {
+  return [...rows].sort((a, b) => {
+    const pa = rowPriority(a);
+    const pb = rowPriority(b);
+    if (pa !== pb) return pa - pb;
+    if (a.updated < b.updated) return 1;
+    if (a.updated > b.updated) return -1;
+    return 0;
+  });
 }
 
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
@@ -57,9 +75,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
           byId.set(id, row);
         }
       });
-      const rows = Array.from(byId.values()).sort((a, b) =>
-        a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0,
-      );
+      const rows = sortRows(Array.from(byId.values()));
       set({ rows, loading: false });
     } catch (e) {
       set({ error: String(e), loading: false });
@@ -97,6 +113,52 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       const still = new Set(get().pendingUpdates);
       still.delete(path);
       set({ pendingUpdates: still });
+    }
+  },
+
+  reorderRows: async (fromIdx, toIdx) => {
+    const current = get().rows;
+    if (fromIdx === toIdx) return;
+    if (fromIdx < 0 || fromIdx >= current.length) return;
+    if (toIdx < 0 || toIdx >= current.length) return;
+
+    // Compute new visual order
+    const reordered = [...current];
+    const [moved] = reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, moved);
+
+    // Renumerate priorities 1..N over the new order
+    const updates: Array<{ path: string; priority: number; row: WorkflowRow }> = [];
+    const optimistic = reordered.map((row, idx) => {
+      const newPriority = idx + 1;
+      const story = row.cells.stories;
+      if (!story) {
+        return row; // orphan: no story, can't persist priority
+      }
+      const oldPriority = story.Priority ?? 0;
+      const newCells = { ...row.cells };
+      newCells.stories = { ...story, Priority: newPriority };
+      if (oldPriority !== newPriority) {
+        updates.push({ path: story.Path, priority: newPriority, row });
+      }
+      return { ...row, cells: newCells };
+    });
+
+    // Optimistic
+    set({ rows: optimistic });
+
+    try {
+      await Promise.all(
+        updates.map((u) => UpdateArtifactPriority(u.path, u.priority)),
+      );
+      // Re-sort to make sure the order matches priority asc (it should
+      // already, but defensive)
+      set({ rows: sortRows(optimistic) });
+      void useArtifactsStore.getState().refresh();
+    } catch (e) {
+      // Rollback
+      set({ rows: current, error: String(e) });
+      throw e;
     }
   },
 

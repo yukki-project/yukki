@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -466,4 +467,104 @@ func (a *App) AllowedTransitions(currentStatus string) []string {
 		out[i] = string(s)
 	}
 	return out
+}
+
+// UpdateArtifactPriority mutates the `priority:` field of the SPDD
+// artifact at `path`. priority must be >= 0 (0 = unset, sorts to
+// the end of the workflow pipeline). Bumps `updated:` to today's
+// date. Other front-matter fields and the body are preserved
+// (yaml.Node round-trip). UI-008 binding (post-implem update).
+func (a *App) UpdateArtifactPriority(path string, priority int) error {
+	if priority < 0 {
+		return fmt.Errorf("priority must be >= 0, got %d", priority)
+	}
+	if !strings.HasSuffix(path, ".md") {
+		return fmt.Errorf("not a markdown file: %s", path)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read artifact: %w", err)
+	}
+	content := string(raw)
+
+	if !strings.HasPrefix(content, "---") {
+		return fmt.Errorf("missing front-matter delimiter")
+	}
+	rest := content[3:]
+	if strings.HasPrefix(rest, "\r\n") {
+		rest = rest[2:]
+	} else if strings.HasPrefix(rest, "\n") {
+		rest = rest[1:]
+	}
+	end := strings.Index(rest, "\n---")
+	if end == -1 {
+		return fmt.Errorf("malformed front-matter: no closing ---")
+	}
+	yamlPart := rest[:end]
+	bodyOffset := 3 + (len(content) - 3 - len(rest)) + end + 4
+	body := content[bodyOffset:]
+
+	var root yaml.Node
+	if err := yaml.Unmarshal([]byte(yamlPart), &root); err != nil {
+		return fmt.Errorf("parse front-matter: %w", err)
+	}
+	if root.Kind != yaml.DocumentNode || len(root.Content) == 0 {
+		return fmt.Errorf("unexpected yaml structure")
+	}
+	mapping := root.Content[0]
+	if mapping.Kind != yaml.MappingNode {
+		return fmt.Errorf("front-matter is not a yaml mapping")
+	}
+
+	priorityStr := strconv.Itoa(priority)
+	today := time.Now().Format("2006-01-02")
+
+	var priorityNode, updatedNode *yaml.Node
+	for i := 0; i+1 < len(mapping.Content); i += 2 {
+		key := mapping.Content[i]
+		val := mapping.Content[i+1]
+		switch key.Value {
+		case "priority":
+			priorityNode = val
+		case "updated":
+			updatedNode = val
+		}
+	}
+	if priorityNode != nil {
+		priorityNode.Value = priorityStr
+		priorityNode.Tag = "!!int"
+	} else {
+		mapping.Content = append(mapping.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "priority", Tag: "!!str"},
+			&yaml.Node{Kind: yaml.ScalarNode, Value: priorityStr, Tag: "!!int"},
+		)
+	}
+	if updatedNode != nil {
+		updatedNode.Value = today
+	} else {
+		mapping.Content = append(mapping.Content,
+			&yaml.Node{Kind: yaml.ScalarNode, Value: "updated", Tag: "!!str"},
+			&yaml.Node{Kind: yaml.ScalarNode, Value: today, Tag: "!!str"},
+		)
+	}
+
+	newYaml, err := yaml.Marshal(mapping)
+	if err != nil {
+		return fmt.Errorf("marshal front-matter: %w", err)
+	}
+	final := "---\n" + strings.TrimRight(string(newYaml), "\n") + "\n---" + body
+
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, []byte(final), 0o644); err != nil {
+		return fmt.Errorf("write temp: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("atomic rename: %w", err)
+	}
+	if a.logger != nil {
+		a.logger.Info("artifact priority updated", "path", path, "priority", priority)
+	}
+	return nil
 }

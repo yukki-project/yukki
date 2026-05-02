@@ -48,3 +48,7 @@ export function UpdateArtifactStatus(path, newStatus) {
 export function AllowedTransitions(currentStatus) {
   return window['go']['uiapp']['App']['AllowedTransitions'](currentStatus);
 }
+
+export function UpdateArtifactPriority(path, priority) {
+  return window['go']['uiapp']['App']['UpdateArtifactPriority'](path, priority);
+}

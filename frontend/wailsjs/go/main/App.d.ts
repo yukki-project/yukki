@@ -19,6 +19,7 @@ export function SuggestedPrefixes(): Promise<string[]>;
 // UI-008
 export function UpdateArtifactStatus(path: string, newStatus: string): Promise<void>;
 export function AllowedTransitions(currentStatus: string): Promise<string[]>;
+export function UpdateArtifactPriority(path: string, priority: number): Promise<void>;
 
 export interface Meta {
   ID: string;
@@ -26,6 +27,7 @@ export interface Meta {
   Title: string;
   Status: string;
   Updated: string;
+  Priority?: number;
   Path: string;
   Error?: string;
 }

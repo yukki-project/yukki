@@ -41,7 +41,7 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: artifact.Path,
-      data: { kind, status, artifact },
+      data: { type: 'card', kind, status, artifact },
       disabled: isPending,
     });
 

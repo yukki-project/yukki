@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { WorkflowCard } from './WorkflowCard';
 import { CreateNextStageModal } from './CreateNextStageModal';
@@ -12,6 +14,7 @@ import { type WorkflowRow as WorkflowRowType } from '@/stores/workflow';
 
 interface WorkflowRowProps {
   row: WorkflowRowType;
+  index: number;
 }
 
 const REVIEWED_OR_BEYOND = new Set([
@@ -29,9 +32,26 @@ function mostAdvancedIndex(row: WorkflowRowType): number {
   return last;
 }
 
-export function WorkflowRow({ row }: WorkflowRowProps) {
+export function WorkflowRow({ row, index }: WorkflowRowProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [targetKind, setTargetKind] = useState<StageKind>('analysis');
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: row.id,
+    data: { type: 'row' },
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const activeIdx = mostAdvancedIndex(row);
   const activeKind = activeIdx >= 0 ? KINDS[activeIdx] : null;
@@ -52,12 +72,31 @@ export function WorkflowRow({ row }: WorkflowRowProps) {
 
   return (
     <>
-      <tr className="border-b border-border last:border-b-0">
-        <th className="sticky left-0 z-10 w-32 bg-card px-3 py-2 text-left text-xs font-mono text-muted-foreground border-r border-border">
-          {row.id}
-        </th>
+      <tr
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          'group border-b border-border last:border-b-0',
+          isDragging && 'opacity-40',
+        )}
+      >
+        <td className="w-12 px-1 py-2 align-middle">
+          <div className="flex items-center justify-center gap-1">
+            <span className="font-mono text-xs text-muted-foreground/50 w-4 text-right">
+              {index + 1}.
+            </span>
+            <button
+              type="button"
+              className="cursor-grab text-muted-foreground/30 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+              aria-label={`Drag to reorder ${row.id}`}
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          </div>
+        </td>
         {KINDS.map((kind, i) => {
-          // Active cell : show the card.
           if (i === activeIdx) {
             return (
               <td key={kind} className="p-2 align-top">
@@ -65,7 +104,6 @@ export function WorkflowRow({ row }: WorkflowRowProps) {
               </td>
             );
           }
-          // Past cell : discreet placeholder.
           if (i < activeIdx) {
             return (
               <td
@@ -76,7 +114,6 @@ export function WorkflowRow({ row }: WorkflowRowProps) {
               </td>
             );
           }
-          // Next-action cell : Plus if gating open.
           if (i === activeIdx + 1) {
             return (
               <td key={kind} className="p-2 align-top">
@@ -101,7 +138,6 @@ export function WorkflowRow({ row }: WorkflowRowProps) {
               </td>
             );
           }
-          // Far future cell : empty.
           return <td key={kind} className="p-2 align-top" />;
         })}
         <td className="p-2 align-top">

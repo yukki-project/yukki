@@ -35,6 +35,27 @@ style validators).
 
 ### Definition of Done
 
+- [ ] **Pas de colonne "Feature"/"ID" sticky leftmost**. Le tableau
+      affiche **5 colonnes uniquement** (Story / Analysis / Canvas /
+      Implementation / Tests). L'`id` reste visible dans la
+      `<WorkflowCard />` active. Pas de scroll horizontal sur une
+      fenêtre ≥ 1200px.
+- [ ] **Réorganisation des rows par drag-and-drop** :
+      - Drag handle `GripVertical` lucide-react à gauche de chaque
+        ligne, visible au hover.
+      - `dnd-kit useSortable` sur les rows (distinct du
+        `useDraggable` existant sur les cards : drag handle dédié
+        évite les conflits).
+      - Numéro de position visible (`1.`, `2.`, ...) en
+        `text-muted-foreground/50` font-mono à gauche de la
+        ligne.
+      - Au drop : `useWorkflowStore.reorderRows(fromIdx, toIdx)`
+        renumérote toutes les visible rows de 1..N selon le nouvel
+        ordre, batch-call `UpdateArtifactPriority` Go pour chaque
+        row dont la priorité a changé. Optimistic + rollback.
+- [ ] **Tri des rows** par `row.cells.stories?.Priority` ascending
+      (avec `0` ou champ absent → `Infinity`, donc fin de liste),
+      tie-break `updated desc`.
 - [ ] **Mode `Workflow`** ajouté dans `<ActivityBar />` en 5ᵉ slot
       principal (entre `Tests` et `Settings`). Icône `Workflow` ou
       `LayoutGrid` lucide-react. `ShellMode` étendu à 6 valeurs.
@@ -91,6 +112,13 @@ style validators).
         Updated, recolle au body, atomic write.
       - Méthode `(a *App) AllowedTransitions(currentStatus string)
         []string` exposée pour le frontend.
+      - Méthode `(a *App) UpdateArtifactPriority(path string,
+        priority int) error` (mirror de UpdateArtifactStatus,
+        sans validation métier sauf `priority >= 0`). Bumpe
+        `updated` à la date du jour. Atomic write.
+      - **Extension `Meta`** dans `internal/artifacts/lister.go`
+        avec `Priority int yaml:"priority,omitempty"`. Default 0
+        (champ absent dans le YAML → 0).
 - [ ] **Frontend store** `useWorkflowStore` (6ᵉ store, Invariant
       I6 UI-001b) :
       - `rows: WorkflowRow[]` (indexé par `id`, agrégation
@@ -104,6 +132,10 @@ style validators).
       - `advanceStatus` appelle `UpdateArtifactStatus` Go binding,
         update optimistic, rollback sur erreur, refresh
         `useArtifactsStore` (D-D7 double refresh).
+      - `reorderRows(fromIdx, toIdx)` calcule le nouvel ordre
+        visuel post-drop, renumérote toutes les visible rows
+        (1..N), batch-call `UpdateArtifactPriority` pour chaque
+        row dont la priority a changé. Optimistic + rollback.
 - [ ] **Stubs Wails** : `frontend/wailsjs/go/main/App.{d.ts,js}`
       étendus avec `UpdateArtifactStatus` et `AllowedTransitions`
       (pattern AV-workaround UI-001a/c/UI-007).
@@ -741,17 +773,36 @@ style validators).
   1. **`<WorkflowPipeline />`** :
      - Mount → `useEffect(() => { loadAll(); }, [])`.
      - Render `<DndContext onDragEnd={...}>` englobant le tableau.
-     - Header sticky : `STAGES.map(s => <th>{s.label}</th>)` +
-       `<th>Implementation</th>`.
-     - Body : `rows.map(row => <WorkflowRow row={row} />)`.
+       `onDragEnd` différencie selon `active.data.current.type` :
+       `'row'` → `reorderRows(fromIdx, toIdx)`, `'card'` → no-op
+       V1 (drag de card sans drop target → retour origine).
+     - Wrap le `<tbody>` dans `<SortableContext items={rows.map(r => r.id)} strategy={verticalListSortingStrategy}>`.
+     - Header : **5 colonnes uniquement** — `STAGES.map(s => <th>{s.label}</th>)`
+       + `<th>Implementation</th>`. **Pas de colonne "Feature"
+       sticky leftmost** (l'`id` est dans la card active).
+     - Body : `rows.map(row => <WorkflowRow row={row} index={i} />)`.
      - `<WorkflowDrawer />` rendu en dehors du tableau.
-     - `<DragOverlay>` rendu au niveau `<DndContext>` enfant.
-  2. **`<WorkflowRow />`** (rendu minimaliste révisé 2026-05-02) :
-     - Props `{ row: WorkflowRow }`.
+     - `<DragOverlay>` rendu au niveau `<DndContext>` enfant
+       (preview de la row draggée).
+  2. **`<WorkflowRow />`** (rendu minimaliste révisé 2026-05-02,
+      drag-handle ajouté 2026-05-03) :
+     - Props `{ row: WorkflowRow, index: number }`.
+     - `useSortable({ id: row.id, data: { type: 'row' } })` →
+       `attributes`, `listeners`, `setNodeRef`, `transform`,
+       `transition`. Les `listeners` sont posés UNIQUEMENT sur
+       le bouton drag handle (cf. ci-dessous), pas sur le `<tr>`
+       entier — sinon click sur les cards déclenche le drag de row.
      - Calcule `mostAdvancedKind` = max index dans
        `KINDS = ['stories', 'analysis', 'prompts', 'tests']` où
        `row.cells[kind]` existe. Si aucune cellule → la ligne
        n'est pas rendue (cas théorique, ne devrait pas arriver).
+     - **Première cellule (sans en-tête)** : drag handle column
+       avec :
+       - Numéro de position visible : `<span className="font-mono text-xs text-muted-foreground/50">{index + 1}.</span>`
+       - Bouton drag handle : `<button {...attributes} {...listeners}><GripVertical className="h-4 w-4 text-muted-foreground/40 group-hover:text-muted-foreground" /></button>`
+         — visible discrètement au repos, plus clair au hover.
+       - Largeur fixe ~48px (compact, pas une "colonne" sticky
+         comme avant).
      - Pour chaque kind, l'index `i` détermine le rendu :
        - `i < mostAdvancedIdx` : cellule **passée**. Rendue
          comme placeholder discret `—` centré, `text-muted-foreground`,
@@ -900,6 +951,66 @@ style validators).
      - cellule vide bloquée → icône Lock, tooltip
 - **Tests** : aucun automatisé en plus.
 
+### O11 — Priority field + binding `UpdateArtifactPriority`
+
+> Ajouté via `/spdd-prompt-update` 2026-05-03 — changement de
+> comportement (drag-to-reorder rows + numéro de position visible).
+
+- **Module** : `internal/artifacts` + `internal/uiapp` + stubs Wails
+- **Fichiers** :
+  - `internal/artifacts/lister.go` (modif minimale — ajout 1 champ
+    au struct `Meta`)
+  - `internal/uiapp/app.go` (modif — méthode ajoutée)
+  - `frontend/wailsjs/go/main/App.{d.ts,js}` (modif — 1 stub
+    ajouté chacun)
+- **Diff `lister.go`** :
+  ```diff
+    type Meta struct {
+        ID       string `yaml:"id"`
+        Slug     string `yaml:"slug"`
+        Title    string `yaml:"title"`
+        Status   string `yaml:"status"`
+        Updated  string `yaml:"updated"`
+  +     Priority int    `yaml:"priority,omitempty"`
+        Path     string `yaml:"-"`
+        Error    error  `yaml:"-"`
+    }
+  ```
+- **Signature Go `UpdateArtifactPriority`** (à ajouter à
+  `internal/uiapp/app.go` après `AllowedTransitions`) :
+  ```go
+  // UpdateArtifactPriority mutates the `priority:` field of the
+  // SPDD artifact at `path`. priority must be >= 0 (0 = unset,
+  // sorts to the end of the workflow pipeline). Bumps `updated:`
+  // to today's date. Other front-matter fields and the body are
+  // preserved (yaml.Node round-trip).
+  // UI-008 binding (post-implem update).
+  func (a *App) UpdateArtifactPriority(path string, priority int) error
+  ```
+- **Comportement** :
+  1. Validation : `priority < 0` → erreur immédiate.
+  2. Read file at `path`. Front-matter parse via `yaml.Node`.
+  3. Find/create the `priority:` scalar. Set value to
+     `strconv.Itoa(priority)`. Tag `!!int`.
+  4. Find/create `updated:` scalar. Set to today (ISO).
+  5. Re-marshal the mapping. Recombine `---\n` + yaml + `\n---`
+     + body.
+  6. Atomic write (temp + rename).
+  7. Return nil.
+- **Stubs Wails** (`App.d.ts` + `App.js` ajout) :
+  ```typescript
+  // App.d.ts
+  export function UpdateArtifactPriority(path: string, priority: number): Promise<void>;
+  ```
+  ```javascript
+  // App.js
+  export function UpdateArtifactPriority(path, priority) {
+    return window['go']['uiapp']['App']['UpdateArtifactPriority'](path, priority);
+  }
+  ```
+- **Tests** : aucun automatisé en V1 (cohérent UI-008 V1).
+  Validation manuelle via AC12-AC13.
+
 ---
 
 ## N — Norms
@@ -1039,3 +1150,26 @@ style validators).
   touchées (E / N / Safeguards). Status canvas : implemented
   → reviewed (signal que le code n'est plus aligné, à
   régénérer via /spdd-generate ciblé sur O8).
+- **2026-05-03 — `R — DoD` + `A — Approach` + `O7` + `O8` +
+  nouvelle `O11`** — changement de comportement (cf.
+  `/spdd-prompt-update` 2026-05-03) :
+  - **Suppression de la colonne "Feature" sticky leftmost** —
+    créait un gros scroll horizontal pour info redondante (l'`id`
+    est déjà dans la card active). Le tableau a maintenant 5
+    colonnes uniquement (Story / Analysis / Canvas / Implementation
+    / Tests).
+  - **Réorganisation des rows par drag-and-drop** — chaque row
+    a un drag handle `GripVertical` à gauche (compact ~48px, pas
+    une colonne) + numéro de position visible (`1.`, `2.`, ...)
+    en `text-muted-foreground/50` font-mono.
+  - **Nouvelle Operation O11** — `Meta.Priority int` ajouté au
+    struct `internal/artifacts/lister.go`, nouvelle binding Go
+    `UpdateArtifactPriority(path, priority int) error` (mirror de
+    `UpdateArtifactStatus`), stubs Wails étendus.
+  - **`useWorkflowStore`** trie par `cells.stories?.Priority`
+    asc (0/absent → ∞), tie-break `updated desc`. Nouvelle
+    action `reorderRows(fromIdx, toIdx)` qui renumérote toutes
+    les visible rows de 1..N et batch-update via la binding.
+  - Sections d'intention E / N / Safeguards non touchées.
+    Status canvas : implemented → reviewed (régénérer code
+    ciblé sur O7 + O8 + O11).

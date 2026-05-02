@@ -34,13 +34,14 @@ var allowedKinds = []string{"stories", "analysis", "prompts", "tests"}
 // Path is absolute when filepath.Abs succeeds (the common case); on
 // failure it falls back to the path as-built by filepath.Join.
 type Meta struct {
-	ID      string `yaml:"id"`
-	Slug    string `yaml:"slug"`
-	Title   string `yaml:"title"`
-	Status  string `yaml:"status"`
-	Updated string `yaml:"updated"`
-	Path    string `yaml:"-"`
-	Error   error  `yaml:"-"`
+	ID       string `yaml:"id"`
+	Slug     string `yaml:"slug"`
+	Title    string `yaml:"title"`
+	Status   string `yaml:"status"`
+	Updated  string `yaml:"updated"`
+	Priority int    `yaml:"priority,omitempty"`
+	Path     string `yaml:"-"`
+	Error    error  `yaml:"-"`
 }
 
 // AllowedKinds returns a fresh copy of the artifact-kind whitelist

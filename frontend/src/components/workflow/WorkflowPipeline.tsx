@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -8,7 +8,10 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { useState } from 'react';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { useToast } from '@/hooks/use-toast';
 import { useWorkflowStore } from '@/stores/workflow';
 import { WorkflowRow } from './WorkflowRow';
@@ -16,14 +19,22 @@ import { WorkflowDrawer } from './WorkflowDrawer';
 import { IMPLEMENTATION_LABEL, STAGES } from './stages';
 import { type Meta } from '../../../wailsjs/go/main/App';
 
+interface DragData {
+  type: 'card' | 'row';
+  status?: string;
+  artifact?: Meta;
+}
+
 export function WorkflowPipeline() {
   const rows = useWorkflowStore((s) => s.rows);
   const loading = useWorkflowStore((s) => s.loading);
   const error = useWorkflowStore((s) => s.error);
   const loadAll = useWorkflowStore((s) => s.loadAll);
   const advanceStatus = useWorkflowStore((s) => s.advanceStatus);
+  const reorderRows = useWorkflowStore((s) => s.reorderRows);
   const getAllowed = useWorkflowStore((s) => s.getAllowed);
   const [activeArtifact, setActiveArtifact] = useState<Meta | null>(null);
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -35,38 +46,67 @@ export function WorkflowPipeline() {
   }, [loadAll]);
 
   function onDragStart(e: DragStartEvent) {
-    const data = e.active.data.current as { artifact?: Meta } | undefined;
-    setActiveArtifact(data?.artifact ?? null);
+    const data = e.active.data.current as DragData | undefined;
+    if (data?.type === 'row') {
+      setActiveRowId(String(e.active.id));
+    } else {
+      setActiveArtifact(data?.artifact ?? null);
+    }
   }
 
   async function onDragEnd(e: DragEndEvent) {
+    const data = e.active.data.current as DragData | undefined;
     setActiveArtifact(null);
-    if (!e.over) return;
-    const path = String(e.active.id);
-    const targetStatus = String(e.over.id).split(':').pop() ?? '';
-    const data = e.active.data.current as { status?: string } | undefined;
-    if (!data || !targetStatus || targetStatus === data.status) return;
-    const allowed = await getAllowed(data.status ?? '');
-    if (!allowed.includes(targetStatus)) {
-      toast({
-        title: 'Invalid transition',
-        description: `Cannot go from ${data.status} to ${targetStatus}`,
-        variant: 'destructive',
-      });
+    setActiveRowId(null);
+
+    // Row reorder
+    if (data?.type === 'row' && e.over && e.active.id !== e.over.id) {
+      const fromIdx = rows.findIndex((r) => r.id === e.active.id);
+      const toIdx = rows.findIndex((r) => r.id === e.over!.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+      try {
+        await reorderRows(fromIdx, toIdx);
+        toast({
+          title: 'Reordered',
+          description: `Moved ${e.active.id} to position ${toIdx + 1}.`,
+        });
+      } catch (err) {
+        toast({
+          title: 'Reorder failed',
+          description: String(err),
+          variant: 'destructive',
+        });
+      }
       return;
     }
-    try {
-      await advanceStatus(path, targetStatus);
-      toast({
-        title: 'Status updated',
-        description: `${data.status} → ${targetStatus}`,
-      });
-    } catch (err) {
-      toast({
-        title: 'Update failed',
-        description: String(err),
-        variant: 'destructive',
-      });
+
+    // Card status change (V1 has no drop targets, this is a no-op for now)
+    if (data?.type === 'card' && e.over) {
+      const path = String(e.active.id);
+      const targetStatus = String(e.over.id).split(':').pop() ?? '';
+      if (!targetStatus || targetStatus === data.status) return;
+      const allowed = await getAllowed(data.status ?? '');
+      if (!allowed.includes(targetStatus)) {
+        toast({
+          title: 'Invalid transition',
+          description: `Cannot go from ${data.status} to ${targetStatus}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      try {
+        await advanceStatus(path, targetStatus);
+        toast({
+          title: 'Status updated',
+          description: `${data.status} → ${targetStatus}`,
+        });
+      } catch (err) {
+        toast({
+          title: 'Update failed',
+          description: String(err),
+          variant: 'destructive',
+        });
+      }
     }
   }
 
@@ -97,37 +137,42 @@ export function WorkflowPipeline() {
     );
   }
 
+  const activeRow = activeRowId ? rows.find((r) => r.id === activeRowId) : null;
+
   return (
     <section
       aria-label="Workflow pipeline"
       className="flex flex-1 flex-col overflow-auto"
     >
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
-          <thead className="sticky top-0 z-20 bg-card">
-            <tr>
-              <th className="w-32 px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-r border-border">
-                Feature
-              </th>
-              {STAGES.map((s) => (
-                <th
-                  key={s.kind}
-                  className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border"
-                >
-                  {s.label}
+        <SortableContext
+          items={rows.map((r) => r.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+            <thead className="sticky top-0 z-20 bg-card">
+              <tr>
+                <th className="w-12 px-1 py-2 border-b border-border" aria-label="Reorder" />
+                {STAGES.map((s) => (
+                  <th
+                    key={s.kind}
+                    className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border"
+                  >
+                    {s.label}
+                  </th>
+                ))}
+                <th className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+                  {IMPLEMENTATION_LABEL}
                 </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <WorkflowRow key={row.id} row={row} index={i} />
               ))}
-              <th className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border">
-                {IMPLEMENTATION_LABEL}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <WorkflowRow key={row.id} row={row} />
-            ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </SortableContext>
         <DragOverlay>
           {activeArtifact ? (
             <div className="rounded-md border border-primary bg-card p-2 text-xs shadow-lg shadow-primary/30">
@@ -137,6 +182,10 @@ export function WorkflowPipeline() {
               <div className="text-foreground line-clamp-1">
                 {activeArtifact.Title}
               </div>
+            </div>
+          ) : activeRow ? (
+            <div className="rounded-md border border-primary bg-card px-3 py-2 text-xs shadow-lg shadow-primary/30">
+              <span className="font-mono text-foreground">{activeRow.id}</span>
             </div>
           ) : null}
         </DragOverlay>

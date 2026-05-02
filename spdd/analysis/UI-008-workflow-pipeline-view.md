@@ -24,6 +24,20 @@ updated: 2026-05-02
 > rend un `Plus` si gating ouvert, le reste est vide. Pas
 > d'impact sur les D-D existantes ; impact uniquement sur
 > O8 (WorkflowRow). Cf. canvas changelog.
+>
+> **Note 2026-05-03 (post-implem)** : (a) la colonne Feature
+> sticky leftmost a été supprimée — l'`id` est déjà visible dans
+> la cellule active, et la colonne sticky créait un gros scroll
+> horizontal. (b) Ajout de la **réorganisation des lignes
+> par drag-and-drop** : nouveau champ `priority: int` sur le
+> front-matter de la story, nouvelle binding Go
+> `UpdateArtifactPriority(path, priority)` (mirror de
+> `UpdateArtifactStatus`), `Meta.Priority int` ajouté au struct,
+> `useWorkflowStore` étendu avec `reorderRows(fromIdx, toIdx)`
+> (renumérotation lazy de toutes les visible rows). UI : drag
+> handle `GripVertical` à gauche de chaque row + numéro de
+> position visible. Pas d'impact sur les D-D existantes ;
+> nouvelle Operation O11 ajoutée au canvas.
 
 ## Mots-clés métier extraits
 
