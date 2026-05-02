@@ -3,7 +3,7 @@ id: UI-006
 slug: shell-vscode-layout
 story: spdd/stories/UI-006-shell-vscode-layout.md
 analysis: spdd/analysis/UI-006-shell-vscode-layout.md
-status: draft
+status: implemented
 created: 2026-05-02
 updated: 2026-05-02
 ---
@@ -748,3 +748,18 @@ l'API React des composants existants.
 - **2026-05-02 — création** — canvas v1 issu de l'analyse UI-006
   reviewed, 7 OQs (story) + 8 D-D (analyse) toutes en reco par
   défaut. 8 Operations livrables.
+- **2026-05-02 — implementation** — O1..O7 livrés. O8 no-op
+  (HubList rend correctement dans 240px). Ajustements internes
+  vs canvas : (a) `tailwind.config.js` étendu avec
+  `spacing.13 = 3.25rem` (la classe `w-13` annoncée par le
+  canvas n'existe pas dans la scale Tailwind par défaut, qui
+  saute de `w-12` à `w-14` ; on garde donc `w-13` côté JSX
+  conformément au canvas en l'ajoutant à la theme — pas
+  d'arbitrary value). (b) `useShellStore` augmenté d'un
+  hook `onRehydrateStorage` qui appelle `setKind` après
+  rehydration depuis localStorage si `activeMode` ∈ SPDD_KINDS,
+  pour que `useArtifactsStore.kind` soit aligné dès le mount —
+  sinon AC1/AC2 cassent au second lancement quand
+  `activeMode` rehydraté ≠ `'stories'` (default kind). Reste
+  dans Invariant I4 (useShellStore = unique caller). `tsc
+  --noEmit` ✓, `vite build` ✓.
