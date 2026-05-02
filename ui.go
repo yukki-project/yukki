@@ -41,9 +41,10 @@ func newUICmd() *cobra.Command {
 			app := uiapp.NewApp(prov, logger)
 
 			err := wails.Run(&options.App{
-				Title:  "yukki",
-				Width:  1280,
-				Height: 800,
+				Title:     "yukki",
+				Width:     1280,
+				Height:    800,
+				Frameless: true,
 				AssetServer: &assetserver.Options{
 					Assets: frontend.Assets,
 				},

@@ -3,7 +3,7 @@ id: UI-007
 slug: custom-titlebar-dark
 story: spdd/stories/UI-007-custom-titlebar-dark.md
 analysis: spdd/analysis/UI-007-custom-titlebar-dark.md
-status: reviewed
+status: implemented
 created: 2026-05-02
 updated: 2026-05-02
 ---
@@ -659,6 +659,14 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
   Go + 1 nouveau composant + 1 ligne App.tsx + vérifications). 7
   invariants Safeguards. 1 OQ résiduelle (visibilité TitleBar pendant
   ProjectPicker) à arbitrer en `/spdd-generate`.
+- **2026-05-02 — implementation** — O1..O5 livrés (ordre O1 → O5 →
+  O2 → O3 → O4). Ajustement vs canvas : ajout d'un fichier
+  `frontend/src/vite-env.d.ts` (`/// <reference types="vite/client" />`)
+  pour typer l'import PNG du logo via Vite — fichier qui aurait dû
+  exister depuis UI-001a (oversight scaffolding Vite, type-only,
+  zéro runtime impact). `tsc --noEmit` ✓, `vite build` ✓ (logo
+  bundlé en 4.86 KB hashé), `wails build -tags mock` ✓ (32.8s,
+  binaire 12.8 MB).
 - **2026-05-02 — `O — Operations` + `N — Norms` + `S — Structure`** —
   fix import path stub Wails runtime révélé à l'implémentation.
   Le canvas v1 annonçait import depuis `wailsjs/wailsjs/runtime/runtime`
