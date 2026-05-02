@@ -220,7 +220,8 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
 | `wails.json` | **nul** | la config frameless se fait dans Go via `options.App.Frameless` |
 | `cmd/yukki/` (s'il existe) / `main.go` | **nul** | aucun changement |
 | `ui_mock.go` / `ui_prod.go` | **nul** | aucun changement |
-| `frontend/wailsjs/runtime/*.d.ts` | **nul** | bindings déjà exposés |
+| `frontend/wailsjs/runtime/runtime.d.ts` | **modif minimale** | extension stub : ajout des signatures `WindowMinimise`, `WindowToggleMaximise`, `Quit` (pattern AV-workaround comme `App.d.ts`) |
+| `frontend/wailsjs/runtime/runtime.js` | **création** | nouveau fichier stub : wrappers `window['runtime'][...]()` pour les 3 bindings (pendant `App.js`) |
 | `frontend/src/styles/globals.css` | **nul** | pas de nouvelle classe utilitaire (D-D3 = inline) |
 | `frontend/package.json` / `package-lock.json` | **nul** | aucune dépendance ajoutée |
 | Tous les composants UI-006 (`<ActivityBar />`, `<SidebarPanel />`, `<HubList />`, `<StoryViewer />`, `<ClaudeBanner />`, `<NewStoryModal />`, `<ProjectPicker />`) | **nul** | API et code inchangés |
@@ -281,8 +282,12 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
 
 ## O — Operations
 
-> Ordre amont → aval. Chaque Operation livrable indépendamment en
-> 1 commit atomique.
+> Ordre d'exécution : **O1 → O5 → O2 → O3 → O4**. O5 (extension du
+> stub Wails runtime) doit précéder O2 (qui en consomme les exports),
+> mais a été ajouté après coup via `/spdd-prompt-update` 2026-05-02
+> donc reste numéroté à la fin pour préserver la traçabilité des
+> Operations existantes. Chaque Operation livrable indépendamment
+> en 1 commit atomique.
 
 ### O1 — Frameless dans `ui.go`
 
@@ -329,7 +334,7 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
     Quit,
     WindowMinimise,
     WindowToggleMaximise,
-  } from '../../../wailsjs/wailsjs/runtime/runtime';
+  } from '../../../wailsjs/runtime/runtime';
 
   const DRAG_REGION: CSSProperties = {
     // Wails v2 contract : la propriété CSS custom --wails-draggable
@@ -484,6 +489,60 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
      - hover sur close → fond rouge destructive
 - **Tests** : aucun automatisé. Manuel uniquement (cohérent UI-006).
 
+### O5 — Étendre le stub Wails runtime (prérequis O2)
+
+> Ajouté via `/spdd-prompt-update` 2026-05-02 — révélé à
+> l'implémentation : le stub `frontend/wailsjs/runtime/runtime.d.ts`
+> est vide (`export {};`), pas le `wailsjs/wailsjs/runtime/runtime`
+> auto-regénéré (untracked). Pattern AV-workaround à appliquer comme
+> `frontend/wailsjs/go/main/App.{d.ts,js}`.
+
+- **Module** : `frontend/wailsjs/runtime`
+- **Fichiers** :
+  - `frontend/wailsjs/runtime/runtime.d.ts` (modif minimale —
+    extension du stub vide existant)
+  - `frontend/wailsjs/runtime/runtime.js` (création — stub
+    JS qui délègue à `window.runtime[...]`)
+- **Signatures `runtime.d.ts`** :
+  ```typescript
+  // AV-WORKAROUND STUB — see App.d.ts pattern.
+  // Wails runtime bindings used by UI-007 TitleBar.
+  // Wails overwrites this file cleanly once the AV exclusion is in place.
+
+  export function WindowMinimise(): void;
+  export function WindowToggleMaximise(): void;
+  export function Quit(): void;
+  ```
+- **Signatures `runtime.js`** :
+  ```javascript
+  // @ts-check
+  // AV-WORKAROUND STUB — see runtime.d.ts.
+
+  export function WindowMinimise() {
+    return window['runtime']['WindowMinimise']();
+  }
+
+  export function WindowToggleMaximise() {
+    return window['runtime']['WindowToggleMaximise']();
+  }
+
+  export function Quit() {
+    return window['runtime']['Quit']();
+  }
+  ```
+- **Comportement** :
+  1. Le `.d.ts` étend le stub vide existant en déclarant les 3
+     bindings utilisés par `<TitleBar />` (O2). Pas d'autres
+     bindings (on n'expose que ce qui est consommé).
+  2. Le `.js` crée le wrapper qui appelle `window['runtime'][name]()`,
+     populé au runtime par Wails (équivalent du pattern
+     `window['go']['uiapp']['App']` utilisé pour les bindings Go).
+  3. Le commentaire d'en-tête explicite le caractère AV-workaround
+     pour que les futurs devs comprennent (et que Wails écrase ces
+     fichiers une fois l'exclusion AV en place).
+- **Tests** : aucun. Validation indirecte via O2 (TitleBar import
+  doit type-checker) et O4 (`tsc --noEmit` doit passer).
+
 ---
 
 ## N — Norms
@@ -501,9 +560,11 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
   Surcharge via `className="h-8 w-12 rounded-none"` pour aligner sur
   la title bar.
 - **Wails bindings** : import direct depuis
-  `frontend/wailsjs/wailsjs/runtime/runtime` (notez le double
-  `wailsjs/wailsjs/` — c'est la convention chemin actuelle du repo).
-  Pas de wrapper.
+  `frontend/wailsjs/runtime/runtime` (single `wailsjs/`, pattern
+  AV-workaround stubs hand-written committés — cf. UI-001a). Le
+  répertoire `frontend/wailsjs/wailsjs/runtime/` est l'auto-regénéré
+  par `wails build` (untracked, ignoré). Pas de wrapper côté
+  composant.
 - **Accessibilité** : `aria-label` sur `<header>` ("Title bar") et sur
   chaque `<Button>` ("Minimize", "Maximize", "Close"). Pas de tooltip
   visible (D-D2) mais l'aria-label suffit pour les screen readers.
@@ -598,3 +659,14 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
   Go + 1 nouveau composant + 1 ligne App.tsx + vérifications). 7
   invariants Safeguards. 1 OQ résiduelle (visibilité TitleBar pendant
   ProjectPicker) à arbitrer en `/spdd-generate`.
+- **2026-05-02 — `O — Operations` + `N — Norms` + `S — Structure`** —
+  fix import path stub Wails runtime révélé à l'implémentation.
+  Le canvas v1 annonçait import depuis `wailsjs/wailsjs/runtime/runtime`
+  (double, répertoire auto-regénéré untracked) — corrigé en
+  `wailsjs/runtime/runtime` (single, stub AV-workaround committé).
+  Ajout d'**Operation O5** "Étendre le stub Wails runtime" qui doit
+  s'exécuter avant O2 (le stub vide existant ne ré-exporte rien).
+  Ordre d'exécution : O1 → O5 → O2 → O3 → O4. Section Structure mise
+  à jour pour refléter modif de `runtime.d.ts` + création de
+  `runtime.js`. Aucun changement comportemental — pure correction
+  d'intégration côté repo (pattern AV-workaround manqué en analyse).
