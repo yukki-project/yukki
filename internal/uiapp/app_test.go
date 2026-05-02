@@ -455,12 +455,9 @@ func TestApp_RunStory_AbortMidFlight(t *testing.T) {
 		done <- result{path, err}
 	}()
 
-	// wait until runStoryCancel is set, then abort
-	deadline := time.Now().Add(time.Second)
-	for app.runStoryCancel == nil && time.Now().Before(deadline) {
-		time.Sleep(time.Millisecond)
-	}
-	if app.runStoryCancel == nil {
+	// wait until runStoryCancel is set, then abort. Read under
+	// cancelMu so the race detector is happy.
+	if !waitCancelArmed(app, time.Second) {
 		t.Fatal("runStoryCancel never set within 1s")
 	}
 	if err := app.AbortRunning(); err != nil {
@@ -480,6 +477,22 @@ func TestApp_RunStory_AbortMidFlight(t *testing.T) {
 	}
 }
 
+// waitCancelArmed polls (under cancelMu) until runStoryCancel is set
+// or the deadline elapses. Returns true if armed.
+func waitCancelArmed(app *App, within time.Duration) bool {
+	deadline := time.Now().Add(within)
+	for time.Now().Before(deadline) {
+		app.cancelMu.Lock()
+		armed := app.runStoryCancel != nil
+		app.cancelMu.Unlock()
+		if armed {
+			return true
+		}
+		time.Sleep(time.Millisecond)
+	}
+	return false
+}
+
 func TestApp_RunStory_ShutdownDuringGeneration(t *testing.T) {
 	mock := &provider.MockProvider{
 		Response:   stubStoryUIC,
@@ -494,9 +507,8 @@ func TestApp_RunStory_ShutdownDuringGeneration(t *testing.T) {
 		done <- err
 	}()
 
-	deadline := time.Now().Add(time.Second)
-	for app.runStoryCancel == nil && time.Now().Before(deadline) {
-		time.Sleep(time.Millisecond)
+	if !waitCancelArmed(app, time.Second) {
+		t.Fatal("runStoryCancel never set within 1s")
 	}
 	app.OnShutdown(context.Background())
 

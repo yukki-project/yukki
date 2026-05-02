@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -85,9 +86,16 @@ type App struct {
 	// returns true (a generation is already in progress).
 	running atomic.Bool
 
+	// cancelMu protects runStoryCancel against concurrent read by
+	// AbortRunning (called from another goroutine, e.g. the Wails JS
+	// callback path) while RunStory writes it. atomic.Bool was not
+	// enough on its own because runStoryCancel is a non-atomic
+	// context.CancelFunc.
+	cancelMu sync.Mutex
+
 	// runStoryCancel is the cancel function of the per-generation
 	// sub-context derived from a.ctx. AbortRunning calls this. Reset
-	// to nil on RunStory return.
+	// to nil on RunStory return. Read/write only under cancelMu.
 	runStoryCancel context.CancelFunc
 }
 
@@ -291,9 +299,13 @@ func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, e
 		parent = context.Background()
 	}
 	runStoryCtx, cancel := context.WithCancel(parent)
+	a.cancelMu.Lock()
 	a.runStoryCancel = cancel
+	a.cancelMu.Unlock()
 	defer func() {
+		a.cancelMu.Lock()
 		a.runStoryCancel = nil
+		a.cancelMu.Unlock()
 		cancel()
 	}()
 
@@ -314,9 +326,16 @@ func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, e
 // AbortRunning cancels the in-flight generation, if any. Idempotent
 // no-op if nothing is running. Distinct from OnShutdown so the user
 // can abandon without closing the window (D-C3).
+//
+// Read of runStoryCancel is protected by cancelMu (paired with the
+// write in RunStory) to avoid the data race the -race detector
+// catches under concurrent UI-callback / abort scenarios.
 func (a *App) AbortRunning() error {
-	if a.runStoryCancel != nil {
-		a.runStoryCancel()
+	a.cancelMu.Lock()
+	cancel := a.runStoryCancel
+	a.cancelMu.Unlock()
+	if cancel != nil {
+		cancel()
 	}
 	return nil
 }
