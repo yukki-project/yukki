@@ -32,31 +32,35 @@
     --radius: 0.5rem;
   }
 
+  /* UI-006 — palette yukki dark (dark forced V1, D-D3) */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 240 10% 11%;        /* ~#1A1A1F */
+    --foreground: 240 5% 95%;         /* ~#F0F0F2 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 13%;              /* ~#1F1F26 surface */
+    --card-foreground: 240 5% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --popover: 240 10% 13%;
+    --popover-foreground: 240 5% 95%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --primary: 263 70% 65%;           /* ~#8B5CF6 violet */
+    --primary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --secondary: 240 8% 18%;          /* surface élevée */
+    --secondary-foreground: 240 5% 95%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 240 8% 18%;
+    --muted-foreground: 240 5% 65%;   /* ~#9CA3AF */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: 240 8% 22%;
+    --accent-foreground: 240 5% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 8% 22%;             /* ~#2E2E36 */
+    --input: 240 8% 22%;
+    --ring: 263 70% 65%;              /* violet ring focus */
   }
 }
 

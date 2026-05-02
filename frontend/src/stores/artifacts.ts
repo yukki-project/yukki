@@ -16,6 +16,7 @@ export const useArtifactsStore = create<ArtifactsState>((set, get) => ({
   items: [],
   selectedPath: '',
   error: null,
+  // @internal — call only via useShellStore.setActiveMode (UI-006 I4)
   setKind: (k) => {
     set({ kind: k, selectedPath: '' });
     void get().refresh();
