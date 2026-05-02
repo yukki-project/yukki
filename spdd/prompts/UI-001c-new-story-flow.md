@@ -4,7 +4,7 @@ slug: new-story-flow
 story: spdd/stories/UI-001c-new-story-flow.md
 analysis: spdd/analysis/UI-001c-new-story-flow.md
 family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
-status: implemented
+status: synced
 created: 2026-05-02
 updated: 2026-05-02
 ---
@@ -290,6 +290,7 @@ Le tout sans toucher la CLI.
 | `frontend/src/components/hub/HubList.tsx` | + bouton *New Story* en header (disabled si `!projectDir`) | modification minimale |
 | `frontend/src/App.tsx` | aucun changement (le modal est consommé depuis HubList) | nul |
 | `frontend/package.json` | éventuellement `+ @radix-ui/react-dialog` si pas déjà tiré par shadcn add | dépendance shadcn |
+| `ui_mock.go` (root, `//go:build mock`) | `MockProvider` reçoit un `Response: mockStoryStub` (story stub déterministe) pour que `wails build -tags mock` produise une story valide en bout de chaîne | dev-only, hors prod |
 | `cmd/yukki`, `internal/artifacts`, `internal/templates`, `internal/clilog`, `internal/provider/claude.go` | aucun changement | nul |
 
 ### Schéma de flux
@@ -707,17 +708,19 @@ Le tout sans toucher la CLI.
 
   // Subscribe to a Wails event. Returns an unsubscribe function.
   export function EventsOn<T>(name: string, handler: (payload: T) => void): () => void
-
-  // Emit (rarely used from frontend; primarily backend → frontend in SPDD)
-  export function EventsEmit(name: string, payload: unknown): void
   ```
 - **Comportement** :
-  - Wrapper hand-written sur `window.runtime.EventsOn` et
-    `window.runtime.EventsOff` que Wails injecte dans la fenêtre.
-    Cohérent avec le pattern stubs `App.{d.ts,js}` (D-B8b).
-  - `EventsOn` retourne une fonction qui appelle
-    `window.runtime.EventsOff(name, handler)` au moment du cleanup.
-  - Type-paramétré pour que les callsite récupèrent un payload typé.
+  - Wrapper hand-written sur `window.runtime.EventsOn` que Wails 2.x
+    injecte dans la fenêtre.
+  - **Wails 2.x EventsOn retourne directement la fonction
+    d'unsubscribe** ; le wrapper la forward simplement (pas besoin
+    d'appeler EventsOff manuellement). Si le runtime n'est pas
+    disponible (cas exceptionnel : fenêtre détruite, bridge non
+    initialisé), retourne un no-op `() => {}` pour ne pas planter.
+  - Type-paramétré pour que les callsite récupèrent un payload typé
+    via cast `data[0] as T` à la frontière.
+  - Pas de wrapper `EventsEmit` : les events flow ne va que backend
+    → frontend dans SPDD ; pas de cas d'usage symétrique en V1.
 - **Tests** : aucun ; validation via `tsc --noEmit`.
 
 ### O7 — `frontend/src/components/ui/dialog.tsx` (shadcn add)
@@ -811,17 +814,27 @@ Le tout sans toucher la CLI.
      - Return une cleanup function appelant les unsubscribes.
   4. Lecture `useClaudeStore.status.Available` pour disabled du
      bouton *Generate* + tooltip "Install Claude CLI first".
-  5. Fonction `handleGenerate` :
+  5. Fonction `handleGenerate` (Promise-first, events = enhancement) :
      - Validation min côté front : description non-vide.
      - `effectivePrefix = prefix === '__custom__' ? customPrefix.trim() : prefix`.
-     - `useGenerationStore.reset()` puis le store sera mis en
-       'running' par l'event `provider:start`.
-     - `try { await RunStory(description, effectivePrefix, strictPrefix) }
-       catch (e) { useGenerationStore.fail(String(e)) }`.
-     - Le payload `provider:end` arrive aussi en parallèle ; les deux
-       chemins (catch + event) ont le même résultat (set phase=error
-       avec le même message). Pas de double-rendering — `set` est
-       idempotent.
+     - **Optimistically** : `startGen('Asking Claude')` *avant* d'awaiter
+       la promesse, pour que le spinner soit visible immédiatement même
+       si le listener `provider:start` n'est pas encore prêt (cas où le
+       runtime Wails s'initialise après le premier render React).
+       Le backend overwrite ce label live par l'event `provider:start`
+       quand il arrive.
+     - `try { const path = await RunStory(description, effectivePrefix,
+       strictPrefix) ; succeedGen(path, 0) ; refreshArtifacts() ;
+       setSelectedPath(path) ; onOpenChange(false) }
+       catch (e) { failGen(String(e)) }`.
+     - **Promise = source of truth** : le path retourné par RunStory
+       drive l'auto-close et le refresh ; les events restent actifs
+       comme enhancement (label live pendant `running`) mais ne sont
+       pas requis pour le flow nominal. Robustesse : si l'event
+       `provider:end` est manqué (race au mount), la Promise garantit
+       quand même le succeed/fail. `durationMs=0` côté Promise (le
+       backend l'envoie via l'event `provider:end` si ce dernier est
+       reçu en parallèle ; idempotent set).
   6. Fonction `handleAbort` : `await AbortRunning()`. Le store
      phase reviendra à 'error' via `provider:end{success:false,
      error:"context canceled"}`.
@@ -987,3 +1000,35 @@ Le tout sans toucher la CLI.
 - **2026-05-02 — création** — canvas v1 issu de l'analyse UI-001c
   reviewed, 15 décisions D-C1..D-C15 toutes en reco par défaut
   (validées en revue interactive). 10 Operations livrables.
+
+- **2026-05-02 — sync v2** — refactor pur post-`/spdd-generate`,
+  comportement utilisateur inchangé. 3 dérives consignées :
+
+  - **O6** : wrapper `EventsOn` simplifié — Wails 2.x EventsOn retourne
+    directement la fonction d'unsubscribe, plus besoin d'`EventsOff`
+    manuellement. Bug fix sur le wrapper original qui n'installait pas
+    le listener si `window.runtime` n'était pas prêt au mount React
+    (no-op silencieux). Comportement spec préservé : un listener
+    actif au mount, une cleanup function à l'unmount.
+
+  - **O9** : `handleGenerate` rendu *Promise-first* avec events comme
+    enhancement. Avant : flux entièrement event-driven (phase running
+    set par `provider:start`, auto-close par `provider:end`). Après :
+    `startGen('Asking Claude')` optimiste avant `await RunStory()`,
+    `succeedGen(path, 0)` sur Promise resolved, `failGen` sur
+    rejection. Les events restent abonnés et mettent à jour le label
+    live (enhancement). Effet utilisateur identique (spinner →
+    close → hub refresh) ; robustesse accrue si listener pas prêt
+    ou event manqué.
+
+  - **`ui_mock.go`** : `MockProvider.Response = mockStoryStub`
+    ajouté. Hors canvas (dev-tool config), mais nécessaire pour que
+    `wails build -tags mock` produise une story valide en sortie
+    de `Writer.Write` (sinon `Generate` retournait `""` et
+    `ValidateFrontmatter` rejetait — le mode mock était cassé pour
+    le flow `/spdd-story`). Pas de modif comportementale en prod
+    (build sans `-tags mock` utilise `ClaudeProvider`).
+
+  Aucune section d'intention (R / E / A / N / Safeguards) modifiée.
+  Tests Go inchangés et toujours verts (29/29). Status `implemented
+  → synced`.

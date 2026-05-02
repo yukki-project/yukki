@@ -1,6 +1,6 @@
 // AV-WORKAROUND STUB — wrapper around the Wails runtime events API
-// (window.runtime.EventsOn / EventsOff). Hand-written to keep typing
-// strict and to surface UI-001c payloads as first-class TS interfaces.
+// (window.runtime.EventsOn). Hand-written to keep typing strict and to
+// surface UI-001c payloads as first-class TS interfaces.
 
 export interface ProviderStartPayload {
   label: string;
@@ -14,8 +14,7 @@ export interface ProviderEndPayload {
 }
 
 interface WailsRuntime {
-  EventsOn: (eventName: string, callback: (...data: unknown[]) => void) => void;
-  EventsOff: (eventName: string, ...handlers: Array<(...data: unknown[]) => void>) => void;
+  EventsOn: (eventName: string, callback: (...data: unknown[]) => void) => () => void;
 }
 
 declare global {
@@ -28,18 +27,16 @@ declare global {
  * Subscribe to a Wails event. Returns an unsubscribe function the
  * caller MUST invoke at component unmount.
  *
- * Wails passes the payload as the first variadic argument; we cast
- * to T at the boundary and trust the wire contract.
+ * Wails 2.x EventsOn returns the unsubscribe function directly — we
+ * forward it. If the runtime is not ready at call time, we no-op
+ * (the caller will retry on next render).
  */
 export function EventsOn<T>(name: string, handler: (payload: T) => void): () => void {
-  if (typeof window === 'undefined' || !window.runtime) {
+  if (typeof window === 'undefined' || !window.runtime?.EventsOn) {
     return () => {};
   }
-  const wrapped = (...data: unknown[]) => {
+  const cancel = window.runtime.EventsOn(name, (...data: unknown[]) => {
     handler(data[0] as T);
-  };
-  window.runtime.EventsOn(name, wrapped);
-  return () => {
-    window.runtime?.EventsOff(name, wrapped);
-  };
+  });
+  return typeof cancel === 'function' ? cancel : () => {};
 }

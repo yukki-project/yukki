@@ -103,10 +103,24 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
     phase !== 'running';
 
   async function handleGenerate() {
+    // Optimistically set phase=running so the spinner shows immediately
+    // even if the provider:start event arrives late (or never, e.g.
+    // events listener not yet wired). The backend will overwrite this
+    // via provider:start with a richer label.
+    startGen('Asking Claude');
     try {
-      await RunStory(description, effectivePrefix, strictPrefix);
-      // success path: provider:end event will close the modal.
+      const path = await RunStory(description, effectivePrefix, strictPrefix);
+      // Promise resolved with a path → success. Use the Promise as the
+      // source of truth (events are best-effort enhancement for live
+      // label updates).
+      succeedGen(path, 0);
+      void refreshArtifacts();
+      if (path) setSelectedPath(path);
+      onOpenChange(false);
     } catch (e) {
+      // Promise rejected → failure. Use the rejected error as the
+      // message; the provider:end event with the same error will be
+      // ignored (idempotent set).
       failGen(String(e));
     }
   }
