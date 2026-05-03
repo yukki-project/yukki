@@ -106,14 +106,20 @@ ultérieure câblera l'appel direct).
     date `updated`.
   - **Cellules avant l'étape active** (étapes déjà passées) :
     rendues comme un placeholder discret `—` (juste une ligne
-    horizontale grise). Pas de carte, pas de Lock. L'historique
-    reste lisible via le viewer markdown.
-  - **Cellule immédiatement après l'étape active** : si le
-    status de l'active est ≥ `reviewed` (gating), bouton `Plus`
-    cliquable pour créer la prochaine étape. Sinon vide.
-  - **Cellules plus loin** que l'étape active+1 : vides (pas
-    de Lock, pas de Plus — on ne montre que la prochaine action
-    accessible).
+    horizontale grise). Pas de carte. L'historique reste
+    lisible via le viewer markdown.
+  - **Cellule immédiatement après l'étape active** :
+    **drop target** pour drag-and-drop (zone dashed discrète au
+    repos, surlignée violet `bg-primary/10` + `border-primary`
+    quand une carte la survole pendant un drag). **Pas de
+    bouton `Plus`** — la création de l'étape suivante se fait
+    uniquement par drop de la carte active sur cette cellule.
+    Si gating fermé (status active < `reviewed`), le drop est
+    refusé silencieusement (toast destructive "Mark <stage> as
+    reviewed first").
+  - **Cellules plus loin** que l'étape active+1 : vides
+    complètement (pas de drop target — on n'expose que la
+    prochaine étape).
 - **Click sur une carte** → ouvre l'artefact dans le viewer en
   side panel (réutilise le `<StoryViewer />` actuel adapté pour
   s'afficher en overlay/drawer quand mode = workflow). Click hors
@@ -130,13 +136,17 @@ ultérieure câblera l'appel direct).
   implemented / synced`. Les transitions invalides (skip) sont
   **désactivées** dans le menu (grisées + tooltip "Cannot skip
   status — go through reviewed first").
-- **Création d'étape suivante (V1 read-only trigger)** : click
-  sur une cellule **vide** → modal qui affiche :
+- **Création d'étape suivante (V1 read-only trigger)** :
+  drag-and-drop la carte active sur la cellule drop target
+  immédiatement à droite → modal qui affiche :
   - Le nom de la commande slash à exécuter (`/spdd-analysis`,
     `/spdd-reasons-canvas`, ...) avec un bouton "Copy command"
   - Le chemin de l'artefact source (à copier avec)
   - **Pas** d'exécution AI directe en V1 (Scope Out, story
     future câblera l'appel via Claude Agent SDK).
+  - **Plus de bouton `Plus`** : la seule manière de déclencher
+    cette modal est le drop. Cohérence "tout est drag" avec le
+    reorder de rows (qui utilise aussi dnd-kit).
 - **Gating progressif** (règle dure, partagée code+UI) :
   - Une cellule colonne N+1 reste **verrouillée** tant que la
     cellule colonne N (même `id`) n'a pas un status ≥ `reviewed`
@@ -275,19 +285,26 @@ ultérieure câblera l'appel direct).
   `<HubList />`) : draft=gris, reviewed=bleu, accepted=violet,
   implemented=vert, synced=teal.
 
-### AC4 — Bouton "Plus" uniquement sur l'étape immédiatement
-suivante (gating progressif)
+### AC4 — Drop target sur l'étape immédiatement suivante
+(gating progressif)
 
 - **Given** une feature qui n'a qu'une story (UI-008 elle-même
   au début)
 - **When** je regarde sa ligne
 - **Then** :
-  - cellule `Story` (= étape active) → carte avec status badge
-  - cellule `Analysis` (= étape immédiatement suivante) → bouton
-    `Plus` cliquable **si** la story a status ≥ `reviewed`
-    (gating progressif) ; sinon vide
-  - cellules `Canvas` / `Tests` → vides (pas de Lock, pas de Plus,
-    on n'expose que la prochaine action accessible)
+  - cellule `Story` (= étape active) → carte avec status badge,
+    draggable
+  - cellule `Analysis` (= étape immédiatement suivante) →
+    **drop target** : zone dashed discrète au repos (border
+    `border-border/50`), surlignée `bg-primary/10` +
+    `border-primary` pendant le hover d'un drag. **Pas de
+    bouton `Plus`**. Drop d'une carte → ouverture de la modal
+    "Create analysis" si gating ouvert (story.status ≥
+    reviewed), sinon toast destructive "Mark stories as
+    reviewed first" et drop refusé.
+  - cellules `Canvas` / `Tests` → vides (pas de drop target,
+    pas de bouton — on n'expose que la prochaine étape
+    accessible)
   - cellule `Implementation` → vide tant que canvas absent ou
     pas en status `implemented`
 
@@ -340,17 +357,24 @@ suivante (gating progressif)
   affichée comme toast destructive dans l'UI. Le front-matter
   n'est pas modifié.
 
-### AC9 — Cellule "Create analysis" affiche modal slash command
+### AC9 — Drop sur cellule next-stage affiche modal slash command
 
 - **Given** UI-008 a une story `reviewed` mais pas d'analyse
-- **When** je clique sur la cellule vide colonne `Analysis`
+- **When** je drag la carte story et la drop sur la cellule
+  drop target colonne `Analysis`
 - **Then** un modal shadcn Dialog s'ouvre avec :
-  - Titre "Create analysis for UI-008"
-  - Texte explicatif "V1 : copy this command and run it via Claude Code"
-  - Code block monospace `\/spdd-analysis spdd/stories/UI-008-workflow-pipeline-view.md`
+  - Titre "Create next stage"
+  - Texte explicatif référençant l'`id` de la feature
+  - Code block monospace
+    `\/spdd-analysis spdd/stories/UI-008-workflow-pipeline-view.md`
   - Bouton `Copy command` qui copie dans le clipboard
   - Bouton `Close`
+  - Disclaimer "Coming in a future version: this will run
+    automatically."
   - **Pas** d'exécution AI directe (Scope Out V1)
+- **And** si la story a status `draft` au moment du drop, le
+  modal **ne s'ouvre pas** ; un toast destructive apparaît
+  ("Mark stories as reviewed first").
 
 ### AC10 — Pas de régression UI-006/007
 

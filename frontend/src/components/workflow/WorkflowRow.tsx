@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { GripVertical, Plus } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
+import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { WorkflowCard } from './WorkflowCard';
-import { CreateNextStageModal } from './CreateNextStageModal';
 import {
   IMPLEMENTATION_LABEL,
   KINDS,
@@ -32,10 +31,32 @@ function mostAdvancedIndex(row: WorkflowRowType): number {
   return last;
 }
 
-export function WorkflowRow({ row, index }: WorkflowRowProps) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [targetKind, setTargetKind] = useState<StageKind>('analysis');
+interface NextStageDropTargetProps {
+  row: WorkflowRowType;
+  kind: StageKind;
+  gatingOpen: boolean;
+}
 
+function NextStageDropTarget({ row, kind, gatingOpen }: NextStageDropTargetProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `${row.id}:next:${kind}`,
+    data: { type: 'next-stage-target', rowId: row.id, kind, gatingOpen },
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex h-16 w-full items-center justify-center rounded-md border border-dashed transition-colors',
+        isOver && gatingOpen && 'border-primary bg-primary/10',
+        isOver && !gatingOpen && 'border-destructive/50 bg-destructive/10',
+        !isOver && 'border-border/40',
+      )}
+      aria-label={`Drop card here to create ${kind}`}
+    />
+  );
+}
+
+export function WorkflowRow({ row, index }: WorkflowRowProps) {
   const {
     attributes,
     listeners,
@@ -58,12 +79,6 @@ export function WorkflowRow({ row, index }: WorkflowRowProps) {
   const activeCell = activeKind ? row.cells[activeKind] : null;
   const gatingOpen =
     !!activeCell && REVIEWED_OR_BEYOND.has(activeCell.Status);
-  const sourceArtifact = activeCell ?? null;
-
-  function openCreate(kind: StageKind) {
-    setTargetKind(kind);
-    setModalOpen(true);
-  }
 
   const promptsCell = row.cells.prompts;
   const isImplemented =
@@ -71,94 +86,73 @@ export function WorkflowRow({ row, index }: WorkflowRowProps) {
     (promptsCell.Status === 'implemented' || promptsCell.Status === 'synced');
 
   return (
-    <>
-      <tr
-        ref={setNodeRef}
-        style={style}
-        className={cn(
-          'group border-b border-border last:border-b-0',
-          isDragging && 'opacity-40',
-        )}
-      >
-        <td className="w-12 px-1 py-2 align-middle">
-          <div className="flex items-center justify-center gap-1">
-            <span className="font-mono text-xs text-muted-foreground/50 w-4 text-right">
-              {index + 1}.
-            </span>
-            <button
-              type="button"
-              className="cursor-grab text-muted-foreground/30 transition-colors hover:text-muted-foreground active:cursor-grabbing"
-              aria-label={`Drag to reorder ${row.id}`}
-              {...attributes}
-              {...listeners}
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'group border-b border-border last:border-b-0',
+        isDragging && 'opacity-40',
+      )}
+    >
+      <td className="w-12 px-1 py-2 align-middle">
+        <div className="flex items-center justify-center gap-1">
+          <span className="font-mono text-xs text-muted-foreground/50 w-4 text-right">
+            {index + 1}.
+          </span>
+          <button
+            type="button"
+            className="cursor-grab text-muted-foreground/30 transition-colors hover:text-muted-foreground active:cursor-grabbing"
+            aria-label={`Drag to reorder ${row.id}`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        </div>
+      </td>
+      {KINDS.map((kind, i) => {
+        if (i === activeIdx) {
+          return (
+            <td key={kind} className="p-2 align-top">
+              <WorkflowCard artifact={row.cells[kind]!} kind={kind} />
+            </td>
+          );
+        }
+        if (i < activeIdx) {
+          return (
+            <td
+              key={kind}
+              className="p-2 align-middle text-center text-muted-foreground/40"
             >
-              <GripVertical className="h-4 w-4" />
-            </button>
+              —
+            </td>
+          );
+        }
+        if (i === activeIdx + 1) {
+          return (
+            <td key={kind} className="p-2 align-top">
+              <NextStageDropTarget
+                row={row}
+                kind={kind}
+                gatingOpen={gatingOpen}
+              />
+            </td>
+          );
+        }
+        return <td key={kind} className="p-2 align-top" />;
+      })}
+      <td className="p-2 align-top">
+        {isImplemented ? (
+          <div
+            className="flex h-16 w-full items-center justify-center rounded-md border border-green-500/40 bg-green-500/10 text-xs text-green-700 dark:text-green-300"
+            title={`${IMPLEMENTATION_LABEL} ✓`}
+          >
+            ✓ implemented
           </div>
-        </td>
-        {KINDS.map((kind, i) => {
-          if (i === activeIdx) {
-            return (
-              <td key={kind} className="p-2 align-top">
-                <WorkflowCard artifact={row.cells[kind]!} kind={kind} />
-              </td>
-            );
-          }
-          if (i < activeIdx) {
-            return (
-              <td
-                key={kind}
-                className="p-2 align-middle text-center text-muted-foreground/40"
-              >
-                —
-              </td>
-            );
-          }
-          if (i === activeIdx + 1) {
-            return (
-              <td key={kind} className="p-2 align-top">
-                <button
-                  type="button"
-                  disabled={!gatingOpen}
-                  onClick={() => gatingOpen && openCreate(kind)}
-                  title={
-                    gatingOpen
-                      ? `Create ${kind}`
-                      : 'Mark previous stage as reviewed first'
-                  }
-                  className={cn(
-                    'flex h-16 w-full items-center justify-center rounded-md border border-dashed',
-                    gatingOpen
-                      ? 'border-primary/40 text-primary hover:bg-primary/10'
-                      : 'border-transparent text-muted-foreground/30 cursor-not-allowed',
-                  )}
-                >
-                  {gatingOpen && <Plus className="h-4 w-4" />}
-                </button>
-              </td>
-            );
-          }
-          return <td key={kind} className="p-2 align-top" />;
-        })}
-        <td className="p-2 align-top">
-          {isImplemented ? (
-            <div
-              className="flex h-16 w-full items-center justify-center rounded-md border border-green-500/40 bg-green-500/10 text-xs text-green-700 dark:text-green-300"
-              title={`${IMPLEMENTATION_LABEL} ✓`}
-            >
-              ✓ implemented
-            </div>
-          ) : (
-            <div className="h-16" />
-          )}
-        </td>
-      </tr>
-      <CreateNextStageModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        sourceArtifact={sourceArtifact}
-        nextKind={targetKind}
-      />
-    </>
+        ) : (
+          <div className="h-16" />
+        )}
+      </td>
+    </tr>
   );
 }

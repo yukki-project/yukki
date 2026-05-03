@@ -38,6 +38,18 @@ updated: 2026-05-02
 > handle `GripVertical` à gauche de chaque row + numéro de
 > position visible. Pas d'impact sur les D-D existantes ;
 > nouvelle Operation O11 ajoutée au canvas.
+>
+> **Note 2026-05-03 bis (post-implem)** : suppression des
+> boutons `Plus` au profit du **drag-and-drop pour la création
+> d'étape suivante**. La cellule immédiatement à droite de
+> l'active devient un drop target `useDroppable` (pas un
+> bouton). Drop d'une carte active → ouverture de
+> `<CreateNextStageModal />` si gating ouvert (story.status ≥
+> reviewed), toast destructive sinon. Modal state remontée
+> dans `useWorkflowStore` (au lieu de l'état local de
+> `<WorkflowRow />`) car le drop est géré au niveau
+> `<WorkflowPipeline />`. Pas d'impact sur D-D ; modif O7 +
+> O8 + onDragEnd de Pipeline.
 
 ## Mots-clés métier extraits
 

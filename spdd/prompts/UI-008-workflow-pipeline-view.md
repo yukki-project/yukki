@@ -73,10 +73,23 @@ style validators).
       status (`STATUS_BADGE` exporté depuis `HubList.tsx`), date
       `updated`. Cellules avant l'active (étapes passées) =
       placeholder discret `—`. Cellule immédiatement après
-      l'active = bouton `Plus` cliquable **si** status active
-      ≥ `reviewed` (gating progressif), sinon vide. Cellules
-      plus loin = vides (pas de Lock, on n'expose que la
-      prochaine action accessible).
+      l'active = **drop target** `useDroppable` (PAS de bouton
+      `Plus`). Cellules plus loin = vides complètement (pas de
+      drop target).
+- [ ] **Création d'étape suivante par drop** : drag la carte
+      active sur la cellule drop target colonne `+1` →
+      `<WorkflowPipeline />` détecte `over.data.current.type ===
+      'next-stage-target'` dans `onDragEnd`, vérifie le gating
+      (status ≥ `reviewed`), et soit appelle
+      `useWorkflowStore.openCreateModal(sourceArtifact, nextKind)`
+      (gating ouvert) soit affiche un toast destructive "Mark
+      <kind> as reviewed first" (gating fermé).
+- [ ] **`<CreateNextStageModal />`** est rendue **une seule
+      fois** au niveau `<WorkflowPipeline />` (plus dans
+      `<WorkflowRow />`). State piloté par
+      `useWorkflowStore.createModal` :
+      `{ open: boolean, sourceArtifact: Meta | null, nextKind:
+      StageKind | null }`.
 - [ ] **Click sur carte** → ouvre `<WorkflowDrawer />` (Sheet
       shadcn, drawer droit ~600px) avec `<StoryViewer />` à
       l'intérieur. Close au click hors / `Escape`.
@@ -1150,6 +1163,20 @@ style validators).
   touchées (E / N / Safeguards). Status canvas : implemented
   → reviewed (signal que le code n'est plus aligné, à
   régénérer via /spdd-generate ciblé sur O8).
+- **2026-05-03 ter — `R — DoD` + `O7` + `O8`** — suppression
+  des boutons `Plus` au profit du **drag-and-drop direct**
+  (cf. `/spdd-prompt-update` 2026-05-03 ter, capture utilisateur
+  avec Plus barrés rouge). Justification UX : "tout est drag"
+  (cohérence avec le reorder de rows), réduit le bruit visuel
+  (suppression des cellules Plus disabled grises). Cellule +1
+  devient `useDroppable` avec `data.type === 'next-stage-target'`.
+  `<CreateNextStageModal />` lift au niveau
+  `<WorkflowPipeline />`, state piloté par
+  `useWorkflowStore.createModal` (open + sourceArtifact +
+  nextKind). Sections d'intention E / N / Safeguards non
+  touchées. Status canvas : implemented → reviewed
+  (régénération ciblée O7 + O8 + Pipeline.onDragEnd).
+
 - **2026-05-03 — `R — DoD` + `A — Approach` + `O7` + `O8` +
   nouvelle `O11`** — changement de comportement (cf.
   `/spdd-prompt-update` 2026-05-03) :

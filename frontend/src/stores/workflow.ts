@@ -15,6 +15,12 @@ export interface WorkflowRow {
   updated: string;
 }
 
+export interface CreateModalState {
+  open: boolean;
+  sourceArtifact: Meta | null;
+  nextKind: StageKind | null;
+}
+
 interface WorkflowState {
   rows: WorkflowRow[];
   loading: boolean;
@@ -22,12 +28,15 @@ interface WorkflowState {
   pendingUpdates: Set<string>;
   drawerPath: string | null;
   transitionsCache: Map<string, string[]>;
+  createModal: CreateModalState;
 
   loadAll: () => Promise<void>;
   advanceStatus: (path: string, newStatus: string) => Promise<void>;
   reorderRows: (fromIdx: number, toIdx: number) => Promise<void>;
   openDrawer: (path: string) => void;
   closeDrawer: () => void;
+  openCreateModal: (sourceArtifact: Meta, nextKind: StageKind) => void;
+  closeCreateModal: () => void;
   getAllowed: (currentStatus: string) => Promise<string[]>;
 }
 
@@ -54,6 +63,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   pendingUpdates: new Set<string>(),
   drawerPath: null,
   transitionsCache: new Map<string, string[]>(),
+  createModal: { open: false, sourceArtifact: null, nextKind: null },
 
   loadAll: async () => {
     set({ loading: true, error: null });
@@ -164,6 +174,13 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
   openDrawer: (path) => set({ drawerPath: path }),
   closeDrawer: () => set({ drawerPath: null }),
+
+  openCreateModal: (sourceArtifact, nextKind) =>
+    set({ createModal: { open: true, sourceArtifact, nextKind } }),
+  closeCreateModal: () =>
+    set({
+      createModal: { open: false, sourceArtifact: null, nextKind: null },
+    }),
 
   getAllowed: async (currentStatus) => {
     const cached = get().transitionsCache.get(currentStatus);

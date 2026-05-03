@@ -16,7 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useWorkflowStore } from '@/stores/workflow';
 import { WorkflowRow } from './WorkflowRow';
 import { WorkflowDrawer } from './WorkflowDrawer';
-import { IMPLEMENTATION_LABEL, STAGES } from './stages';
+import { CreateNextStageModal } from './CreateNextStageModal';
+import { IMPLEMENTATION_LABEL, STAGES, type StageKind } from './stages';
 import { type Meta } from '../../../wailsjs/go/main/App';
 
 interface DragData {
@@ -25,14 +26,22 @@ interface DragData {
   artifact?: Meta;
 }
 
+interface DropData {
+  type: 'next-stage-target';
+  rowId: string;
+  kind: StageKind;
+  gatingOpen: boolean;
+}
+
 export function WorkflowPipeline() {
   const rows = useWorkflowStore((s) => s.rows);
   const loading = useWorkflowStore((s) => s.loading);
   const error = useWorkflowStore((s) => s.error);
   const loadAll = useWorkflowStore((s) => s.loadAll);
-  const advanceStatus = useWorkflowStore((s) => s.advanceStatus);
   const reorderRows = useWorkflowStore((s) => s.reorderRows);
-  const getAllowed = useWorkflowStore((s) => s.getAllowed);
+  const createModal = useWorkflowStore((s) => s.createModal);
+  const openCreateModal = useWorkflowStore((s) => s.openCreateModal);
+  const closeCreateModal = useWorkflowStore((s) => s.closeCreateModal);
   const [activeArtifact, setActiveArtifact] = useState<Meta | null>(null);
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -80,32 +89,21 @@ export function WorkflowPipeline() {
       return;
     }
 
-    // Card status change (V1 has no drop targets, this is a no-op for now)
+    // Card drop on next-stage target
     if (data?.type === 'card' && e.over) {
-      const path = String(e.active.id);
-      const targetStatus = String(e.over.id).split(':').pop() ?? '';
-      if (!targetStatus || targetStatus === data.status) return;
-      const allowed = await getAllowed(data.status ?? '');
-      if (!allowed.includes(targetStatus)) {
-        toast({
-          title: 'Invalid transition',
-          description: `Cannot go from ${data.status} to ${targetStatus}`,
-          variant: 'destructive',
-        });
-        return;
-      }
-      try {
-        await advanceStatus(path, targetStatus);
-        toast({
-          title: 'Status updated',
-          description: `${data.status} → ${targetStatus}`,
-        });
-      } catch (err) {
-        toast({
-          title: 'Update failed',
-          description: String(err),
-          variant: 'destructive',
-        });
+      const dropData = e.over.data.current as DropData | undefined;
+      if (dropData?.type === 'next-stage-target') {
+        if (!dropData.gatingOpen) {
+          toast({
+            title: 'Mark previous stage as reviewed first',
+            description: `Status of the active artifact must be ≥ reviewed before creating the next stage.`,
+            variant: 'destructive',
+          });
+          return;
+        }
+        if (data.artifact) {
+          openCreateModal(data.artifact, dropData.kind);
+        }
       }
     }
   }
@@ -191,6 +189,14 @@ export function WorkflowPipeline() {
         </DragOverlay>
       </DndContext>
       <WorkflowDrawer />
+      <CreateNextStageModal
+        open={createModal.open}
+        onOpenChange={(v) => {
+          if (!v) closeCreateModal();
+        }}
+        sourceArtifact={createModal.sourceArtifact}
+        nextKind={createModal.nextKind ?? 'analysis'}
+      />
     </section>
   );
 }
