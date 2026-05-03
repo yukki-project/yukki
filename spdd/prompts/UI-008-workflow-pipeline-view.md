@@ -35,16 +35,28 @@ style validators).
 
 ### Definition of Done
 
-- [ ] **Layout packed Linear-style** : pas de colonnes par kind
-      (Story / Analysis / Canvas / Tests), pas de placeholder `—`
-      pour les stages passés. Chaque ligne a **3 zones** alignées
-      à gauche :
-      - Zone 1 (large) : carte active (kind = stage le plus avancé)
-      - Zone 2 (étroite) : drop target avec label "→ <next-kind>"
-      - Zone 3 (étroite) : marker Implementation
-      Le `kind` de l'artefact actif est rendu en **badge** sur la
-      carte (outline `border-border text-muted-foreground`), pas
-      via la colonne. Pas de scroll horizontal sur fenêtre ≥ 1000px.
+- [ ] **Layout Kanban** (Jira/Trello-style) : 5 colonnes par
+      état (`Story` / `Analysis` / `Canvas` / `Implementation` /
+      `Tests`) côte à côte. Chaque colonne est un **stack
+      vertical indépendant** de cards. Pas de lignes alignées
+      entre colonnes, pas de placeholder pour les features
+      absentes — une colonne vide reste juste vide.
+- [ ] **Une feature = une seule card** dans la colonne de son
+      **état actuel** (= étape la plus avancée, avec
+      `Implementation` comme état dérivé quand canvas en
+      `implemented`/`synced`). Pas de duplication.
+- [ ] **Drag-and-drop entre colonnes adjacentes** :
+      - Drop d'une card sur la colonne immédiatement à droite
+        → modal `Create next stage` si gating ouvert
+        (status active ≥ `reviewed`)
+      - Drop sur une colonne non-adjacente (skip) → toast
+        destructive "Cannot skip stages"
+      - Drop sur la même colonne ou colonne à gauche → no-op
+        (la card retourne à sa colonne d'origine)
+- [ ] **Tri vertical dans chaque colonne** : `priority asc`
+      (champ `priority: int` sur la story, 0/absent → fin),
+      tie-break `updated desc`. Pas de drag-to-reorder
+      manuel en V1 (différé).
 - [ ] **Réorganisation des rows par drag-and-drop** :
       - Drag handle `GripVertical` lucide-react à gauche de chaque
         ligne, visible au hover.
@@ -1168,6 +1180,26 @@ style validators).
   touchées (E / N / Safeguards). Status canvas : implemented
   → reviewed (signal que le code n'est plus aligné, à
   régénérer via /spdd-generate ciblé sur O8).
+- **2026-05-03 quinquies — pivot Kanban** — retour aux 5
+  colonnes par kind (Story/Analysis/Canvas/Implementation/Tests),
+  mais en **layout Kanban** (chaque colonne = stack vertical
+  indépendant, pas de lignes alignées). Une feature = une
+  seule card dans la colonne de son état actuel. Drag-and-drop
+  entre colonnes adjacentes pour avancer (modal Create next
+  stage). Capture utilisateur référence : Jira Sprint board.
+  - `<WorkflowRow />` **supprimé** (plus de notion de ligne)
+  - `<WorkflowColumn />` **créé** (stack de cards par état)
+  - `useWorkflowStore` réorganisé : `columns: Record<State,
+    WorkflowItem[]>` au lieu de `rows: WorkflowRow[]`
+  - `reorderRows` supprimé (priority sort uniquement, pas de
+    manual reorder V1)
+  - DragHandle GripVertical supprimé (plus de rows à
+    réordonner)
+  - WorkflowPipeline header reprend les 5 noms par kind
+  - Drag-and-drop : drop d'une card sur colonne adjacente →
+    modal, drop sur colonne skip → toast "Cannot skip stages"
+  - E / N / Safeguards intacts. Status : implemented → reviewed.
+
 - **2026-05-03 quater — `R — DoD` + `O8` + `WorkflowPipeline`** —
   layout packed Linear-style : suppression des colonnes par kind
   (Story / Analysis / Canvas / Tests) et des placeholders `—`.

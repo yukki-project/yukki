@@ -9,10 +9,35 @@ import {
 import { useArtifactsStore } from './artifacts';
 import { KINDS, type StageKind } from '../components/workflow/stages';
 
-export interface WorkflowRow {
+export type ColumnState =
+  | 'stories'
+  | 'analysis'
+  | 'prompts'
+  | 'implementation'
+  | 'tests';
+
+export const COLUMN_ORDER: ColumnState[] = [
+  'stories',
+  'analysis',
+  'prompts',
+  'implementation',
+  'tests',
+];
+
+export const COLUMN_LABELS: Record<ColumnState, string> = {
+  stories: 'Story',
+  analysis: 'Analysis',
+  prompts: 'Canvas',
+  implementation: 'Implementation',
+  tests: 'Tests',
+};
+
+export interface WorkflowItem {
   id: string;
+  state: ColumnState;
+  activeKind: StageKind;
+  active: Meta;
   cells: Partial<Record<StageKind, Meta>>;
-  updated: string;
 }
 
 export interface CreateModalState {
@@ -22,7 +47,7 @@ export interface CreateModalState {
 }
 
 interface WorkflowState {
-  rows: WorkflowRow[];
+  columns: Record<ColumnState, WorkflowItem[]>;
   loading: boolean;
   error: string | null;
   pendingUpdates: Set<string>;
@@ -32,7 +57,6 @@ interface WorkflowState {
 
   loadAll: () => Promise<void>;
   advanceStatus: (path: string, newStatus: string) => Promise<void>;
-  reorderRows: (fromIdx: number, toIdx: number) => Promise<void>;
   openDrawer: (path: string) => void;
   closeDrawer: () => void;
   openCreateModal: (sourceArtifact: Meta, nextKind: StageKind) => void;
@@ -40,24 +64,103 @@ interface WorkflowState {
   getAllowed: (currentStatus: string) => Promise<string[]>;
 }
 
-function rowPriority(row: WorkflowRow): number {
-  const p = row.cells.stories?.Priority ?? 0;
+function emptyColumns(): Record<ColumnState, WorkflowItem[]> {
+  return {
+    stories: [],
+    analysis: [],
+    prompts: [],
+    implementation: [],
+    tests: [],
+  };
+}
+
+function deriveState(cells: Partial<Record<StageKind, Meta>>): {
+  state: ColumnState;
+  activeKind: StageKind;
+  active: Meta;
+} | null {
+  if (cells.tests) {
+    return { state: 'tests', activeKind: 'tests', active: cells.tests };
+  }
+  if (cells.prompts) {
+    const status = cells.prompts.Status;
+    const state: ColumnState =
+      status === 'implemented' || status === 'synced'
+        ? 'implementation'
+        : 'prompts';
+    return { state, activeKind: 'prompts', active: cells.prompts };
+  }
+  if (cells.analysis) {
+    return { state: 'analysis', activeKind: 'analysis', active: cells.analysis };
+  }
+  if (cells.stories) {
+    return { state: 'stories', activeKind: 'stories', active: cells.stories };
+  }
+  return null;
+}
+
+function itemPriority(item: WorkflowItem): number {
+  const p = item.cells.stories?.Priority ?? 0;
   return p > 0 ? p : Number.POSITIVE_INFINITY;
 }
 
-function sortRows(rows: WorkflowRow[]): WorkflowRow[] {
-  return [...rows].sort((a, b) => {
-    const pa = rowPriority(a);
-    const pb = rowPriority(b);
+function sortItems(items: WorkflowItem[]): WorkflowItem[] {
+  return [...items].sort((a, b) => {
+    const pa = itemPriority(a);
+    const pb = itemPriority(b);
     if (pa !== pb) return pa - pb;
-    if (a.updated < b.updated) return 1;
-    if (a.updated > b.updated) return -1;
+    const ua = a.active.Updated ?? '';
+    const ub = b.active.Updated ?? '';
+    if (ua < ub) return 1;
+    if (ua > ub) return -1;
     return 0;
   });
 }
 
+function buildColumns(
+  arrays: Meta[][],
+): Record<ColumnState, WorkflowItem[]> {
+  const byId = new Map<string, Partial<Record<StageKind, Meta>>>();
+  KINDS.forEach((kind, i) => {
+    for (const meta of arrays[i] ?? []) {
+      const id = meta.ID || meta.Slug || meta.Path;
+      const cells = byId.get(id) ?? {};
+      cells[kind] = meta;
+      byId.set(id, cells);
+    }
+  });
+
+  const columns = emptyColumns();
+  for (const [id, cells] of byId.entries()) {
+    const derived = deriveState(cells);
+    if (!derived) continue;
+    columns[derived.state].push({
+      id,
+      state: derived.state,
+      activeKind: derived.activeKind,
+      active: derived.active,
+      cells,
+    });
+  }
+  for (const state of COLUMN_ORDER) {
+    columns[state] = sortItems(columns[state]);
+  }
+  return columns;
+}
+
+function findItemByPath(
+  columns: Record<ColumnState, WorkflowItem[]>,
+  path: string,
+): WorkflowItem | null {
+  for (const state of COLUMN_ORDER) {
+    const found = columns[state].find((it) => it.active.Path === path);
+    if (found) return found;
+  }
+  return null;
+}
+
 export const useWorkflowStore = create<WorkflowState>((set, get) => ({
-  rows: [],
+  columns: emptyColumns(),
   loading: false,
   error: null,
   pendingUpdates: new Set<string>(),
@@ -69,24 +172,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const arrays = await Promise.all(KINDS.map((k) => ListArtifacts(k)));
-      const byId = new Map<string, WorkflowRow>();
-      KINDS.forEach((kind, i) => {
-        for (const meta of arrays[i] ?? []) {
-          const id = meta.ID || meta.Slug || meta.Path;
-          const row: WorkflowRow = byId.get(id) ?? {
-            id,
-            cells: {},
-            updated: '',
-          };
-          row.cells[kind] = meta;
-          if (meta.Updated && meta.Updated > row.updated) {
-            row.updated = meta.Updated;
-          }
-          byId.set(id, row);
-        }
-      });
-      const rows = sortRows(Array.from(byId.values()));
-      set({ rows, loading: false });
+      set({ columns: buildColumns(arrays), loading: false });
     } catch (e) {
       set({ error: String(e), loading: false });
     }
@@ -99,76 +185,38 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     next.add(path);
     set({ pendingUpdates: next });
 
-    const prevRows = get().rows;
-    const newRows = prevRows.map((row) => {
-      const newCells = { ...row.cells };
-      for (const kind of KINDS) {
-        const cell = newCells[kind];
-        if (cell?.Path === path) {
-          newCells[kind] = { ...cell, Status: newStatus };
-          break;
-        }
-      }
-      return { ...row, cells: newCells };
-    });
-    set({ rows: newRows });
+    const prevColumns = get().columns;
+    // Optimistic: mutate the active.Status of the item
+    const newColumns = COLUMN_ORDER.reduce((acc, state) => {
+      acc[state] = prevColumns[state].map((it) =>
+        it.active.Path === path
+          ? {
+              ...it,
+              active: { ...it.active, Status: newStatus },
+              cells: {
+                ...it.cells,
+                [it.activeKind]: { ...it.active, Status: newStatus },
+              },
+            }
+          : it,
+      );
+      return acc;
+    }, emptyColumns());
+    set({ columns: newColumns });
 
     try {
       await UpdateArtifactStatus(path, newStatus);
+      // Reload to pick up state change (e.g. canvas.implemented → moves to
+      // Implementation column).
+      await get().loadAll();
       void useArtifactsStore.getState().refresh();
     } catch (e) {
-      set({ rows: prevRows, error: String(e) });
+      set({ columns: prevColumns, error: String(e) });
       throw e;
     } finally {
       const still = new Set(get().pendingUpdates);
       still.delete(path);
       set({ pendingUpdates: still });
-    }
-  },
-
-  reorderRows: async (fromIdx, toIdx) => {
-    const current = get().rows;
-    if (fromIdx === toIdx) return;
-    if (fromIdx < 0 || fromIdx >= current.length) return;
-    if (toIdx < 0 || toIdx >= current.length) return;
-
-    // Compute new visual order
-    const reordered = [...current];
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(toIdx, 0, moved);
-
-    // Renumerate priorities 1..N over the new order
-    const updates: Array<{ path: string; priority: number; row: WorkflowRow }> = [];
-    const optimistic = reordered.map((row, idx) => {
-      const newPriority = idx + 1;
-      const story = row.cells.stories;
-      if (!story) {
-        return row; // orphan: no story, can't persist priority
-      }
-      const oldPriority = story.Priority ?? 0;
-      const newCells = { ...row.cells };
-      newCells.stories = { ...story, Priority: newPriority };
-      if (oldPriority !== newPriority) {
-        updates.push({ path: story.Path, priority: newPriority, row });
-      }
-      return { ...row, cells: newCells };
-    });
-
-    // Optimistic
-    set({ rows: optimistic });
-
-    try {
-      await Promise.all(
-        updates.map((u) => UpdateArtifactPriority(u.path, u.priority)),
-      );
-      // Re-sort to make sure the order matches priority asc (it should
-      // already, but defensive)
-      set({ rows: sortRows(optimistic) });
-      void useArtifactsStore.getState().refresh();
-    } catch (e) {
-      // Rollback
-      set({ rows: current, error: String(e) });
-      throw e;
     }
   },
 
@@ -192,3 +240,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     return allowed;
   },
 }));
+
+// Reserved for future column-priority manual reorder (V2).
+void UpdateArtifactPriority;
+void findItemByPath;

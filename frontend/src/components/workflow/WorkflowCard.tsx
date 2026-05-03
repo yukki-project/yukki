@@ -13,8 +13,12 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { type Meta } from '../../../wailsjs/go/main/App';
 import { STATUS_BADGE } from '../hub/HubList';
-import { useWorkflowStore } from '@/stores/workflow';
-import { STAGES, type StageKind } from './stages';
+import {
+  COLUMN_ORDER,
+  useWorkflowStore,
+  type ColumnState,
+} from '@/stores/workflow';
+import { type StageKind } from './stages';
 
 const ALL_STATUSES = ['draft', 'reviewed', 'accepted', 'implemented', 'synced'];
 
@@ -28,11 +32,22 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
   const openDrawer = useWorkflowStore((s) => s.openDrawer);
   const getAllowed = useWorkflowStore((s) => s.getAllowed);
   const pendingUpdates = useWorkflowStore((s) => s.pendingUpdates);
+  const columns = useWorkflowStore((s) => s.columns);
   const [allowed, setAllowed] = useState<string[]>([]);
   const { toast } = useToast();
 
   const status = artifact.Status || 'draft';
   const isPending = pendingUpdates.has(artifact.Path);
+
+  // Find which column this artifact lives in (for drag data).
+  const item = (() => {
+    for (const state of COLUMN_ORDER) {
+      const found = columns[state].find((it) => it.active.Path === artifact.Path);
+      if (found) return { state, item: found };
+    }
+    return null;
+  })();
+  const cardState: ColumnState = item?.state ?? 'stories';
 
   useEffect(() => {
     void getAllowed(status).then(setAllowed);
@@ -41,7 +56,7 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: artifact.Path,
-      data: { type: 'card', kind, status, artifact },
+      data: { type: 'card', state: cardState, item: item?.item },
       disabled: isPending,
     });
 
@@ -91,19 +106,14 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
           <span className="font-mono text-[10px] text-muted-foreground">
             {artifact.ID}
           </span>
-          <div className="flex items-center gap-1">
-            <span className="inline-block rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
-              {STAGES.find((s) => s.kind === kind)?.label ?? kind}
-            </span>
-            <span
-              className={cn(
-                'inline-block rounded px-1.5 py-0.5 text-[10px]',
-                STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
-              )}
-            >
-              {status}
-            </span>
-          </div>
+          <span
+            className={cn(
+              'inline-block rounded px-1.5 py-0.5 text-[10px]',
+              STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
+            )}
+          >
+            {status}
+          </span>
         </div>
         <div className="line-clamp-1 text-foreground" title={artifact.Title}>
           {artifact.Title || artifact.Slug || '—'}

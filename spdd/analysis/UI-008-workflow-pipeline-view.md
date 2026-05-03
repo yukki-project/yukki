@@ -66,6 +66,27 @@ updated: 2026-05-02
 > l'autre". Impact : O8 (WorkflowRow re-render) +
 > WorkflowPipeline header (3 cols seulement). E / N /
 > Safeguards intacts.
+>
+> **Note 2026-05-03 quinquies (post-implem)** : pivot vers un
+> vrai **layout Kanban** (cf. Jira/Trello, capture utilisateur
+> avec board DEVOPS Sprint). Retour à 5 colonnes par kind
+> (Story / Analysis / Canvas / Implementation / Tests) MAIS
+> chaque colonne est un **stack vertical indépendant** —
+> pas de lignes alignées entre colonnes, pas d'espace
+> réservé pour les features absentes. Une feature = une
+> seule card dans la colonne de son état actuel.
+> Conséquences :
+> - `<WorkflowRow />` supprimé (plus de notion de ligne)
+> - `<WorkflowColumn />` créé (stack de cards par kind)
+> - `useWorkflowStore` regroupe les features par état actuel
+>   plutôt que par id (résultat = `columns: Record<state,
+>   WorkflowItem[]>`)
+> - Drag-and-drop : drop d'une card sur une colonne adjacente
+>   à droite → modal Create next stage. Skip → toast
+>   destructive.
+> - Drag-to-reorder rows supprimé (notion de "rows" disparue,
+>   priority sort dans chaque colonne uniquement, pas de
+>   manual reorder en V1).
 
 ## Mots-clés métier extraits
 
