@@ -3,7 +3,7 @@ id: TEST-001
 slug: testing-methodology-classic
 story: spdd/stories/TEST-001-testing-methodology-classic.md
 analysis: spdd/analysis/TEST-001-testing-methodology-classic.md
-status: reviewed
+status: implemented
 created: 2026-05-03
 updated: 2026-05-03
 ---
