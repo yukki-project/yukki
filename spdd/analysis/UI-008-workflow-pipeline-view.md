@@ -50,6 +50,22 @@ updated: 2026-05-02
 > `<WorkflowRow />`) car le drop est géré au niveau
 > `<WorkflowPipeline />`. Pas d'impact sur D-D ; modif O7 +
 > O8 + onDragEnd de Pipeline.
+>
+> **Note 2026-05-03 quater (post-implem)** : layout packed
+> Linear-style — suppression des **colonnes par kind**
+> (Story/Analysis/Canvas/Tests). Chaque ligne a 3 zones
+> alignées à gauche : carte active (large) + drop target
+> compact (label "→ Analysis", "→ Canvas", ...) + marker
+> Implementation. Plus de placeholder `—` pour les stages
+> passés, plus d'espace réservé à droite des cards. Le kind
+> de l'artefact actif devient un **badge sur la carte**
+> ("Story" / "Analysis" / "Canvas" / "Tests" en outline
+> `border-border`). Justification UX : capture utilisateur
+> avec rouge crossing out les espaces vides — "je ne veux pas
+> réserver de place pour passer les cards d'un endroit à
+> l'autre". Impact : O8 (WorkflowRow re-render) +
+> WorkflowPipeline header (3 cols seulement). E / N /
+> Safeguards intacts.
 
 ## Mots-clés métier extraits
 

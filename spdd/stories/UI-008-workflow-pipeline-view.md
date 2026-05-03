@@ -70,18 +70,31 @@ ultérieure câblera l'appel direct).
 - **Nouveau mode "Workflow"** dans l'ActivityBar (UI-006) en
   position après `Tests`, avant `Settings`. Icône lucide-react
   `Workflow` ou `LayoutGrid`. Étend `ShellMode` à 6 valeurs.
-- **Vue pipeline (swim-lane)** affichée dans le main content area
-  (à la place du `<StoryViewer />` quand mode = `workflow`).
-  Layout :
-  - Header sticky : 5 colonnes nommées **Story** / **Analysis** /
-    **Canvas** / **Implementation** / **Tests**, qui correspondent
-    aux 4 kinds SPDD (`stories`, `analysis`, `prompts`, `tests`)
-    + un 5ᵉ marker "Implementation" déduit du status `implemented`
-    du canvas (pas un kind séparé). **Pas de colonne "Feature"** —
-    l'`id` est déjà visible dans la `<WorkflowCard />` active,
-    inutile de doubler avec une colonne sticky qui crée un gros
-    scroll horizontal.
-  - Lignes : **une par `id` distinct** trouvé dans le repo
+- **Vue pipeline (Linear-style packed)** affichée dans le main
+  content area (à la place du `<StoryViewer />` quand mode =
+  `workflow`). Layout :
+  - **Pas de colonnes par kind** (Story / Analysis / Canvas /
+    Tests). Pas de placeholder `—` à gauche pour les stages
+    passés. Le layout est **packed horizontalement** : chaque
+    ligne a 3 zones visibles, alignées à gauche, sans espace
+    réservé entre cartes et drop target.
+  - **Zone 1** (large) : carte active de la feature. La
+    carte affiche `id`, slug tronqué, **un badge `kind`**
+    (Story / Analysis / Canvas / Tests) en plus du badge
+    status (draft/reviewed/accepted/implemented/synced), et
+    la date `updated`. Le kind était auparavant indiqué par
+    la colonne ; il devient un badge sur la card.
+  - **Zone 2** (étroite) : drop target pour la prochaine
+    étape. Affiche en label discret le nom du prochain kind
+    ("→ Analysis", "→ Canvas", ...). Au repos : dashed
+    border discrète. Pendant un drag-hover : surlignée
+    violet (gating ouvert) ou rouge destructive (gating
+    fermé). Pas de drop target si la feature est déjà au
+    dernier kind (`tests`) — la zone reste vide.
+  - **Zone 3** (étroite, à droite) : marker "Implementation"
+    inchangé (badge `✓ implemented` si canvas en
+    implemented/synced, vide sinon).
+  - **Lignes** : **une par `id` distinct** trouvé dans le repo
     (groupement transverse aux 4 kinds). L'ordre est piloté par
     un champ `priority: int` (optionnel) sur le front-matter de
     la **story** : tri ascending (priority 1 = en haut),
@@ -256,57 +269,59 @@ ultérieure câblera l'appel direct).
 - **Then** une 5ᵉ icône `Workflow` (lucide-react) est visible
   entre `Tests` et `Settings`. Tooltip "Workflow" au hover.
 
-### AC2 — Vue pipeline rendue avec swim-lanes (sans colonne Feature)
+### AC2 — Vue pipeline packed (3 zones par ligne)
 
 - **Given** je clique sur l'icône `Workflow`
 - **When** la sidebar bascule sur ce mode
-- **Then** le main content affiche un tableau avec **5 colonnes
-  uniquement** (Story / Analysis / Canvas / Implementation /
-  Tests) en header sticky. **Pas de colonne "Feature" ou "ID"
-  sticky leftmost** (l'`id` apparaît dans la cellule active de
-  chaque ligne, inutile de doubler). Une ligne par `id` SPDD
-  distinct trouvé dans `spdd/`. Au moins UI-001a, UI-001b,
-  UI-001c, UI-006, UI-007 sont visibles si le repo yukki est
-  ouvert. **Pas de scroll horizontal nécessaire** sur une
-  fenêtre de largeur normale (≥ 1200px).
+- **Then** le main content affiche un tableau **sans header par
+  kind**. Chaque ligne contient 3 zones alignées à gauche :
+  (1) carte active large à gauche, (2) drop target étroit
+  juste à droite, (3) implementation marker à droite. **Pas
+  de colonnes Story / Analysis / Canvas / Tests** dans le
+  header — chaque kind est rendu via un badge sur la card.
+  **Pas de placeholder `—`** pour les stages passés. Une
+  ligne par `id` SPDD distinct trouvé dans `spdd/`. Au moins
+  UI-001a, UI-001b, UI-001c, UI-006, UI-007 sont visibles si
+  le repo yukki est ouvert. Cards alignées à gauche, sans
+  scroll horizontal sur une fenêtre ≥ 1000px.
 
-### AC3 — Une seule cellule active par feature (étape la plus avancée)
+### AC3 — Carte active large à gauche + badge kind sur la carte
 
 - **Given** la vue pipeline ouverte avec une feature qui a story
   + analysis + canvas implémenté (ex. UI-007)
 - **When** je regarde sa ligne
-- **Then** **seule** la cellule colonne `Canvas` affiche une
-  carte (= étape la plus avancée). Les colonnes `Story` et
-  `Analysis` montrent un placeholder discret `—` (passées). La
-  colonne `Implementation` montre `✓ implemented`. La colonne
-  `Tests` est vide.
-- La carte active affiche `id`, `slug` tronqué, et un badge
-  coloré selon le status (mapping `STATUS_BADGE` cohérent avec
-  `<HubList />`) : draft=gris, reviewed=bleu, accepted=violet,
-  implemented=vert, synced=teal.
+- **Then** la carte active (= étape la plus avancée, ici
+  `prompts`/Canvas) est rendue dans la **zone 1** (à gauche,
+  juste après le numéro de position et la drag handle), pas
+  dans une "colonne Canvas" séparée. La carte affiche :
+  - `id` (font-mono xs en haut-gauche)
+  - **Badge `kind`** "Canvas" en plus du badge status (visuel :
+    rectangle outline `border-border text-muted-foreground`)
+  - Badge status coloré selon le mapping `STATUS_BADGE` cohérent
+    avec `<HubList />` (draft=gris, reviewed=bleu, accepted=
+    violet, implemented=vert, synced=teal)
+  - slug tronqué + date `updated`
+- La marker "Implementation" reste à droite, badge
+  `✓ implemented` si canvas en `implemented`/`synced`.
 
-### AC4 — Drop target sur l'étape immédiatement suivante
-(gating progressif)
+### AC4 — Drop target compact à droite de la carte active
 
 - **Given** une feature qui n'a qu'une story (UI-008 elle-même
   au début)
 - **When** je regarde sa ligne
 - **Then** :
-  - cellule `Story` (= étape active) → carte avec status badge,
-    draggable
-  - cellule `Analysis` (= étape immédiatement suivante) →
-    **drop target** : zone dashed discrète au repos (border
-    `border-border/50`), surlignée `bg-primary/10` +
-    `border-primary` pendant le hover d'un drag. **Pas de
-    bouton `Plus`**. Drop d'une carte → ouverture de la modal
-    "Create analysis" si gating ouvert (story.status ≥
-    reviewed), sinon toast destructive "Mark stories as
-    reviewed first" et drop refusé.
-  - cellules `Canvas` / `Tests` → vides (pas de drop target,
-    pas de bouton — on n'expose que la prochaine étape
-    accessible)
-  - cellule `Implementation` → vide tant que canvas absent ou
-    pas en status `implemented`
+  - **Zone 1** = carte active story (badge kind "Story" +
+    badge status), draggable
+  - **Zone 2** = drop target juste à droite, label "→ Analysis"
+    discret. Au repos : dashed `border-border/40`. Pendant
+    drag-hover : surligné `bg-primary/10 border-primary`
+    (gating ouvert) ou `bg-destructive/10 border-destructive`
+    (gating fermé). Drop : ouverture du modal Create analysis
+    si gating ouvert, toast destructive sinon.
+  - **Zone 3** = vide (Implementation marker absent — canvas
+    pas créé)
+  - Cards `Analysis` / `Canvas` / `Tests` ne sont **pas
+    rendues** : pas de cellule, pas d'espace. Layout packed.
 
 ### AC5 — Click sur carte ouvre le viewer en panel
 

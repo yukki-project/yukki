@@ -7,6 +7,8 @@ import { WorkflowCard } from './WorkflowCard';
 import {
   IMPLEMENTATION_LABEL,
   KINDS,
+  STAGES,
+  nextStageOf,
   type StageKind,
 } from './stages';
 import { type WorkflowRow as WorkflowRowType } from '@/stores/workflow';
@@ -31,6 +33,10 @@ function mostAdvancedIndex(row: WorkflowRowType): number {
   return last;
 }
 
+function stageLabel(kind: StageKind): string {
+  return STAGES.find((s) => s.kind === kind)?.label ?? kind;
+}
+
 interface NextStageDropTargetProps {
   row: WorkflowRowType;
   kind: StageKind;
@@ -46,13 +52,15 @@ function NextStageDropTarget({ row, kind, gatingOpen }: NextStageDropTargetProps
     <div
       ref={setNodeRef}
       className={cn(
-        'flex h-16 w-full items-center justify-center rounded-md border border-dashed transition-colors',
-        isOver && gatingOpen && 'border-primary bg-primary/10',
-        isOver && !gatingOpen && 'border-destructive/50 bg-destructive/10',
-        !isOver && 'border-border/40',
+        'flex h-16 w-full items-center justify-center rounded-md border border-dashed text-xs transition-colors',
+        isOver && gatingOpen && 'border-primary bg-primary/10 text-primary',
+        isOver && !gatingOpen && 'border-destructive/60 bg-destructive/10 text-destructive',
+        !isOver && 'border-border/40 text-muted-foreground/50',
       )}
       aria-label={`Drop card here to create ${kind}`}
-    />
+    >
+      → {stageLabel(kind)}
+    </div>
   );
 }
 
@@ -79,6 +87,7 @@ export function WorkflowRow({ row, index }: WorkflowRowProps) {
   const activeCell = activeKind ? row.cells[activeKind] : null;
   const gatingOpen =
     !!activeCell && REVIEWED_OR_BEYOND.has(activeCell.Status);
+  const nextKind = activeKind ? nextStageOf(activeKind) : null;
 
   const promptsCell = row.cells.prompts;
   const isImplemented =
@@ -94,7 +103,7 @@ export function WorkflowRow({ row, index }: WorkflowRowProps) {
         isDragging && 'opacity-40',
       )}
     >
-      <td className="w-12 px-1 py-2 align-middle">
+      <td className="px-1 py-2 align-middle">
         <div className="flex items-center justify-center gap-1">
           <span className="font-mono text-xs text-muted-foreground/50 w-4 text-right">
             {index + 1}.
@@ -110,37 +119,24 @@ export function WorkflowRow({ row, index }: WorkflowRowProps) {
           </button>
         </div>
       </td>
-      {KINDS.map((kind, i) => {
-        if (i === activeIdx) {
-          return (
-            <td key={kind} className="p-2 align-top">
-              <WorkflowCard artifact={row.cells[kind]!} kind={kind} />
-            </td>
-          );
-        }
-        if (i < activeIdx) {
-          return (
-            <td
-              key={kind}
-              className="p-2 align-middle text-center text-muted-foreground/40"
-            >
-              —
-            </td>
-          );
-        }
-        if (i === activeIdx + 1) {
-          return (
-            <td key={kind} className="p-2 align-top">
-              <NextStageDropTarget
-                row={row}
-                kind={kind}
-                gatingOpen={gatingOpen}
-              />
-            </td>
-          );
-        }
-        return <td key={kind} className="p-2 align-top" />;
-      })}
+      <td className="p-2 align-top">
+        {activeCell && activeKind ? (
+          <WorkflowCard artifact={activeCell} kind={activeKind} />
+        ) : (
+          <div className="text-xs text-muted-foreground">—</div>
+        )}
+      </td>
+      <td className="p-2 align-top">
+        {nextKind ? (
+          <NextStageDropTarget
+            row={row}
+            kind={nextKind}
+            gatingOpen={gatingOpen}
+          />
+        ) : (
+          <div className="h-16" />
+        )}
+      </td>
       <td className="p-2 align-top">
         {isImplemented ? (
           <div

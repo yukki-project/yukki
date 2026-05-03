@@ -17,7 +17,7 @@ import { useWorkflowStore } from '@/stores/workflow';
 import { WorkflowRow } from './WorkflowRow';
 import { WorkflowDrawer } from './WorkflowDrawer';
 import { CreateNextStageModal } from './CreateNextStageModal';
-import { IMPLEMENTATION_LABEL, STAGES, type StageKind } from './stages';
+import { IMPLEMENTATION_LABEL, type StageKind } from './stages';
 import { type Meta } from '../../../wailsjs/go/main/App';
 
 interface DragData {
@@ -147,18 +147,22 @@ export function WorkflowPipeline() {
           items={rows.map((r) => r.id)}
           strategy={verticalListSortingStrategy}
         >
-          <table className="w-full table-fixed border-separate border-spacing-0 text-sm">
+          <table className="w-full border-separate border-spacing-0 text-sm">
+            <colgroup>
+              <col className="w-12" />
+              <col />
+              <col className="w-48" />
+              <col className="w-40" />
+            </colgroup>
             <thead className="sticky top-0 z-20 bg-card">
               <tr>
-                <th className="w-12 px-1 py-2 border-b border-border" aria-label="Reorder" />
-                {STAGES.map((s) => (
-                  <th
-                    key={s.kind}
-                    className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border"
-                  >
-                    {s.label}
-                  </th>
-                ))}
+                <th className="px-1 py-2 border-b border-border" aria-label="Reorder" />
+                <th className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+                  Active
+                </th>
+                <th className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border">
+                  Next stage
+                </th>
                 <th className="px-2 py-2 text-left text-xs font-semibold uppercase text-muted-foreground border-b border-border">
                   {IMPLEMENTATION_LABEL}
                 </th>

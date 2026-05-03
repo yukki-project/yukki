@@ -35,11 +35,16 @@ style validators).
 
 ### Definition of Done
 
-- [ ] **Pas de colonne "Feature"/"ID" sticky leftmost**. Le tableau
-      affiche **5 colonnes uniquement** (Story / Analysis / Canvas /
-      Implementation / Tests). L'`id` reste visible dans la
-      `<WorkflowCard />` active. Pas de scroll horizontal sur une
-      fenêtre ≥ 1200px.
+- [ ] **Layout packed Linear-style** : pas de colonnes par kind
+      (Story / Analysis / Canvas / Tests), pas de placeholder `—`
+      pour les stages passés. Chaque ligne a **3 zones** alignées
+      à gauche :
+      - Zone 1 (large) : carte active (kind = stage le plus avancé)
+      - Zone 2 (étroite) : drop target avec label "→ <next-kind>"
+      - Zone 3 (étroite) : marker Implementation
+      Le `kind` de l'artefact actif est rendu en **badge** sur la
+      carte (outline `border-border text-muted-foreground`), pas
+      via la colonne. Pas de scroll horizontal sur fenêtre ≥ 1000px.
 - [ ] **Réorganisation des rows par drag-and-drop** :
       - Drag handle `GripVertical` lucide-react à gauche de chaque
         ligne, visible au hover.
@@ -1163,6 +1168,15 @@ style validators).
   touchées (E / N / Safeguards). Status canvas : implemented
   → reviewed (signal que le code n'est plus aligné, à
   régénérer via /spdd-generate ciblé sur O8).
+- **2026-05-03 quater — `R — DoD` + `O8` + `WorkflowPipeline`** —
+  layout packed Linear-style : suppression des colonnes par kind
+  (Story / Analysis / Canvas / Tests) et des placeholders `—`.
+  Chaque ligne a maintenant 3 zones (active card large + drop
+  target étroit + Implementation). Le kind devient un **badge
+  sur la carte** (outline). Justification UX : capture utilisateur
+  avec rouge crossing out les espaces vides à droite des cards.
+  E / N / Safeguards intacts. Status : implemented → reviewed.
+
 - **2026-05-03 ter — `R — DoD` + `O7` + `O8`** — suppression
   des boutons `Plus` au profit du **drag-and-drop direct**
   (cf. `/spdd-prompt-update` 2026-05-03 ter, capture utilisateur

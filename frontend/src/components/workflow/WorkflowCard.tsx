@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { type Meta } from '../../../wailsjs/go/main/App';
 import { STATUS_BADGE } from '../hub/HubList';
 import { useWorkflowStore } from '@/stores/workflow';
-import { type StageKind } from './stages';
+import { STAGES, type StageKind } from './stages';
 
 const ALL_STATUSES = ['draft', 'reviewed', 'accepted', 'implemented', 'synced'];
 
@@ -91,14 +91,19 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
           <span className="font-mono text-[10px] text-muted-foreground">
             {artifact.ID}
           </span>
-          <span
-            className={cn(
-              'inline-block rounded px-1.5 py-0.5 text-[10px]',
-              STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
-            )}
-          >
-            {status}
-          </span>
+          <div className="flex items-center gap-1">
+            <span className="inline-block rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              {STAGES.find((s) => s.kind === kind)?.label ?? kind}
+            </span>
+            <span
+              className={cn(
+                'inline-block rounded px-1.5 py-0.5 text-[10px]',
+                STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
+              )}
+            >
+              {status}
+            </span>
+          </div>
         </div>
         <div className="line-clamp-1 text-foreground" title={artifact.Title}>
           {artifact.Title || artifact.Slug || '—'}
