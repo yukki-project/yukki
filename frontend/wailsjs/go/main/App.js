@@ -39,3 +39,16 @@ export function AbortRunning() {
 export function SuggestedPrefixes() {
   return window['go']['uiapp']['App']['SuggestedPrefixes']();
 }
+
+// UI-008
+export function UpdateArtifactStatus(path, newStatus) {
+  return window['go']['uiapp']['App']['UpdateArtifactStatus'](path, newStatus);
+}
+
+export function AllowedTransitions(currentStatus) {
+  return window['go']['uiapp']['App']['AllowedTransitions'](currentStatus);
+}
+
+export function UpdateArtifactPriority(path, priority) {
+  return window['go']['uiapp']['App']['UpdateArtifactPriority'](path, priority);
+}

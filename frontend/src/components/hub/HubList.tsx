@@ -7,7 +7,7 @@ import { useArtifactsStore } from '@/stores/artifacts';
 import { useProjectStore } from '@/stores/project';
 import { NewStoryModal } from './NewStoryModal';
 
-const STATUS_BADGE: Record<string, string> = {
+export const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   reviewed: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
   accepted: 'bg-purple-500/15 text-purple-700 dark:text-purple-300',

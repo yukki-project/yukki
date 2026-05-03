@@ -16,12 +16,18 @@ export function RunStory(description: string, prefix: string, strictPrefix: bool
 export function AbortRunning(): Promise<void>;
 export function SuggestedPrefixes(): Promise<string[]>;
 
+// UI-008
+export function UpdateArtifactStatus(path: string, newStatus: string): Promise<void>;
+export function AllowedTransitions(currentStatus: string): Promise<string[]>;
+export function UpdateArtifactPriority(path: string, priority: number): Promise<void>;
+
 export interface Meta {
   ID: string;
   Slug: string;
   Title: string;
   Status: string;
   Updated: string;
+  Priority?: number;
   Path: string;
   Error?: string;
 }

@@ -1,4 +1,4 @@
-import { BookOpen, CheckSquare, Cog, FileText, Lightbulb, type LucideIcon } from 'lucide-react';
+import { BookOpen, CheckSquare, Cog, FileText, Lightbulb, Workflow, type LucideIcon } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +19,7 @@ const PRIMARY_ITEMS: ActivityItem[] = [
   { mode: 'analysis', label: 'Analyses', Icon: Lightbulb },
   { mode: 'prompts', label: 'Canvas', Icon: FileText },
   { mode: 'tests', label: 'Tests', Icon: CheckSquare },
+  { mode: 'workflow', label: 'Workflow', Icon: Workflow },
 ];
 
 const SETTINGS_ITEM: ActivityItem = {

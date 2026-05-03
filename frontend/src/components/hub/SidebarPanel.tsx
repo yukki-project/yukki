@@ -10,6 +10,7 @@ const TITLES: Record<ShellMode, string> = {
   prompts: 'Canvas',
   tests: 'Tests',
   settings: 'Settings',
+  workflow: 'Workflow',
 };
 
 export function SidebarPanel(): JSX.Element {

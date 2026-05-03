@@ -5,12 +5,16 @@ import { ProjectPicker } from '@/components/hub/ProjectPicker';
 import { SidebarPanel } from '@/components/hub/SidebarPanel';
 import { StoryViewer } from '@/components/hub/StoryViewer';
 import { TitleBar } from '@/components/hub/TitleBar';
+import { Toaster } from '@/components/ui/toaster';
+import { WorkflowPipeline } from '@/components/workflow/WorkflowPipeline';
 import { useClaudeStore } from '@/stores/claude';
 import { useProjectStore } from '@/stores/project';
+import { useShellStore } from '@/stores/shell';
 
 export default function App() {
   const projectDir = useProjectStore((s) => s.projectDir);
   const refreshClaude = useClaudeStore((s) => s.refresh);
+  const activeMode = useShellStore((s) => s.activeMode);
 
   useEffect(() => {
     void refreshClaude();
@@ -28,11 +32,16 @@ export default function App() {
             <ActivityBar />
             <SidebarPanel />
             <section className="flex flex-1 overflow-hidden">
-              <StoryViewer className="flex-1" />
+              {activeMode === 'workflow' ? (
+                <WorkflowPipeline />
+              ) : (
+                <StoryViewer className="flex-1" />
+              )}
             </section>
           </div>
         </>
       )}
+      <Toaster />
     </main>
   );
 }
