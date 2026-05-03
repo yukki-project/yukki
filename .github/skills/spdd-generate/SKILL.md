@@ -58,6 +58,18 @@ Pour chaque Operation dans l'ordre du canvas :
    - controller : `controller/src/test/java/...`
    - frontend : `*.spec.ts` à côté du fichier produit
    - extensions : selon la convention de l'extension
+
+   Pour la **qualité des tests générés** (naming, anti-patterns à éviter,
+   pyramide cible, seuils de coverage, choix unit / intégration / e2e),
+   se référer aux refs du cluster testing :
+   - [`spdd/methodology/testing/testing-frontend.md`](../../../spdd/methodology/testing/testing-frontend.md)
+     pour les Operations frontend
+   - [`spdd/methodology/testing/testing-backend.md`](../../../spdd/methodology/testing/testing-backend.md)
+     pour les Operations backend
+   - sub-refs spécifiques selon le besoin :
+     [`test-naming.md`](../../../spdd/methodology/testing/test-naming.md),
+     [`test-smells.md`](../../../spdd/methodology/testing/test-smells.md),
+     [`coverage-discipline.md`](../../../spdd/methodology/testing/coverage-discipline.md)
 5. **Mettre à jour la checklist** affichée à l'utilisateur (`O1 ✓`, `O2 …`).
 
 Règles transverses :

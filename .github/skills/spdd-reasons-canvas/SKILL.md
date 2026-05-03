@@ -74,7 +74,15 @@ But : que les signatures du canvas reflètent **réellement** les conventions du
   - Fichier (chemin précis)
   - **Signature complète** (types, annotations, exceptions)
   - Comportement étape par étape
-  - Tests à écrire (cas nominal + 1-2 cas limites)
+  - Tests à écrire (cas nominal + 1-2 cas limites). Pour le **format
+    et la nature des tests** — pyramide cible, naming, smells à
+    éviter, seuils de coverage, choix unit/integration/e2e — se
+    référer aux refs cluster testing :
+    [`spdd/methodology/testing/testing-frontend.md`](../../../spdd/methodology/testing/testing-frontend.md)
+    pour les Operations frontend (UI / composants /
+    state management) et
+    [`spdd/methodology/testing/testing-backend.md`](../../../spdd/methodology/testing/testing-backend.md)
+    pour les Operations backend (services / I/O / APIs / CLI).
 - Ordre d'exécution explicite (O1 → O2 → ... — utile pour bâtir incrémentalement).
 
 ### N — Norms
