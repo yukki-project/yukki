@@ -20,7 +20,12 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+# Use BASH_SOURCE[0] over $0 — $0 can resolve to "." when the script
+# is invoked by name only (e.g. `bash ui-build.sh` from inside
+# scripts/dev/), causing dirname/../.. to land at "/" and break the
+# in-repo .gocache/.gotmp AV-workaround with 'cannot create //.gocache'.
+script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_path/../.." && pwd)"
 export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
 export GOTMPDIR="${GOTMPDIR:-$repo_root/.gotmp}"
 export TMP="${TMP:-$repo_root/.gotmp}"
