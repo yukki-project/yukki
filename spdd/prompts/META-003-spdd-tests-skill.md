@@ -3,7 +3,7 @@ id: META-003
 slug: spdd-tests-skill
 story: spdd/stories/META-003-spdd-tests-skill.md
 analysis: spdd/analysis/META-003-spdd-tests-skill.md
-status: reviewed
+status: implemented
 created: 2026-05-03
 updated: 2026-05-03
 ---

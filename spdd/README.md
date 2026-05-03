@@ -15,7 +15,7 @@ prompt d'abord**, puis on régénère ou resynchronise le code.
 | [`stories/`](stories/) | User stories INVEST + Given/When/Then | `/spdd-story` |
 | [`analysis/`](analysis/) | Contexte stratégique (concepts, risques, cas limites) | `/spdd-analysis` |
 | [`prompts/`](prompts/) | Canvas REASONS — spec exécutable | `/spdd-reasons-canvas`, `/spdd-prompt-update`, `/spdd-sync` |
-| [`tests/`](tests/) | Prompts structurés pour les tests unitaires | étape 6 du workflow |
+| [`tests/`](tests/) | Rapports d'audit + génération de tests par feature | `/spdd-tests` (étape 6) |
 | [`templates/`](templates/) | Squelettes des artefacts ci-dessus | maintenu manuellement |
 | [`methodology/`](methodology/) | **Techniques méthodologiques réutilisables** (DDD, STRIDE, BVA, Y-Statement…) référencées par les skills | maintenu manuellement, voir [`methodology/README.md`](methodology/README.md) |
 
