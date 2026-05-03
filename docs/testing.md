@@ -34,34 +34,48 @@ méthodologiques de
 
 ### Commandes
 
-**Run tests** (avec workaround AV pour Defender Windows) :
+**Recommandé — script wrapper qui gère le workaround AV Defender
+Windows** (corporate AV bloque l'exec depuis `%TEMP%`) :
+
+```bash
+bash scripts/dev/test-local.sh ./...                          # toute la suite
+bash scripts/dev/test-local.sh ./... -cover                   # avec coverage
+bash scripts/dev/test-local.sh ./internal/artifacts/... -cover -v
+bash scripts/dev/test-local.sh ./internal/artifacts/... -run "TestIsValid|TestAllowed" -v
+bash scripts/dev/test-local.sh ./... -race                    # race detector
+```
+
+Le script set `GOCACHE`/`GOTMPDIR` à `<repo>/.gocache` et
+`<repo>/.gotmp` (au lieu de `%TEMP%` qui peut être quarantainé
+par Defender), crée les dossiers, puis lance `go test -count=1
+"$@"`. Cf. [`DEVELOPMENT.md`](../DEVELOPMENT.md) pour le détail
+du workaround AV.
+
+> **Symptôme courant si on lance `go test` directement sans le
+> wrapper** :
+>
+> ```
+> go: creating work dir: GetFileAttributesEx /.gotmp:
+>     The system cannot find the file specified.
+> ```
+>
+> → utiliser `scripts/dev/test-local.sh` à la place.
+
+**Coverage report** (après un run avec `-coverprofile`) :
+
+```bash
+bash scripts/dev/test-local.sh ./... -cover -coverprofile=cover.out
+go tool cover -func=cover.out                  # synthèse par fonction
+go tool cover -html=cover.out -o cover.html    # rapport HTML
+```
+
+**Sans wrapper** (équivalent manuel, si on sait ce qu'on fait) :
 
 ```bash
 export GOCACHE="$(pwd)/.gocache" GOTMPDIR="$(pwd)/.gotmp" \
        TMP="$(pwd)/.gotmp" TEMP="$(pwd)/.gotmp"
 mkdir -p "$GOCACHE" "$GOTMPDIR"
 go test ./...
-```
-
-**Coverage report** :
-
-```bash
-go test ./... -cover -coverprofile=cover.out
-go tool cover -func=cover.out                 # synthèse par fonction
-go tool cover -html=cover.out -o cover.html   # rapport HTML
-```
-
-**Test ciblé sur un package** :
-
-```bash
-go test ./internal/artifacts/... -v
-go test ./internal/artifacts/... -run "TestIsValid|TestAllowed" -v
-```
-
-**Race detector** (sur tests qui touchent au concurrent) :
-
-```bash
-go test ./... -race
 ```
 
 ### Modules critiques (seuil ≥ 85%)
