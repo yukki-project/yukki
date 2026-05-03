@@ -2,7 +2,7 @@
 id: TEST-001
 slug: testing-methodology-classic
 title: Refs méthodologiques pour les tests classiques (frontend + backend, langage-agnostique)
-status: draft
+status: reviewed
 created: 2026-05-03
 updated: 2026-05-03
 owner: Thibaut Sannier
@@ -382,55 +382,32 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
   - les 7 refs existantes restent à la racine (pas de
     migration).
 
-## Open Questions
+## Open Questions — toutes tranchées en revue 2026-05-03
 
-- [ ] **OQ1** — Création de la skill `/spdd-tests` (étape 6
-      SPDD) : in-scope V1 ou différée ?
-      *Reco A : différée à une story dédiée (skill = code, refs
-      = doc — ne pas mélanger). TEST-001 reste 100% méthodo.*
-
-- [ ] **OQ2** — Tests d'accessibilité (a11y / WCAG 2.1 AA) :
-      mention dans `testing-frontend.md` ou ref dédiée ?
-      *Reco A : mention dans `testing-frontend.md` (1
-      paragraphe). Ref dédiée en V2 si besoin se manifeste.*
-
-- [ ] **OQ3** — Statut frontmatter : `status: stable` (comme les
-      7 existantes) ou `status: draft` au début pour permettre
-      itération rapide ?
-      *Reco A : `status: stable` directement — ces refs sont
-      issues de la littérature canonique (Cohn, Meszaros, Hughes,
-      Beck), pas d'expérimentation.*
-
-- [ ] **OQ4** — Frontmatter `version: 1` ou `version: 0.1` ?
-      *Reco A : `version: 1` (cohérent avec INVEST / SPIDR
-      existants). Bumps via `## Changelog` au pied de la ref si
-      évolution.*
-
-- [ ] **OQ5** — Tonalité : prescriptive ("vous devez") ou
-      descriptive ("on observe que") ?
-      *Reco A : descriptive avec des recos claires (style
-      Fowler / Beck), pas dogmatique. La ref met le contexte ;
-      le projet décide.*
-
-- [ ] **OQ6** — Sources : citation académique complète (auteur,
-      titre, année, ISBN) ou simple "voir Meszaros" ?
-      *Reco A : citation complète dans le frontmatter `sources:`,
-      "voir Meszaros 2007" en inline. Cohérent avec INVEST qui
-      cite Wake 2003.*
-
-- [ ] **OQ7** — Si une ref a un overlap fort avec une ref
-      existante (ex. `test-naming` ↔ `acceptance-criteria` —
-      tous deux Given/When/Then) : comment éviter la duplication ?
-      *Reco A : les refs se référencent mutuellement
-      ("voir aussi `acceptance-criteria.md`"), chacune garde son
-      angle (test-naming = code structure ; AC = contrat user
-      story). Pas de duplication de contenu, juste des liens.*
-
-- [ ] **OQ8** — Code review : faut-il faire reviewer les refs
-      par une personne externe (peer review) avant merge, ou
-      auto-review suffit ?
-      *Reco A : peer review obligatoire. Une ref méthodo qui
-      sert de référentiel doit avoir 2 paires d'yeux minimum.*
+- [x] **OQ1 → A** : skill `/spdd-tests` **différée** à une story
+      dédiée (séparation propre code/doc). TEST-001 reste 100%
+      méthodo.
+- [x] **OQ2 → A** : a11y/WCAG mentionné en **1 paragraphe** dans
+      `testing-frontend.md`, ref dédiée différée en V2 (peut
+      relever d'un cluster `accessibility/` à part).
+- [x] **OQ3 → A** : `status: stable` directement — refs issues
+      de littérature canonique consolidée. Peer review (OQ8) est
+      l'équivalent fonctionnel du passage stable.
+- [x] **OQ4 → A** : `version: 1` (cohérent INVEST/SPIDR existants),
+      bumps via `## Changelog` au pied de la ref.
+- [x] **OQ5 → A** : tonalité **descriptive avec recos claires**
+      (style Fowler / Beck / Khorikov), aligne avec philosophie
+      SPDD "le canvas est négociable, pas dogmatique".
+- [x] **OQ6 → A** : citation académique **complète** dans
+      frontmatter `sources:` (auteur + titre + année + ISBN/URL),
+      "voir Meszaros 2007" inline pour la lisibilité, optionnel
+      `## Pour aller plus loin` en bas si dense.
+- [x] **OQ7 → A** : refs avec overlap = **liens mutuels en
+      footer** (`## Voir aussi`), chaque ref garde son angle.
+      Pas de duplication ni de ref pivot supplémentaire.
+- [x] **OQ8 → A** : **peer review obligatoire** avant merge
+      (≥ 1 reviewer humain externe à l'auteur). Une ref méthodo
+      doit être opposable.
 
 ## Notes
 
