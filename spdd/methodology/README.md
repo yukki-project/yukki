@@ -53,15 +53,15 @@ par écosystème est traité dans une **story sœur TEST-002** (différée).
 
 | Ref | Résumé | applies-to |
 |---|---|---|
-| [testing/testing-frontend.md](testing/testing-frontend.md) | **Playbook frontend** — pyramide adaptée (Cohn / Honeycomb / Trophy), arbitrage par contexte, sub-refs liées, annexe outils | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/testing-backend.md](testing/testing-backend.md) | **Playbook backend** — pyramide 70/20/10, spécificités I/O / DB / messaging / APIs, annexe outils | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/test-naming.md](testing/test-naming.md) | Conventions de nommage : G/W/T, AAA, MethodName_State_Expected (Osherove). Heuristiques par stack. Anti-patterns | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/test-smells.md](testing/test-smells.md) | Catalogue Meszaros : 11 smells fréquents (Fragile, Slow, Eager, Lazy, Mystery Guest, etc.) avec symptôme + fix | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/coverage-discipline.md](testing/coverage-discipline.md) | Seuils 70% / 85% critiques. **4 anti-cheat obligatoires** (mutation, test size limit, forbid patterns, drift gate). Patterns de gaming | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/mutation-testing.md](testing/mutation-testing.md) | Mesurer la qualité des tests via injection de mutants. Quand l'introduire (modules critiques), seuil 60-70%, traps | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/property-based-testing.md](testing/property-based-testing.md) | Invariants vs example-based. 7 patterns (round-trip, oracle, équivalence, métamorphique, idempotence, commutativité, identité) | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/contract-testing.md](testing/contract-testing.md) | Consumer-driven (Pact) vs schema-first (OpenAPI). Décision context-aware. Versioning, expand-contract | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/snapshot-testing.md](testing/snapshot-testing.md) | Decision tree : caractérisation legacy / output stable. Anti-pattern "regenerate sans review" | `spdd-reasons-canvas`, `spdd-generate` |
+| [testing/testing-frontend.md](testing/testing-frontend.md) | **Playbook frontend** — pyramide adaptée (Cohn / Honeycomb / Trophy), arbitrage par contexte, sub-refs liées, annexe outils | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/testing-backend.md](testing/testing-backend.md) | **Playbook backend** — pyramide 70/20/10, spécificités I/O / DB / messaging / APIs, annexe outils | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/test-naming.md](testing/test-naming.md) | Conventions de nommage : G/W/T, AAA, MethodName_State_Expected (Osherove). Heuristiques par stack. Anti-patterns | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/test-smells.md](testing/test-smells.md) | Catalogue Meszaros : 11 smells fréquents (Fragile, Slow, Eager, Lazy, Mystery Guest, etc.) avec symptôme + fix | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/coverage-discipline.md](testing/coverage-discipline.md) | Seuils 70% / 85% critiques. **4 anti-cheat obligatoires** (mutation, test size limit, forbid patterns, drift gate). Patterns de gaming | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/mutation-testing.md](testing/mutation-testing.md) | Mesurer la qualité des tests via injection de mutants. Quand l'introduire (modules critiques), seuil 60-70%, traps | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/property-based-testing.md](testing/property-based-testing.md) | Invariants vs example-based. 7 patterns (round-trip, oracle, équivalence, métamorphique, idempotence, commutativité, identité) | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/contract-testing.md](testing/contract-testing.md) | Consumer-driven (Pact) vs schema-first (OpenAPI). Décision context-aware. Versioning, expand-contract | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
+| [testing/snapshot-testing.md](testing/snapshot-testing.md) | Decision tree : caractérisation legacy / output stable. Anti-pattern "regenerate sans review" | `spdd-reasons-canvas`, `spdd-generate`, `spdd-tests` |
 
 ## Convention
 
