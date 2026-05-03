@@ -16,7 +16,13 @@
 
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+# Use BASH_SOURCE[0] over $0 to handle the case where the script is
+# invoked by name only (e.g. `bash test-local.sh` from inside the
+# scripts/dev/ dir, or via aliases) — $0 can resolve to ".", causing
+# `dirname "$0"/../..` to land at "/" instead of the repo root and
+# trigger 'mkdir: cannot create //.gocache: Read-only file system'.
+script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_path/../.." && pwd)"
 export GOCACHE="${GOCACHE:-$repo_root/.gocache}"
 export GOTMPDIR="${GOTMPDIR:-$repo_root/.gotmp}"
 
