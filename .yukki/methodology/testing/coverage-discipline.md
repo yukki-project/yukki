@@ -4,7 +4,7 @@ title: Coverage discipline — seuils + 4 anti-cheat
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -162,13 +162,13 @@ Pour un module sans tests qui hérite d'une dette :
 
 ## Heuristiques pour SPDD
 
-- **Pendant `/spdd-generate`** : pour chaque Operation, écrire
+- **Pendant `/yukki-generate`** : pour chaque Operation, écrire
   les tests annoncés dans le canvas avant de marquer
   l'Operation done. Ne pas reporter.
-- **Pendant `/spdd-tests`** (étape 6, futur) : la suite
+- **Pendant `/yukki-tests`** (étape 6, futur) : la suite
   complète sera générée selon les patterns décrits ici, en
   respectant les 4 anti-cheat.
-- **Pendant `/spdd-prompt-update`** : si une Operation
+- **Pendant `/yukki-prompt-update`** : si une Operation
   modifiée touche un module critique, prévoir l'ajout des
   tests mutation correspondants dans le changelog du canvas.
 

@@ -1,18 +1,18 @@
 ---
-name: spdd-prompt-update
-description: "Étape 6a du workflow SPDD : quand la logique métier doit changer (bug, malentendu, raffinement), met à jour de façon ciblée les sections affectées du canvas REASONS sans toucher au reste, puis propose de régénérer uniquement les Operations impactées via /spdd-generate. C'est la voie 'prompt first' — toute évolution comportementale passe ici avant de toucher au code."
+name: yukki-prompt-update
+description: "Étape 6a du workflow SPDD : quand la logique métier doit changer (bug, malentendu, raffinement), met à jour de façon ciblée les sections affectées du canvas REASONS sans toucher au reste, puis propose de régénérer uniquement les Operations impactées via /yukki-generate. C'est la voie 'prompt first' — toute évolution comportementale passe ici avant de toucher au code."
 argument-hint: "<id-slug> <description du changement>"
 user-invocable: true
 ---
 
-# /spdd-prompt-update — Mise à jour ciblée d'un canvas REASONS
+# /yukki-prompt-update — Mise à jour ciblée d'un canvas REASONS
 
-Sixième étape (variante "logique") du workflow [Structured Prompt-Driven Development](../../../spdd/README.md).
+Sixième étape (variante "logique") du workflow [Structured Prompt-Driven Development](../../../.yukki/README.md).
 
 **Règle fondamentale SPDD** : tout changement de **comportement** se fait dans le
 canvas d'abord, puis on régénère le code. On n'édite **jamais** le code en
 premier pour un changement de logique — sinon le canvas devient un mensonge
-versionné. Pour un refactor pur (sans changement observable), utiliser `/spdd-sync` à la place.
+versionné. Pour un refactor pur (sans changement observable), utiliser `/yukki-sync` à la place.
 
 ## Entrée
 
@@ -81,7 +81,7 @@ Afficher :
 - Liste des Operations impactées (à régénérer)
 - Suite recommandée :
   - **Si la story est aussi à mettre à jour** (ex. nouveau AC) → le faire en complément, en mettant aussi à jour son `updated`.
-  - **Régénération ciblée** : `/spdd-generate <id-slug>` — la commande relira le canvas et appliquera les écarts. **Ne pas régénérer le code des Operations non touchées** (le rappeler à l'utilisateur).
+  - **Régénération ciblée** : `/yukki-generate <id-slug>` — la commande relira le canvas et appliquera les écarts. **Ne pas régénérer le code des Operations non touchées** (le rappeler à l'utilisateur).
   - **Si tests existants concernés** → les revoir manuellement avant de relancer la suite.
 
 ## Checklist avant de rendre la main
@@ -91,4 +91,4 @@ Afficher :
 - [ ] Le changement est tracé en bas du canvas dans `## Changelog`
 - [ ] `updated` mis à jour, `status` repassé à `reviewed` si nécessaire
 - [ ] Operations supprimées sont barrées avec date + raison, pas effacées
-- [ ] Suite (`/spdd-generate` ciblé) clairement annoncée à l'utilisateur
+- [ ] Suite (`/yukki-generate` ciblé) clairement annoncée à l'utilisateur

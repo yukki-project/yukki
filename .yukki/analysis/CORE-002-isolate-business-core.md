@@ -1,7 +1,7 @@
 ---
 id: CORE-002
 slug: isolate-business-core
-story: spdd/stories/CORE-002-isolate-business-core.md
+story: .yukki/stories/CORE-002-isolate-business-core.md
 status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
@@ -272,7 +272,7 @@ Les 11 décisions ont été tranchées en revue interactive. Recap :
   golangci-lint → O4 annotation `story_integration_test.go` → O5
   schéma DEVELOPMENT.md → O6 entrée TODO INT-002 (déjà appliquée).
   Permet de découper le commit en 6 commits atomiques au moment du
-  `/spdd-generate` si voulu.
+  `/yukki-generate` si voulu.
 - [x] **D11 — Imports transitifs** : **non vérifiés en v1**.
   L'allow-list strict (D2=C) limite tellement les directs que le
   risque transitif est quasi-nul. Reconsidérer en v2 si un leak

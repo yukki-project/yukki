@@ -27,8 +27,8 @@ dans le workflow (story.draft → story.reviewed → analyse créée →
 analyse.reviewed → canvas créé → ...), il faut aujourd'hui :
 
 - éditer le front-matter à la main (changer `status:`) ou
-- lancer la commande slash suivante via Claude Code (`/spdd-analysis`,
-  `/spdd-reasons-canvas`, ...).
+- lancer la commande slash suivante via Claude Code (`/yukki-analysis`,
+  `/yukki-reasons-canvas`, ...).
 
 Aucune visualisation de la progression, aucun garde-fou contre les
 skips d'étape. Les outils que le public cible utilise au quotidien
@@ -61,7 +61,7 @@ ultérieure câblera l'appel direct).
   Jira (workflow validators).
 - **Foundation pour l'intégration AI** : les boutons "→ next
   stage" deviendront des triggers directs pour
-  `/spdd-analysis` / `/spdd-reasons-canvas` / `/spdd-generate`
+  `/yukki-analysis` / `/yukki-reasons-canvas` / `/yukki-generate`
   via le SDK Claude Agent — story future. UI-008 expose les bons
   points d'accroche dans l'UI.
 
@@ -146,8 +146,8 @@ ultérieure câblera l'appel direct).
 - **Création d'étape suivante (V1 read-only trigger)** :
   drag-and-drop la carte active sur la cellule drop target
   immédiatement à droite → modal qui affiche :
-  - Le nom de la commande slash à exécuter (`/spdd-analysis`,
-    `/spdd-reasons-canvas`, ...) avec un bouton "Copy command"
+  - Le nom de la commande slash à exécuter (`/yukki-analysis`,
+    `/yukki-reasons-canvas`, ...) avec un bouton "Copy command"
   - Le chemin de l'artefact source (à copier avec)
   - **Pas** d'exécution AI directe en V1 (Scope Out, story
     future câblera l'appel via Claude Agent SDK).
@@ -228,7 +228,7 @@ ultérieure câblera l'appel direct).
 ## Scope Out
 
 - **Trigger AI direct** depuis l'UI (click "Create analysis"
-  qui exécute `/spdd-analysis` via Claude Agent SDK) — V2,
+  qui exécute `/yukki-analysis` via Claude Agent SDK) — V2,
   story future. V1 affiche juste la commande à copier-coller.
 - **Command palette** (Linear-style cmd+K) — différé, pas un
   bloqueur pour la vue pipeline.
@@ -315,7 +315,7 @@ ultérieure câblera l'appel direct).
 - **When** je drag la card UI-008 et la drop sur la **colonne
   immédiatement à droite** (`Analysis`)
 - **Then** modal `Create next stage` s'ouvre avec la commande
-  slash `/spdd-analysis spdd/stories/UI-008-...md` et le
+  slash `/yukki-analysis .yukki/stories/UI-008-...md` et le
   disclaimer "Coming in a future version: this will run
   automatically."
 - **Given** la même UI-008 dans `Story`
@@ -334,7 +334,7 @@ ultérieure câblera l'appel direct).
 - **Given** la vue pipeline avec UI-007 visible
 - **When** je clique sur la carte UI-007 colonne `Story`
 - **Then** un panel side (drawer droit, ~600px) s'ouvre avec le
-  rendu markdown de `spdd/stories/UI-007-custom-titlebar-dark.md`
+  rendu markdown de `.yukki/stories/UI-007-custom-titlebar-dark.md`
   via le `<StoryViewer />` existant. Click hors panel ou
   `Escape` → ferme.
 
@@ -387,7 +387,7 @@ ultérieure câblera l'appel direct).
   - Titre "Create next stage"
   - Texte explicatif référençant l'`id` de la feature
   - Code block monospace
-    `\/spdd-analysis spdd/stories/UI-008-workflow-pipeline-view.md`
+    `\/yukki-analysis .yukki/stories/UI-008-workflow-pipeline-view.md`
   - Bouton `Copy command` qui copie dans le clipboard
   - Bouton `Close`
   - Disclaimer "Coming in a future version: this will run
@@ -476,7 +476,7 @@ ultérieure câblera l'appel direct).
       (Radix Dialog en variant drawer droit). Séparation des
       concerns clean, primitive Radix déjà déps via NewStoryModal.
 - [x] **OQ5 → A** : modal "Create analysis" affiche la **commande
-      slash** à copier (`/spdd-analysis spdd/stories/<id>-<slug>.md`)
+      slash** à copier (`/yukki-analysis .yukki/stories/<id>-<slug>.md`)
       + bouton `Copy command` + **disclaimer explicite** :
       "Coming in a future version: this will run automatically."
 - [x] **OQ6 → A** : tri par défaut des rows = **`updated` desc**
@@ -509,7 +509,7 @@ ultérieure câblera l'appel direct).
     keyboard fallback.
   - [UX patterns for developers — Kanban](https://uxpatterns.dev/patterns/data-display/kanban-board)
     — ARIA roles, screen reader announcements, focus management.
-- Risques pressentis (à creuser en `/spdd-analysis`) :
+- Risques pressentis (à creuser en `/yukki-analysis`) :
   - Aggrégation cross-kind dans `useWorkflowStore` : 4 calls
     parallèles à `ListArtifacts` au mount, attention à la
     concurrence + race conditions sur le rafraîchissement

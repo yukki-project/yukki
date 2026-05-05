@@ -1,24 +1,24 @@
 ---
-name: spdd-generate
-description: "Étape 5 du workflow SPDD : à partir d'un canvas REASONS validé, génère le code module par module en suivant strictement la section Operations (O1 → On), en respectant les Norms et les Safeguards. Crée ou modifie les fichiers Java/TS/YAML/Helm correspondants. Utilise après /spdd-reasons-canvas et la revue humaine du canvas."
-argument-hint: "<id-slug OU chemin vers spdd/prompts/...>"
+name: yukki-generate
+description: "Étape 5 du workflow SPDD : à partir d'un canvas REASONS validé, génère le code module par module en suivant strictement la section Operations (O1 → On), en respectant les Norms et les Safeguards. Crée ou modifie les fichiers Java/TS/YAML/Helm correspondants. Utilise après /yukki-reasons-canvas et la revue humaine du canvas."
+argument-hint: "<id-slug OU chemin vers .yukki/prompts/...>"
 user-invocable: true
 ---
 
-# /spdd-generate — Génération de code depuis un canvas REASONS
+# /yukki-generate — Génération de code depuis un canvas REASONS
 
-Cinquième étape du workflow [Structured Prompt-Driven Development](../../../spdd/README.md).
+Cinquième étape du workflow [Structured Prompt-Driven Development](../../../.yukki/README.md).
 
 Le canvas est la **source de vérité**. Cette commande ne fait que projeter ce
 qu'il décrit en code. **Si la réalité diverge du canvas pendant la génération,
 on s'arrête et on signale** — la divergence se résout dans le canvas via
-`/spdd-prompt-update`, pas en s'écartant du prompt en cours.
+`/yukki-prompt-update`, pas en s'écartant du prompt en cours.
 
 ## Entrée
 
 L'argument doit pointer vers un canvas existant :
 - `EXT-014-trivy-csv-export` (id-slug)
-- `spdd/prompts/EXT-014-trivy-csv-export.md` (chemin direct)
+- `.yukki/prompts/EXT-014-trivy-csv-export.md` (chemin direct)
 
 ## Étape 1 — Charger et valider le canvas
 
@@ -62,14 +62,14 @@ Pour chaque Operation dans l'ordre du canvas :
    Pour la **qualité des tests générés** (naming, anti-patterns à éviter,
    pyramide cible, seuils de coverage, choix unit / intégration / e2e),
    se référer aux refs du cluster testing :
-   - [`spdd/methodology/testing/testing-frontend.md`](../../../spdd/methodology/testing/testing-frontend.md)
+   - [`.yukki/methodology/testing/testing-frontend.md`](../../../.yukki/methodology/testing/testing-frontend.md)
      pour les Operations frontend
-   - [`spdd/methodology/testing/testing-backend.md`](../../../spdd/methodology/testing/testing-backend.md)
+   - [`.yukki/methodology/testing/testing-backend.md`](../../../.yukki/methodology/testing/testing-backend.md)
      pour les Operations backend
    - sub-refs spécifiques selon le besoin :
-     [`test-naming.md`](../../../spdd/methodology/testing/test-naming.md),
-     [`test-smells.md`](../../../spdd/methodology/testing/test-smells.md),
-     [`coverage-discipline.md`](../../../spdd/methodology/testing/coverage-discipline.md)
+     [`test-naming.md`](../../../.yukki/methodology/testing/test-naming.md),
+     [`test-smells.md`](../../../.yukki/methodology/testing/test-smells.md),
+     [`coverage-discipline.md`](../../../.yukki/methodology/testing/coverage-discipline.md)
 5. **Mettre à jour la checklist** affichée à l'utilisateur (`O1 ✓`, `O2 …`).
 
 Règles transverses :
@@ -89,8 +89,8 @@ Une fois toutes les Operations implémentées :
    - frontend : `yarn --cwd frontend tsc --noEmit` ou la commande équivalente du projet
 2. **Lancer les tests unitaires** des modules touchés. En cas d'échec :
    - Si l'échec révèle une erreur de génération (signature mal respectée, oubli) → corriger directement dans le code généré.
-   - Si l'échec révèle un défaut de **spec** (le canvas est imprécis ou contradictoire) → **arrêter** et proposer `/spdd-prompt-update`.
-3. Si la feature ajoute un endpoint REST → proposer `/spdd-api-test` pour la validation fonctionnelle.
+   - Si l'échec révèle un défaut de **spec** (le canvas est imprécis ou contradictoire) → **arrêter** et proposer `/yukki-prompt-update`.
+3. Si la feature ajoute un endpoint REST → proposer `/yukki-api-test` pour la validation fonctionnelle.
 
 ## Étape 5 — Mettre à jour le canvas et restituer
 
@@ -100,9 +100,9 @@ Une fois toutes les Operations implémentées :
    - La liste des fichiers créés / modifiés (liens cliquables)
    - Le résultat des compilations / tests
    - La suite suggérée :
-     - `/spdd-api-test <id-slug>` si endpoints REST
+     - `/yukki-api-test <id-slug>` si endpoints REST
      - revue de code humaine sur le diff
-     - `/spdd-sync <id-slug>` après tout refactor manuel
+     - `/yukki-sync <id-slug>` après tout refactor manuel
 
 ## Checklist avant de rendre la main
 

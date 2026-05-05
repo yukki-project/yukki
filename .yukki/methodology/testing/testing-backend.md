@@ -4,7 +4,7 @@ title: Testing backend — playbook (pyramide + sub-refs)
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -135,7 +135,7 @@ Pattern "I/O orchestrée" :
   response, codes, schéma)
 - Tests **contract** sur l'interface publique (cf.
   [`contract-testing.md`](contract-testing.md))
-- La skill SPDD existante `/spdd-api-test` génère un script
+- La skill SPDD existante `/yukki-api-test` génère un script
   bash de validation API (curl + jq) — **complément**
   pratique au contract testing pour smoke tests rapides
 
@@ -227,7 +227,7 @@ outils de coverage par écosystème**.
   appliqués aux modules backend
 - [`contract-testing.md`](contract-testing.md) — APIs et
   events
-- *(skill SPDD existante)* `/spdd-api-test` — script de
+- *(skill SPDD existante)* `/yukki-api-test` — script de
   smoke test API (curl + jq)
 
 ## Sources

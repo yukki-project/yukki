@@ -3,7 +3,7 @@ id: METHO-invest
 title: INVEST — critères de qualité d'une user story
 version: 1
 status: published
-applies-to: [spdd-story, spdd-analysis]
+applies-to: [yukki-story, yukki-analysis]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30
@@ -17,8 +17,8 @@ sources:
 
 Six critères proposés par Bill Wake (2003), popularisés par Mike Cohn dans
 *User Stories Applied* (2004). Appliqués au moment de la rédaction d'une
-story (`/spdd-story`) et au moment de la revue (`/spdd-analysis` peut
-escalader vers `/spdd-story` si INVEST est cassé).
+story (`/yukki-story`) et au moment de la revue (`/yukki-analysis` peut
+escalader vers `/yukki-story` si INVEST est cassé).
 
 ## Les 6 critères
 
@@ -33,7 +33,7 @@ escalader vers `/spdd-story` si INVEST est cassé).
 
 ## Heuristiques d'application
 
-### Au moment de la rédaction (`/spdd-story`)
+### Au moment de la rédaction (`/yukki-story`)
 
 - Lire la story brute (paragraphe, ticket Jira, dump Slack).
 - Pour **chaque critère**, poser la question-test et noter la réponse.
@@ -41,7 +41,7 @@ escalader vers `/spdd-story` si INVEST est cassé).
   1. Reformuler la story pour que le critère passe (cas le plus fréquent)
   2. Si "Small" échoue → invoquer **SPIDR** (voir [`spidr.md`](spidr.md)) pour scinder
 
-### Au moment de l'analyse (`/spdd-analysis`)
+### Au moment de l'analyse (`/yukki-analysis`)
 
 Si pendant le scan codebase on découvre que la story :
 - contredit l'existant (Independent cassé)
@@ -49,7 +49,7 @@ Si pendant le scan codebase on découvre que la story :
 - a un périmètre flou (Estimable cassé)
 - requiert un travail >2 jours (Small cassé)
 
-→ **escalader vers `/spdd-story`** pour reformuler ou scinder.
+→ **escalader vers `/yukki-story`** pour reformuler ou scinder.
 
 ## Independent
 

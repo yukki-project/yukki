@@ -12,7 +12,7 @@ promoted-to: ~
 
 ## Idée
 
-yukki dispose déjà de `/spdd-generate` (canvas → code). Étendre l'aide
+yukki dispose déjà de `/yukki-generate` (canvas → code). Étendre l'aide
 IA à toutes les phases de la chaîne discovery → delivery :
 
 - **Inbox** : à partir d'un brain dump (paragraphe libre, dump Slack,
@@ -31,7 +31,7 @@ laisser que la **revue humaine** comme valeur ajoutée.
 
 ## Notes
 
-- À distinguer de `/spdd-generate` qui projette un canvas en code —
+- À distinguer de `/yukki-generate` qui projette un canvas en code —
   ici on parle de **générer les artefacts d'amont** (Inbox / promotion
   / découpage).
 - Risque méthodologique : laisser l'IA pré-remplir trop tôt peut

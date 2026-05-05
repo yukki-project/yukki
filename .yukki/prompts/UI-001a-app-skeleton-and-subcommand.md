@@ -1,9 +1,9 @@
 ---
 id: UI-001a
 slug: app-skeleton-and-subcommand
-story: spdd/stories/UI-001a-app-skeleton-and-subcommand.md
-analysis: spdd/analysis/UI-001a-app-skeleton-and-subcommand.md
-family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001a-app-skeleton-and-subcommand.md
+analysis: .yukki/analysis/UI-001a-app-skeleton-and-subcommand.md
+family-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: synced
 created: 2026-05-01
 updated: 2026-05-01
@@ -11,7 +11,7 @@ updated: 2026-05-01
 
 # Canvas REASONS — App skeleton & sub-cmd `yukki ui`
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > 1ère story fille de la famille UI-001 (split SPIDR axe **I**). Cette
@@ -22,7 +22,7 @@ updated: 2026-05-01
 > ## Changelog
 >
 > - **v1 — 2026-05-01** : canvas initial (8 Operations, status `draft`).
-> - **v2 — 2026-05-01** : déviation pendant `/spdd-generate`. Wails v2
+> - **v2 — 2026-05-01** : déviation pendant `/yukki-generate`. Wails v2
 >   exige que le package `main` (et donc `main.go`) vive **à la racine
 >   du repo** (à côté de `wails.json`) — son générateur de bindings
 >   TypeScript scanne ce dossier et plante avec
@@ -35,7 +35,7 @@ updated: 2026-05-01
 >   `unit-tests` mock-tagged : `./cmd/yukki/...` → `.`. Status passé
 >   `draft → implemented` après validation locale (6/6 uiapp + 2/2
 >   build-tag dual + workflow/templates/clilog/integration verts).
-> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+> - **v3 — 2026-05-01** — `/yukki-sync` (refactor seul, comportement
 >   inchangé). 4 dérives détectées et propagées dans Structure +
 >   Operations :
 >   1. `cmd/yukki/embed.go` (jamais réellement créé en v1) → mini

@@ -1,4 +1,4 @@
-# spdd/methodology/
+# .yukki/methodology/
 
 Bibliothèque versionnée de **techniques méthodologiques** SPDD. Chaque
 technique vit dans un fichier autonome et est référencée par les skills qui
@@ -6,7 +6,7 @@ la consomment. **Aucune technique n'est inlinée dans un skill.**
 
 ## Convention de catégorisation par cluster
 
-À partir de TEST-001, le dossier `spdd/methodology/` adopte une
+À partir de TEST-001, le dossier `.yukki/methodology/` adopte une
 **organisation par cluster thématique** :
 
 - **1 cluster = 1 sous-dossier** (`testing/`, futurs `code-quality/`,
@@ -37,13 +37,13 @@ la consomment. **Aucune technique n'est inlinée dans un skill.**
 
 | Ref | Résumé | applies-to |
 |---|---|---|
-| [acceptance-criteria.md](acceptance-criteria.md) | Formulation des AC : Given/When/Then, style déclaratif, mots bannis, granularité 3-5 | `spdd-story`, `spdd-prompt-update`, `spdd-reasons-canvas` |
-| [decisions.md](decisions.md) | Format Y-Statement pour l'approche stratégique | `spdd-analysis`, `spdd-reasons-canvas` |
-| [domain-modeling.md](domain-modeling.md) | Identifier entités, value objects, invariants, intégrations et events d'une feature (DDD tactique allégé) | `spdd-analysis`, `spdd-reasons-canvas` |
-| [edge-cases.md](edge-cases.md) | BVA + EP + checklist 7 catégories pour identifier les cas limites | `spdd-analysis`, `spdd-reasons-canvas` |
-| [invest.md](invest.md) | Les 6 critères de qualité d'une user story (Independent / Negotiable / Valuable / Estimable / Small / Testable) | `spdd-story`, `spdd-analysis` |
-| [risk-taxonomy.md](risk-taxonomy.md) | 6 catégories de risques + STRIDE en sous-cadre sécurité | `spdd-analysis`, `spdd-reasons-canvas`, `spdd-prompt-update` |
-| [spidr.md](spidr.md) | SPIDR — 5 axes de découpage (Paths / Interfaces / Data / Rules / Spike) quand "Small" d'INVEST est cassé | `spdd-story`, `spdd-prompt-update` |
+| [acceptance-criteria.md](acceptance-criteria.md) | Formulation des AC : Given/When/Then, style déclaratif, mots bannis, granularité 3-5 | `yukki-story`, `yukki-prompt-update`, `yukki-reasons-canvas` |
+| [decisions.md](decisions.md) | Format Y-Statement pour l'approche stratégique | `yukki-analysis`, `yukki-reasons-canvas` |
+| [domain-modeling.md](domain-modeling.md) | Identifier entités, value objects, invariants, intégrations et events d'une feature (DDD tactique allégé) | `yukki-analysis`, `yukki-reasons-canvas` |
+| [edge-cases.md](edge-cases.md) | BVA + EP + checklist 7 catégories pour identifier les cas limites | `yukki-analysis`, `yukki-reasons-canvas` |
+| [invest.md](invest.md) | Les 6 critères de qualité d'une user story (Independent / Negotiable / Valuable / Estimable / Small / Testable) | `yukki-story`, `yukki-analysis` |
+| [risk-taxonomy.md](risk-taxonomy.md) | 6 catégories de risques + STRIDE en sous-cadre sécurité | `yukki-analysis`, `yukki-reasons-canvas`, `yukki-prompt-update` |
+| [spidr.md](spidr.md) | SPIDR — 5 axes de découpage (Paths / Interfaces / Data / Rules / Spike) quand "Small" d'INVEST est cassé | `yukki-story`, `yukki-prompt-update` |
 
 ## Cluster: testing
 
@@ -53,15 +53,15 @@ par écosystème est traité dans une **story sœur TEST-002** (différée).
 
 | Ref | Résumé | applies-to |
 |---|---|---|
-| [testing/testing-frontend.md](testing/testing-frontend.md) | **Playbook frontend** — pyramide adaptée (Cohn / Honeycomb / Trophy), arbitrage par contexte, sub-refs liées, annexe outils | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/testing-backend.md](testing/testing-backend.md) | **Playbook backend** — pyramide 70/20/10, spécificités I/O / DB / messaging / APIs, annexe outils | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/test-naming.md](testing/test-naming.md) | Conventions de nommage : G/W/T, AAA, MethodName_State_Expected (Osherove). Heuristiques par stack. Anti-patterns | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/test-smells.md](testing/test-smells.md) | Catalogue Meszaros : 11 smells fréquents (Fragile, Slow, Eager, Lazy, Mystery Guest, etc.) avec symptôme + fix | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/coverage-discipline.md](testing/coverage-discipline.md) | Seuils 70% / 85% critiques. **4 anti-cheat obligatoires** (mutation, test size limit, forbid patterns, drift gate). Patterns de gaming | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/mutation-testing.md](testing/mutation-testing.md) | Mesurer la qualité des tests via injection de mutants. Quand l'introduire (modules critiques), seuil 60-70%, traps | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/property-based-testing.md](testing/property-based-testing.md) | Invariants vs example-based. 7 patterns (round-trip, oracle, équivalence, métamorphique, idempotence, commutativité, identité) | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/contract-testing.md](testing/contract-testing.md) | Consumer-driven (Pact) vs schema-first (OpenAPI). Décision context-aware. Versioning, expand-contract | `spdd-reasons-canvas`, `spdd-generate` |
-| [testing/snapshot-testing.md](testing/snapshot-testing.md) | Decision tree : caractérisation legacy / output stable. Anti-pattern "regenerate sans review" | `spdd-reasons-canvas`, `spdd-generate` |
+| [testing/testing-frontend.md](testing/testing-frontend.md) | **Playbook frontend** — pyramide adaptée (Cohn / Honeycomb / Trophy), arbitrage par contexte, sub-refs liées, annexe outils | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/testing-backend.md](testing/testing-backend.md) | **Playbook backend** — pyramide 70/20/10, spécificités I/O / DB / messaging / APIs, annexe outils | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/test-naming.md](testing/test-naming.md) | Conventions de nommage : G/W/T, AAA, MethodName_State_Expected (Osherove). Heuristiques par stack. Anti-patterns | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/test-smells.md](testing/test-smells.md) | Catalogue Meszaros : 11 smells fréquents (Fragile, Slow, Eager, Lazy, Mystery Guest, etc.) avec symptôme + fix | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/coverage-discipline.md](testing/coverage-discipline.md) | Seuils 70% / 85% critiques. **4 anti-cheat obligatoires** (mutation, test size limit, forbid patterns, drift gate). Patterns de gaming | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/mutation-testing.md](testing/mutation-testing.md) | Mesurer la qualité des tests via injection de mutants. Quand l'introduire (modules critiques), seuil 60-70%, traps | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/property-based-testing.md](testing/property-based-testing.md) | Invariants vs example-based. 7 patterns (round-trip, oracle, équivalence, métamorphique, idempotence, commutativité, identité) | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/contract-testing.md](testing/contract-testing.md) | Consumer-driven (Pact) vs schema-first (OpenAPI). Décision context-aware. Versioning, expand-contract | `yukki-reasons-canvas`, `yukki-generate` |
+| [testing/snapshot-testing.md](testing/snapshot-testing.md) | Decision tree : caractérisation legacy / output stable. Anti-pattern "regenerate sans review" | `yukki-reasons-canvas`, `yukki-generate` |
 
 ## Convention
 
@@ -75,4 +75,4 @@ par écosystème est traité dans une **story sœur TEST-002** (différée).
 - **Sous-dossier** : kebab-case anglais (`testing`, `code-quality`, `ai-aware`)
 - **Refs avec overlap** : section `## Voir aussi` en footer (liste à puces simple), pas de duplication de contenu
 
-Voir [`spdd/README.md`](../README.md) pour la philosophie générale SPDD.
+Voir [`.yukki/README.md`](../README.md) pour la philosophie générale SPDD.

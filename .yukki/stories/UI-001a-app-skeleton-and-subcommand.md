@@ -15,8 +15,8 @@ parent: UI-001
 sibling-stories:
   - UI-001b-hub-viewer-claude-banner
   - UI-001c-new-story-flow
-analysis: spdd/analysis/UI-001a-app-skeleton-and-subcommand.md
-family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+analysis: .yukki/analysis/UI-001a-app-skeleton-and-subcommand.md
+family-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 ---
 
 # App skeleton — `yukki ui` sub-cmd lance une fenêtre Wails vide + scaffold React
@@ -24,7 +24,7 @@ family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
 ## Background
 
 Première de 3 stories filles issues du split SPIDR axe **I** (Interface) de
-la story parente UI-001 (cf. [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md)).
+la story parente UI-001 (cf. [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md)).
 
 Cette story pose **uniquement le scaffold** : une fenêtre Wails vide qui
 s'ouvre via `yukki ui`, le projet React/TS/Vite/Tailwind/shadcn-ui prêt à
@@ -33,7 +33,7 @@ recevoir des composants, et le job CI qui valide la compile sur 3 OS.
 UI-001b (hub viewer) et UI-001c (new story flow) vont compléter.
 
 L'analyse stratégique commune aux 3 stories filles UI-001a/b/c reste
-[`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md) ;
+[`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md) ;
 elle couvre toutes les décisions structurantes (D1-D16) et les risques
 de la famille.
 
@@ -173,10 +173,10 @@ de la famille.
   [UI-001b-hub-viewer-claude-banner.md](UI-001b-hub-viewer-claude-banner.md)
   + [UI-001c-new-story-flow.md](UI-001c-new-story-flow.md). La V1 utilisateur
   *"Hub + canvas editor"* nécessite UI-001a + 001b + 001c + UI-004 (canvas).
-- **Analyse partagée** : [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md)
+- **Analyse partagée** : [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md)
   couvre la famille UI-001a/b/c. Les 16 décisions ont déjà été tranchées
   par l'utilisateur (Q1=B, Q2=A, Q3=A, Q4=A, Q5=A, Q6=A, Q7=A acceptées).
 - **Estimation** : ~1.5j (scaffold Wails 0.5j + scaffold React/Vite/Tailwind/
   shadcn 0.5j + CI matrix + DEVELOPMENT.md 0.5j).
 - **Lien vers le canvas REASONS** (à venir) :
-  `spdd/prompts/UI-001a-app-skeleton-and-subcommand.md`
+  `.yukki/prompts/UI-001a-app-skeleton-and-subcommand.md`

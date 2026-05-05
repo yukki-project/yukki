@@ -23,6 +23,6 @@
 //   - No global state. Each Writer instance is bound to a single
 //     output directory.
 //
-// See spdd/stories/CORE-002-isolate-business-core.md for the rationale
+// See .yukki/stories/CORE-002-isolate-business-core.md for the rationale
 // of this isolation.
 package artifacts

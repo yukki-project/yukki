@@ -1,8 +1,8 @@
 ---
 id: UI-008
 slug: workflow-pipeline-view
-story: spdd/stories/UI-008-workflow-pipeline-view.md
-analysis: spdd/analysis/UI-008-workflow-pipeline-view.md
+story: .yukki/stories/UI-008-workflow-pipeline-view.md
+analysis: .yukki/analysis/UI-008-workflow-pipeline-view.md
 status: implemented
 created: 2026-05-02
 updated: 2026-05-02
@@ -10,9 +10,9 @@ updated: 2026-05-02
 
 # Canvas REASONS — Vue pipeline SPDD (swim-lane Linear/Jira hybride)
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > code ↔ canvas se résout **dans ce fichier d'abord** (via
-> `/spdd-prompt-update`). 7 OQs (story) + 8 D-D (analyse) toutes
+> `/yukki-prompt-update`). 7 OQs (story) + 8 D-D (analyse) toutes
 > tranchées en reco A. Lève partiellement l'Invariant I5 d'UI-007
 > (Backend Go = 0 changement) — UI-008 ajoute 2 méthodes Go +
 > 1 nouveau fichier de constants.
@@ -123,8 +123,8 @@ style validators).
 - [ ] **Modal "Create next stage"** (`<CreateNextStageModal />`,
       Dialog shadcn) ouverte au click sur une cellule vide
       débloquée. Affiche la commande slash à copier
-      (`/spdd-analysis spdd/stories/<id>-<slug>.md`,
-      `/spdd-reasons-canvas spdd/analysis/<id>-<slug>.md`, etc.)
+      (`/yukki-analysis .yukki/stories/<id>-<slug>.md`,
+      `/yukki-reasons-canvas .yukki/analysis/<id>-<slug>.md`, etc.)
       + bouton `Copy command` + disclaimer "Coming in a future
       version: this will run automatically."
 - [ ] **Backend Go** :
@@ -877,8 +877,8 @@ style validators).
   5. **`<CreateNextStageModal />`** :
      - Props `{ open, onOpenChange, sourceArtifact, nextKind }`.
      - Affiche commande slash dans un `<code>` :
-       - nextKind=analysis → `/spdd-analysis spdd/stories/<id>-<slug>.md`
-       - nextKind=prompts → `/spdd-reasons-canvas spdd/analysis/<id>-<slug>.md`
+       - nextKind=analysis → `/yukki-analysis .yukki/stories/<id>-<slug>.md`
+       - nextKind=prompts → `/yukki-reasons-canvas .yukki/analysis/<id>-<slug>.md`
        - nextKind=tests → (V1 stub, future story)
      - Bouton `Copy command` → `navigator.clipboard.writeText(...)`.
      - Disclaimer : "Coming in a future version: this will run automatically."
@@ -983,7 +983,7 @@ style validators).
 
 ### O11 — Priority field + binding `UpdateArtifactPriority`
 
-> Ajouté via `/spdd-prompt-update` 2026-05-03 — changement de
+> Ajouté via `/yukki-prompt-update` 2026-05-03 — changement de
 > comportement (drag-to-reorder rows + numéro de position visible).
 
 - **Module** : `internal/artifacts` + `internal/uiapp` + stubs Wails
@@ -1179,7 +1179,7 @@ style validators).
   au click sur la cellule active. Sections d'intention non
   touchées (E / N / Safeguards). Status canvas : implemented
   → reviewed (signal que le code n'est plus aligné, à
-  régénérer via /spdd-generate ciblé sur O8).
+  régénérer via /yukki-generate ciblé sur O8).
 - **2026-05-03 quinquies — pivot Kanban** — retour aux 5
   colonnes par kind (Story/Analysis/Canvas/Implementation/Tests),
   mais en **layout Kanban** (chaque colonne = stack vertical
@@ -1211,7 +1211,7 @@ style validators).
 
 - **2026-05-03 ter — `R — DoD` + `O7` + `O8`** — suppression
   des boutons `Plus` au profit du **drag-and-drop direct**
-  (cf. `/spdd-prompt-update` 2026-05-03 ter, capture utilisateur
+  (cf. `/yukki-prompt-update` 2026-05-03 ter, capture utilisateur
   avec Plus barrés rouge). Justification UX : "tout est drag"
   (cohérence avec le reorder de rows), réduit le bruit visuel
   (suppression des cellules Plus disabled grises). Cellule +1
@@ -1225,7 +1225,7 @@ style validators).
 
 - **2026-05-03 — `R — DoD` + `A — Approach` + `O7` + `O8` +
   nouvelle `O11`** — changement de comportement (cf.
-  `/spdd-prompt-update` 2026-05-03) :
+  `/yukki-prompt-update` 2026-05-03) :
   - **Suppression de la colonne "Feature" sticky leftmost** —
     créait un gros scroll horizontal pour info redondante (l'`id`
     est déjà dans la card active). Le tableau a maintenant 5

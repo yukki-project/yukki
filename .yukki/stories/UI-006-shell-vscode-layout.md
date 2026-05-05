@@ -246,4 +246,4 @@ panneau droit séparé, accent violet sur les éléments actifs.
   CSS globales + ajustement composants 0.4j ; persistance prefs +
   animation 0.3j ; tests manuels + ajustements 0.3j).
 - **Lien vers le canvas REASONS** (à venir) :
-  `spdd/prompts/UI-006-shell-vscode-layout.md`
+  `.yukki/prompts/UI-006-shell-vscode-layout.md`

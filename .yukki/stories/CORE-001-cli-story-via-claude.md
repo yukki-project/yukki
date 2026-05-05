@@ -168,8 +168,8 @@ et INT-001 (provider Copilot CLI).
 
 ### Application des refs methodology
 
-Cette story applique les 3 refs `spdd/methodology/` qui s'adressent au
-skill `/spdd-story` :
+Cette story applique les 3 refs `.yukki/methodology/` qui s'adressent au
+skill `/yukki-story` :
 
 - [`invest.md`](../methodology/invest.md) — évaluation INVEST des 6
   critères, détaillée ci-dessous
@@ -224,7 +224,7 @@ parce que c'est précisément la *valeur* de la story fondatrice — chaque
 ### Architecture pressentie (indicatif)
 
 > Ces packages sont une indication pour l'analyse stratégique
-> (`/spdd-analysis`). Le canvas REASONS section *Operations* tranchera les
+> (`/yukki-analysis`). Le canvas REASONS section *Operations* tranchera les
 > signatures et chemins définitifs.
 
 - `cmd/yukki/main.go` — entrée Cobra

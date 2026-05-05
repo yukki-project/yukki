@@ -13,11 +13,11 @@ prompt d'abord**, puis on régénère ou resynchronise le code.
 | Dossier | Contenu | Produit par |
 |---|---|---|
 | [`inbox/`](inbox/) | Inbox — capture brute en discovery zone (META-005) | manuel / `INBOX-001` à venir |
-| [`stories/`](stories/) | User stories INVEST + Given/When/Then | `/spdd-story` |
+| [`stories/`](stories/) | User stories INVEST + Given/When/Then | `/yukki-story` |
 | [`epics/`](epics/) | Epics — regroupements thématiques de stories (META-005) | manuel / `EPIC-001` à venir |
 | [`roadmap/`](roadmap/) | Roadmap — vue projection Now/Next/Later (META-005) | manuel / `ROADMAP-001` à venir |
-| [`analysis/`](analysis/) | Contexte stratégique (concepts, risques, cas limites) | `/spdd-analysis` |
-| [`prompts/`](prompts/) | Canvas REASONS — spec exécutable | `/spdd-reasons-canvas`, `/spdd-prompt-update`, `/spdd-sync` |
+| [`analysis/`](analysis/) | Contexte stratégique (concepts, risques, cas limites) | `/yukki-analysis` |
+| [`prompts/`](prompts/) | Canvas REASONS — spec exécutable | `/yukki-reasons-canvas`, `/yukki-prompt-update`, `/yukki-sync` |
 | [`tests/`](tests/) | Prompts structurés pour les tests unitaires | étape 6 du workflow |
 | [`templates/`](templates/) | Squelettes des artefacts ci-dessus | maintenu manuellement |
 | [`methodology/`](methodology/) | **Techniques méthodologiques réutilisables** (DDD, STRIDE, BVA, Y-Statement…) référencées par les skills | maintenu manuellement, voir [`methodology/README.md`](methodology/README.md) |
@@ -70,8 +70,8 @@ rapide, kanban, transitions) sont portées par les stories enfants
 
 ## Convention "skill = procédural, methodology = knowledge"
 
-- **Les skills** (`.claude/commands/spdd-*.md` et
-  `.github/skills/spdd-*/SKILL.md`) sont **procéduraux** — ils décrivent les
+- **Les skills** (`.claude/commands/yukki-*.md` et
+  `.github/skills/yukki-*/SKILL.md`) sont **procéduraux** — ils décrivent les
   étapes d'une commande SPDD et la checklist à respecter.
 - **Les techniques méthodologiques** (DDD, STRIDE, Boundary Value Analysis,
   Y-Statement, etc.) **vivent dans [`methodology/`](methodology/)** et sont
@@ -89,13 +89,13 @@ mention de subagent (Claude) vs `#codebase` (Copilot).
 
 | Commande | Argument | Rôle | Skill (Claude / Copilot) |
 |---|---|---|---|
-| `/spdd-story` | `<description libre OU brouillon>` | Étape 1 — produit `spdd/stories/<id>-<slug>.md` | [Claude](../.claude/commands/spdd-story.md) · [Copilot](../.github/skills/spdd-story/SKILL.md) |
-| `/spdd-analysis` | `<id-slug>` | Étape 3 — produit `spdd/analysis/<id>-<slug>.md` | [Claude](../.claude/commands/spdd-analysis.md) · [Copilot](../.github/skills/spdd-analysis/SKILL.md) |
-| `/spdd-reasons-canvas` | `<id-slug>` | Étape 4 — produit `spdd/prompts/<id>-<slug>.md` (canvas) | [Claude](../.claude/commands/spdd-reasons-canvas.md) · [Copilot](../.github/skills/spdd-reasons-canvas/SKILL.md) |
-| `/spdd-generate` | `<id-slug>` | Étape 5 — produit / met à jour le code à partir du canvas | [Claude](../.claude/commands/spdd-generate.md) · [Copilot](../.github/skills/spdd-generate/SKILL.md) |
-| `/spdd-api-test` | `<id-slug>` | Étape 5b — produit `scripts/spdd/<id>-<slug>.sh` (curl + jq) | [Claude](../.claude/commands/spdd-api-test.md) · [Copilot](../.github/skills/spdd-api-test/SKILL.md) |
-| `/spdd-prompt-update` | `<id-slug> <description du changement>` | Boucle logique — met à jour le canvas, status `implemented → reviewed` | [Claude](../.claude/commands/spdd-prompt-update.md) · [Copilot](../.github/skills/spdd-prompt-update/SKILL.md) |
-| `/spdd-sync` | `<id-slug>` | Boucle refactor — met à jour le canvas pour refléter un refactor pur, status `implemented → synced` | [Claude](../.claude/commands/spdd-sync.md) · [Copilot](../.github/skills/spdd-sync/SKILL.md) |
+| `/yukki-story` | `<description libre OU brouillon>` | Étape 1 — produit `.yukki/stories/<id>-<slug>.md` | [Claude](../.claude/commands/yukki-story.md) · [Copilot](../.github/skills/yukki-story/SKILL.md) |
+| `/yukki-analysis` | `<id-slug>` | Étape 3 — produit `.yukki/analysis/<id>-<slug>.md` | [Claude](../.claude/commands/yukki-analysis.md) · [Copilot](../.github/skills/yukki-analysis/SKILL.md) |
+| `/yukki-reasons-canvas` | `<id-slug>` | Étape 4 — produit `.yukki/prompts/<id>-<slug>.md` (canvas) | [Claude](../.claude/commands/yukki-reasons-canvas.md) · [Copilot](../.github/skills/yukki-reasons-canvas/SKILL.md) |
+| `/yukki-generate` | `<id-slug>` | Étape 5 — produit / met à jour le code à partir du canvas | [Claude](../.claude/commands/yukki-generate.md) · [Copilot](../.github/skills/yukki-generate/SKILL.md) |
+| `/yukki-api-test` | `<id-slug>` | Étape 5b — produit `scripts/yukki/<id>-<slug>.sh` (curl + jq) | [Claude](../.claude/commands/yukki-api-test.md) · [Copilot](../.github/skills/yukki-api-test/SKILL.md) |
+| `/yukki-prompt-update` | `<id-slug> <description du changement>` | Boucle logique — met à jour le canvas, status `implemented → reviewed` | [Claude](../.claude/commands/yukki-prompt-update.md) · [Copilot](../.github/skills/yukki-prompt-update/SKILL.md) |
+| `/yukki-sync` | `<id-slug>` | Boucle refactor — met à jour le canvas pour refléter un refactor pur, status `implemented → synced` | [Claude](../.claude/commands/yukki-sync.md) · [Copilot](../.github/skills/yukki-sync/SKILL.md) |
 
 > L'étape 2 (clarification analytique) est **humaine** et conversationnelle — pas de commande SPDD dédiée.
 
@@ -104,28 +104,28 @@ mention de subagent (Claude) vs `#codebase` (Copilot).
 ```
 exigence métier brute
      │
-     ▼ /spdd-story
-spdd/stories/<id>-<slug>.md
+     ▼ /yukki-story
+.yukki/stories/<id>-<slug>.md
      │
      ▼ clarification humaine (étape 2)
      │
-     ▼ /spdd-analysis
-spdd/analysis/<id>-<slug>.md
+     ▼ /yukki-analysis
+.yukki/analysis/<id>-<slug>.md
      │
      ▼ revue humaine
      │
-     ▼ /spdd-reasons-canvas
-spdd/prompts/<id>-<slug>.md  ← source de vérité
+     ▼ /yukki-reasons-canvas
+.yukki/prompts/<id>-<slug>.md  ← source de vérité
      │
      ▼ revue humaine
      │
-     ▼ /spdd-generate
-src/...  + tests + (si REST) /spdd-api-test
+     ▼ /yukki-generate
+src/...  + tests + (si REST) /yukki-api-test
      │
      ▼ revue du diff
      │
-     ├─ logique change   → /spdd-prompt-update + /spdd-generate ciblé
-     └─ refactor pur     → édit code + /spdd-sync
+     ├─ logique change   → /yukki-prompt-update + /yukki-generate ciblé
+     └─ refactor pur     → édit code + /yukki-sync
 ```
 
 ## Exemple complet — META-001 (cycle + boucle)
@@ -136,51 +136,51 @@ La story [`META-001-extract-methodology-references`](stories/META-001-extract-me
 
 ```bash
 # Étape 1 — Story
-/spdd-story "extraire les techniques méthodologiques (DDD, STRIDE, BVA, Y-Statement) hors des skills vers spdd/methodology/ pour servir /spdd-analysis"
-# → spdd/stories/META-001-extract-methodology-references.md (status: draft)
+/yukki-story "extraire les techniques méthodologiques (DDD, STRIDE, BVA, Y-Statement) hors des skills vers .yukki/methodology/ pour servir /yukki-analysis"
+# → .yukki/stories/META-001-extract-methodology-references.md (status: draft)
 
 # Étape 2 — Clarification (HUMAIN, dialogue, pas de commande)
 # Résolution des Open Questions : version=entier, index README=oui
 # → status: draft → reviewed
 
 # Étape 3 — Analyse stratégique
-/spdd-analysis META-001-extract-methodology-references
-# → spdd/analysis/META-001-extract-methodology-references.md (status: draft)
+/yukki-analysis META-001-extract-methodology-references
+# → .yukki/analysis/META-001-extract-methodology-references.md (status: draft)
 
 # (REVUE HUMAINE de l'analyse)
 # Affinage : drop 2 risques mous, ajout du Guide de style des refs
 # → status: draft → reviewed
 
 # Étape 4 — Canvas REASONS
-/spdd-reasons-canvas META-001-extract-methodology-references
-# → spdd/prompts/META-001-extract-methodology-references.md
+/yukki-reasons-canvas META-001-extract-methodology-references
+# → .yukki/prompts/META-001-extract-methodology-references.md
 
 # (REVUE HUMAINE du canvas)
 # → status: draft → reviewed (ou accepted)
 
 # Étape 5 — Génération
-/spdd-generate META-001-extract-methodology-references
-# → 4 refs dans spdd/methodology/ (v1)
-# → spdd/methodology/README.md (index)
-# → maj .claude/commands/spdd-analysis.md (référence les refs)
-# → maj .github/skills/spdd-analysis/SKILL.md (miroir Copilot)
-# → création spdd/README.md (ce fichier !)
+/yukki-generate META-001-extract-methodology-references
+# → 4 refs dans .yukki/methodology/ (v1)
+# → .yukki/methodology/README.md (index)
+# → maj .claude/commands/yukki-analysis.md (référence les refs)
+# → maj .github/skills/yukki-analysis/SKILL.md (miroir Copilot)
+# → création .yukki/README.md (ce fichier !)
 # → status canvas: reviewed → implemented (changelog v1.1)
 ```
 
 ### Boucle de maintenance — divergence post-livraison
 
-Constat humain : *"les exemples des refs doivent être yukki uniquement, pas portail"*. C'est un changement des **Norms** du canvas → on choisit `/spdd-prompt-update` (logique change) plutôt que `/spdd-sync` (refactor pur).
+Constat humain : *"les exemples des refs doivent être yukki uniquement, pas portail"*. C'est un changement des **Norms** du canvas → on choisit `/yukki-prompt-update` (logique change) plutôt que `/yukki-sync` (refactor pur).
 
 ```bash
 # Étape 5b — Prompt-update du canvas
-/spdd-prompt-update META-001-extract-methodology-references "Norms et DoD : exemples yukki uniquement, portail interdit dans les refs publiées. Touche O1, O2, O3."
+/yukki-prompt-update META-001-extract-methodology-references "Norms et DoD : exemples yukki uniquement, portail interdit dans les refs publiées. Touche O1, O2, O3."
 # → canvas mis à jour (Norms + Operations O1/O2/O3 + DoD)
 # → status canvas: implemented → reviewed (signale les refs comme stale)
 # → changelog v1.2
 
 # Étape 5c — Régénération ciblée
-/spdd-generate META-001-extract-methodology-references
+/yukki-generate META-001-extract-methodology-references
 # → la commande détecte status=reviewed et régénère les Operations modifiées
 # → 3 refs passent en v2 (domain-modeling, risk-taxonomy, edge-cases)
 # → 1 ref inchangée (decisions.md, déjà yukki-native)
@@ -189,7 +189,7 @@ Constat humain : *"les exemples des refs doivent être yukki uniquement, pas por
 
 ### Bilan
 
-- **6 invocations** de slash commands (`/spdd-story`, `/spdd-analysis`, `/spdd-reasons-canvas`, `/spdd-generate` ×2, `/spdd-prompt-update`)
+- **6 invocations** de slash commands (`/yukki-story`, `/yukki-analysis`, `/yukki-reasons-canvas`, `/yukki-generate` ×2, `/yukki-prompt-update`)
 - **3 étapes humaines** (clarification + 2 revues)
 - **8 commits Git** versionnés avec préfixes conventionnels (`feat(spdd):`, `chore(spdd):`, `prompt-update(spdd):`, `generate(spdd):`, `review(spdd):`)
 - **Aucune édition de code hors du cycle SPDD**
@@ -215,8 +215,8 @@ Cette même séquence s'applique à toute story du projet — c'est le contrat S
 draft → reviewed → accepted → implemented → synced
                                   │
                                   └─ (back-edges)
-                                     /spdd-prompt-update : status redescend à `reviewed`
-                                     /spdd-sync           : status passe à `synced`
+                                     /yukki-prompt-update : status redescend à `reviewed`
+                                     /yukki-sync           : status passe à `synced`
 ```
 
 Toute transition arrière (`implemented → reviewed`) ajoute une entrée dans la

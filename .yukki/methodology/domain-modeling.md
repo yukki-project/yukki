@@ -3,7 +3,7 @@ id: METHO-domain-modeling
 title: Modélisation de domaine (DDD tactique allégé)
 version: 2
 status: published
-applies-to: [spdd-analysis, spdd-reasons-canvas]
+applies-to: [yukki-analysis, yukki-reasons-canvas]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30
@@ -49,7 +49,7 @@ user story SPDD :
 
 | Brique | Instance |
 |---|---|
-| Entity | `Story` (un fichier `spdd/stories/<id>-<slug>.md`, identifié par son `id`, cycle de vie `draft → reviewed → accepted`) |
+| Entity | `Story` (un fichier `.yukki/stories/<id>-<slug>.md`, identifié par son `id`, cycle de vie `draft → reviewed → accepted`) |
 | Value Object | `StoryID` (chaîne `<préfixe>-<numéro>`, immutable, deux IDs identiques sont identiques), `Description` (texte d'entrée passé à `claude`) |
 | Invariant | "Le numéro d'un id généré est strictement supérieur au plus grand numéro existant pour le préfixe donné" |
 | Integration point | `claude` CLI invoqué via `os/exec` (subprocess), file system (lecture du template `templates/story.md`, écriture de la story dans `stories/`) |

@@ -13,10 +13,10 @@ import { type Meta } from '../../../wailsjs/go/main/App';
 import { type StageKind } from './stages';
 
 const COMMAND_BY_KIND: Record<StageKind, (sourcePath: string) => string> = {
-  stories: () => '/spdd-story <description>',
-  analysis: (p) => `/spdd-analysis ${p}`,
-  prompts: (p) => `/spdd-reasons-canvas ${p}`,
-  tests: () => '/spdd-tests <id-slug> (V2)',
+  stories: () => '/yukki-story <description>',
+  analysis: (p) => `/yukki-analysis ${p}`,
+  prompts: (p) => `/yukki-reasons-canvas ${p}`,
+  tests: () => '/yukki-tests <id-slug> (V2)',
 };
 
 interface CreateNextStageModalProps {

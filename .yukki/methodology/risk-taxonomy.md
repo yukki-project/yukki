@@ -3,7 +3,7 @@ id: METHO-risk-taxonomy
 title: Taxonomie de risques (6 catégories + STRIDE pour la sécurité)
 version: 2
 status: published
-applies-to: [spdd-analysis, spdd-reasons-canvas, spdd-prompt-update]
+applies-to: [yukki-analysis, yukki-reasons-canvas, yukki-prompt-update]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30

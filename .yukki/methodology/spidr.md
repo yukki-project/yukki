@@ -3,7 +3,7 @@ id: METHO-spidr
 title: SPIDR — découpage de stories trop grosses
 version: 1
 status: published
-applies-to: [spdd-story, spdd-prompt-update]
+applies-to: [yukki-story, yukki-prompt-update]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30

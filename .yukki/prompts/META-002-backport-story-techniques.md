@@ -1,16 +1,16 @@
 ---
 id: META-002
 slug: backport-story-techniques
-story: spdd/stories/META-002-backport-story-techniques.md
-analysis: spdd/analysis/META-002-backport-story-techniques.md
+story: .yukki/stories/META-002-backport-story-techniques.md
+analysis: .yukki/analysis/META-002-backport-story-techniques.md
 status: implemented
 created: 2026-04-30
 updated: 2026-04-30
 ---
 
-# Canvas REASONS — Extraire SPIDR / INVEST / formulation des AC depuis /spdd-story vers spdd/methodology/
+# Canvas REASONS — Extraire SPIDR / INVEST / formulation des AC depuis /yukki-story vers .yukki/methodology/
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 
 ---
@@ -19,15 +19,15 @@ updated: 2026-04-30
 
 ### Problème
 
-Le skill `/spdd-story` contient encore inline trois techniques méthodologiques
+Le skill `/yukki-story` contient encore inline trois techniques méthodologiques
 (SPIDR, INVEST, formulation des AC), ce qui viole la convention
 *"skill = procédural, methodology = knowledge"* posée par META-001 et publiée
-dans `spdd/README.md`. Tant que cet inlining résiduel existe, la convention
+dans `.yukki/README.md`. Tant que cet inlining résiduel existe, la convention
 n'est qu'une intention partielle.
 
 ### Definition of Done
 
-- [ ] Trois nouvelles refs créées dans `spdd/methodology/` : `spidr.md`,
+- [ ] Trois nouvelles refs créées dans `.yukki/methodology/` : `spidr.md`,
       `invest.md`, `acceptance-criteria.md`, chacune avec frontmatter
       normalisé complet (`id`, `title`, `version: 1`, `status: published`,
       `applies-to`, `lang: fr`, `created`, `updated`, `sources`)
@@ -35,23 +35,23 @@ n'est qu'une intention partielle.
       80-150 lignes, structure type frontmatter → définition opérationnelle
       → heuristiques → exemple → sources → `## Changelog`, ton
       pratique-d'abord, **exemples exclusivement issus du projet yukki**
-- [ ] Le skill `/spdd-story` (Claude **et** Copilot) ne contient plus
+- [ ] Le skill `/yukki-story` (Claude **et** Copilot) ne contient plus
       aucune redéfinition de SPIDR / INVEST / Given/When/Then / déclaratif
       vs impératif / mots bannis / granularité 3-5 — uniquement des liens
       markdown vers les refs correspondantes
-- [ ] L'index `spdd/methodology/README.md` liste les 3 nouvelles refs
+- [ ] L'index `.yukki/methodology/README.md` liste les 3 nouvelles refs
       avec un résumé d'une phrase et leur `applies-to` correctement
       renseigné
 - [ ] Toutes les valeurs de `applies-to` pointent vers des skills
-      existants : `spdd-story`, `spdd-analysis`, `spdd-prompt-update`,
-      `spdd-reasons-canvas`
-- [ ] Le miroir Claude / Copilot du skill `/spdd-story` reste synchronisé
+      existants : `yukki-story`, `yukki-analysis`, `yukki-prompt-update`,
+      `yukki-reasons-canvas`
+- [ ] Le miroir Claude / Copilot du skill `/yukki-story` reste synchronisé
       à l'octet près (différences strictes : frontmatter `_` vs `-`,
       profondeur de chemin relatif, mention `subagent Explore` vs
       `#codebase`)
 - [ ] Aucune ref n'excède 200 lignes (signal de scinder sinon)
 - [ ] **Critère de revue manuelle** (non-AC) : un agent qui invoque
-      `/spdd-story` après ce changement produit une story avec la même
+      `/yukki-story` après ce changement produit une story avec la même
       qualité INVEST + format Given/When/Then + granularité 3-5 que
       l'ancien skill (régression nulle)
 
@@ -65,7 +65,7 @@ n'est qu'une intention partielle.
 |---|---|---|---|
 | `MethodologyReference` (existante) | Fichier markdown qui décrit une technique | `id`, `title`, `version`, `status`, `applies-to[]`, `sources[]`, `lang` | créée v1, version++ tracé via `## Changelog` |
 | `Skill` (existante, deux formats) | Procédure d'invocation | `name`, `description`, `argument-hint` | corps mis à jour avec liens markdown vers refs |
-| `MethodologyIndex` (existant) | `spdd/methodology/README.md` | tableau ref / résumé / applies-to | regénéré à chaque ajout/suppression |
+| `MethodologyIndex` (existant) | `.yukki/methodology/README.md` | tableau ref / résumé / applies-to | regénéré à chaque ajout/suppression |
 
 ### Relations
 
@@ -82,7 +82,7 @@ n'est qu'une intention partielle.
   vers la ref correspondante
 - `version` est un entier strictement positif et monotone par fichier ;
   tout incrément correspond à une entrée `## Changelog`
-- Les deux formats du skill `/spdd-story` (Claude et Copilot) restent
+- Les deux formats du skill `/yukki-story` (Claude et Copilot) restent
   synchronisés au contenu
 
 ---
@@ -91,19 +91,19 @@ n'est qu'une intention partielle.
 
 ### Y-Statement
 
-> Pour résoudre le **dernier inlining résiduel dans `/spdd-story`** (SPIDR
+> Pour résoudre le **dernier inlining résiduel dans `/yukki-story`** (SPIDR
 > + INVEST + formulation des AC) qui contredit la convention posée par
 > META-001, on choisit de **créer trois refs autonomes dans
-> `spdd/methodology/` (`spidr.md`, `invest.md`, `acceptance-criteria.md`)
-> puis de réécrire `/spdd-story` (Claude + Copilot) pour les référencer
+> `.yukki/methodology/` (`spidr.md`, `invest.md`, `acceptance-criteria.md`)
+> puis de réécrire `/yukki-story` (Claude + Copilot) pour les référencer
 > par lien**, plutôt que de **fusionner les trois techniques dans une ref
 > méta unique** ou de **conserver l'inlining historique au nom de "ce
 > skill est plus didactique que les autres"**, pour atteindre la
 > **cohérence absolue de la convention skill/methodology** et la
 > **réutilisabilité des refs entre skills** (INVEST consommé par
-> `/spdd-analysis`, AC formulation par `/spdd-reasons-canvas`), en
+> `/yukki-analysis`, AC formulation par `/yukki-reasons-canvas`), en
 > acceptant **trois fichiers supplémentaires dans `methodology/` et un
-> skill `/spdd-story` qui exige un Read additionnel par l'agent quand il
+> skill `/yukki-story` qui exige un Read additionnel par l'agent quand il
 > atteint une étape déléguée à une ref**.
 
 ### Alternatives écartées
@@ -113,7 +113,7 @@ n'est qu'une intention partielle.
   sous-ensemble différent des 3 techniques). Une ref par technique reste
   la bonne maille.
 - **Conserver l'inlining (statu quo)** — viole l'invariant publié dans
-  `spdd/README.md`. Toute la valeur de l'effort méthodologie repose sur
+  `.yukki/README.md`. Toute la valeur de l'effort méthodologie repose sur
   cet invariant.
 - **Mixer (ref pour SPIDR mais inline pour AC formulation)** —
   incohérent, sans logique défendable. Tout ou rien.
@@ -126,21 +126,21 @@ n'est qu'une intention partielle.
 
 | Module | Fichiers principaux | Nature |
 |---|---|---|
-| `spdd/methodology/` | `spidr.md`, `invest.md`, `acceptance-criteria.md` | création (3 fichiers) |
-| `.claude/commands/` | `spdd-story.md` | extraction + ajout de liens vers refs |
-| `.github/skills/spdd-story/` | `SKILL.md` | miroir Copilot synchronisé |
-| `spdd/methodology/` | `README.md` (index) | maj +3 lignes |
+| `.yukki/methodology/` | `spidr.md`, `invest.md`, `acceptance-criteria.md` | création (3 fichiers) |
+| `.claude/commands/` | `yukki-story.md` | extraction + ajout de liens vers refs |
+| `.github/skills/yukki-story/` | `SKILL.md` | miroir Copilot synchronisé |
+| `.yukki/methodology/` | `README.md` (index) | maj +3 lignes |
 
 ### Schéma de flux (consultation)
 
 ```
-[agent qui exécute /spdd-story]
+[agent qui exécute /yukki-story]
     │
     ▼
-.claude/commands/spdd-story.md
+.claude/commands/yukki-story.md
     │  (lien markdown explicite à l'étape concernée)
     ▼
-spdd/methodology/<technique>.md
+.yukki/methodology/<technique>.md
     │  (frontmatter applies-to → traçabilité)
     │  (corps : définition + heuristiques + exemple + sources)
     ▼
@@ -162,10 +162,10 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
 > Ordre d'exécution : O1 (foundation) → O2 (peut référencer O1) → O3
 > (autonome) → O4 (Claude) → O5 (Copilot, miroir de O4) → O6 (index).
 
-### O1 — Créer `spdd/methodology/invest.md`
+### O1 — Créer `.yukki/methodology/invest.md`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/invest.md`
+- **Fichier** : `.yukki/methodology/invest.md`
 - **Frontmatter** :
   ```yaml
   ---
@@ -173,7 +173,7 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
   title: INVEST — critères de qualité d'une user story
   version: 1
   status: published
-  applies-to: [spdd-story, spdd-analysis]
+  applies-to: [yukki-story, yukki-analysis]
   lang: fr
   created: 2026-04-30
   updated: 2026-04-30
@@ -200,10 +200,10 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
   - ancre `## Small` présente
   - exemple yukki (pas de portail)
 
-### O2 — Créer `spdd/methodology/spidr.md`
+### O2 — Créer `.yukki/methodology/spidr.md`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/spidr.md`
+- **Fichier** : `.yukki/methodology/spidr.md`
 - **Frontmatter** :
   ```yaml
   ---
@@ -211,7 +211,7 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
   title: SPIDR — découpage de stories trop grosses
   version: 1
   status: published
-  applies-to: [spdd-story, spdd-prompt-update]
+  applies-to: [yukki-story, yukki-prompt-update]
   lang: fr
   created: 2026-04-30
   updated: 2026-04-30
@@ -238,10 +238,10 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
      SPDD" → découpage axe **P (Paths)** en 6 stories filles
   7. Sources + Changelog
 
-### O3 — Créer `spdd/methodology/acceptance-criteria.md`
+### O3 — Créer `.yukki/methodology/acceptance-criteria.md`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/acceptance-criteria.md`
+- **Fichier** : `.yukki/methodology/acceptance-criteria.md`
 - **Frontmatter** :
   ```yaml
   ---
@@ -249,7 +249,7 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
   title: Formulation des Acceptance Criteria (Given/When/Then, déclaratif)
   version: 1
   status: published
-  applies-to: [spdd-story, spdd-prompt-update, spdd-reasons-canvas]
+  applies-to: [yukki-story, yukki-prompt-update, yukki-reasons-canvas]
   lang: fr
   created: 2026-04-30
   updated: 2026-04-30
@@ -276,10 +276,10 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
      erreur user, AC6 cas limite — template fallback)
   8. Sources + Changelog
 
-### O4 — Mettre à jour `.claude/commands/spdd-story.md`
+### O4 — Mettre à jour `.claude/commands/yukki-story.md`
 
 - **Module** : `.claude/commands`
-- **Fichier** : `.claude/commands/spdd-story.md`
+- **Fichier** : `.claude/commands/yukki-story.md`
 - **Comportement** :
   1. Supprimer les sections inlinées :
      - "Formulation des Acceptance Criteria" + sous-sections (style,
@@ -289,12 +289,12 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
        axes + signaux + stratégies + anti-patterns + exemple)
   2. Remplacer par des **invitations courtes** avec liens vers les refs :
      - À l'étape 4 (Rédiger la story) — sous-section "Formulation des
-       AC" → *"Suivre les règles de [`acceptance-criteria.md`](../../spdd/methodology/acceptance-criteria.md)
+       AC" → *"Suivre les règles de [`acceptance-criteria.md`](../../.yukki/methodology/acceptance-criteria.md)
        (Given/When/Then, déclaratif, mots bannis, granularité 3-5)."*
      - Idem pour la mention INVEST → lien vers
-       [`invest.md`](../../spdd/methodology/invest.md)
+       [`invest.md`](../../.yukki/methodology/invest.md)
      - Étape 4bis "Story trop grosse" → *"Évaluer SPIDR selon
-       [`spidr.md`](../../spdd/methodology/spidr.md). Si signaux d'alerte
+       [`spidr.md`](../../.yukki/methodology/spidr.md). Si signaux d'alerte
        présents, scinder en plusieurs stories et le signaler."*
   3. Ajouter une section **"Sources de référence"** en pied du skill
      pointant vers les 3 refs + l'index `methodology/README.md`
@@ -307,24 +307,24 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
   - La checklist finale du skill garde des références aux refs (pas une
     liste de règles dupliquée)
 
-### O5 — Mettre à jour `.github/skills/spdd-story/SKILL.md`
+### O5 — Mettre à jour `.github/skills/yukki-story/SKILL.md`
 
-- **Module** : `.github/skills/spdd-story`
-- **Fichier** : `.github/skills/spdd-story/SKILL.md`
+- **Module** : `.github/skills/yukki-story`
+- **Fichier** : `.github/skills/yukki-story/SKILL.md`
 - **Comportement** : miroir octet-pour-octet de O4 avec les seules
   différences autorisées :
   - frontmatter `user-invocable: true` (au lieu de `user_invocable: true`)
-  - chemins relatifs `../../../spdd/methodology/...` (au lieu de
-    `../../spdd/methodology/...`)
+  - chemins relatifs `../../../.yukki/methodology/...` (au lieu de
+    `../../.yukki/methodology/...`)
   - mention `#codebase` / `#search` (au lieu de `subagent Explore`) si
     pertinent
 - **Tests** (revue manuelle) : `diff` Claude vs Copilot ne montre que
   ces 3 catégories de différences
 
-### O6 — Mettre à jour `spdd/methodology/README.md`
+### O6 — Mettre à jour `.yukki/methodology/README.md`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/README.md`
+- **Fichier** : `.yukki/methodology/README.md`
 - **Comportement** : ajouter 3 lignes au tableau "Refs disponibles" pour
   inclure `spidr.md`, `invest.md`, `acceptance-criteria.md` avec leur
   résumé d'une phrase et leur `applies-to`. L'ordre alphabétique du
@@ -378,14 +378,14 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
 
 ## S — Safeguards
 
-- **Aucune redéfinition d'une technique** dans le skill `/spdd-story` :
+- **Aucune redéfinition d'une technique** dans le skill `/yukki-story` :
   tout mention de SPIDR, INVEST, Given/When/Then, "déclaratif vs
   impératif", "mots bannis", "granularité 3-5" doit être suivie d'un
   lien immédiat vers la ref correspondante. C'est précisément ce que
   META-002 instaure.
-- **Pas de modification d'autres skills** que `/spdd-story` dans cette
-  story. `/spdd-reasons-canvas`, `/spdd-generate`, `/spdd-api-test`,
-  `/spdd-prompt-update`, `/spdd-sync` ne sont pas touchés (chacun aura
+- **Pas de modification d'autres skills** que `/yukki-story` dans cette
+  story. `/yukki-reasons-canvas`, `/yukki-generate`, `/yukki-api-test`,
+  `/yukki-prompt-update`, `/yukki-sync` ne sont pas touchés (chacun aura
   sa propre story d'enrichissement).
 - **Aucune valeur dans `applies-to`** ne peut pointer vers un skill
   inexistant — risquerait de créer des liens morts traçables.
@@ -410,8 +410,8 @@ spidr.md (le critère "Small" d'INVEST → ancre #small d'invest.md)
 ## Changelog
 
 - 2026-04-30 — v1 — création initiale (status: draft, prêt pour
-  `/spdd-generate`)
+  `/yukki-generate`)
 - 2026-04-30 — v1.1 — toutes les Operations O1-O6 implémentées : 3 refs
-  créées (invest, spidr, acceptance-criteria), skill `/spdd-story`
+  créées (invest, spidr, acceptance-criteria), skill `/yukki-story`
   refondu (Claude + Copilot miroir), index `methodology/README.md` mis
   à jour. Status `reviewed → implemented`. Boucle SPDD close.

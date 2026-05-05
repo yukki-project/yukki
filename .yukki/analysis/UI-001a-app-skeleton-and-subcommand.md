@@ -1,8 +1,8 @@
 ---
 id: UI-001a
 slug: app-skeleton-and-subcommand
-story: spdd/stories/UI-001a-app-skeleton-and-subcommand.md
-parent-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001a-app-skeleton-and-subcommand.md
+parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
@@ -13,7 +13,7 @@ updated: 2026-05-01
 > **Analyse de delta** — la stratégie globale, les modules, les 16
 > décisions structurantes, les 10 risques et les 11 cas limites de la
 > famille UI-001 sont dans
-> [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
+> [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
 > Ce document ne couvre que les choix **spécifiques à UI-001a** (skeleton)
 > qui n'ont pas leur place dans une analyse de famille parce qu'ils
 > n'engagent pas UI-001b ni UI-001c.

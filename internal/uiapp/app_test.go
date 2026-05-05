@@ -24,11 +24,11 @@ func newTestLogger() *slog.Logger {
 
 // cfgLoaderAndWriter wires the App's loader and writer as SelectProject
 // would (templates rooted at projectDir, stories writer rooted at
-// <projectDir>/spdd/stories), so RunStory can run end-to-end.
+// <projectDir>/.yukki/stories), so RunStory can run end-to-end.
 func cfgLoaderAndWriter(t *testing.T, app *App, projectDir string) {
 	t.Helper()
 	app.loader = templates.NewLoader(projectDir)
-	app.writer = artifacts.NewWriter(filepath.Join(projectDir, "spdd", "stories"))
+	app.writer = artifacts.NewWriter(filepath.Join(projectDir, ".yukki", "stories"))
 }
 
 // captureEmits silences the package-level emitEvent during the test
@@ -178,7 +178,7 @@ func TestApp_ListArtifacts_NoProject(t *testing.T) {
 
 func TestApp_ListArtifacts_InvalidKind(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "spdd", "stories"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".yukki", "stories"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
@@ -192,7 +192,7 @@ func TestApp_ListArtifacts_InvalidKind(t *testing.T) {
 
 func TestApp_ListArtifacts_Delegation(t *testing.T) {
 	dir := t.TempDir()
-	storyDir := filepath.Join(dir, "spdd", "stories")
+	storyDir := filepath.Join(dir, ".yukki", "stories")
 	if err := os.MkdirAll(storyDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -251,14 +251,14 @@ func TestApp_GetClaudeStatus_VersionFailedAfterCheck(t *testing.T) {
 	}
 }
 
-// --- InitializeSPDD ----------------------------------------------------
+// --- InitializeYukki ----------------------------------------------------
 
-func TestApp_InitializeSPDD_Success(t *testing.T) {
+func TestApp_InitializeYukki_Success(t *testing.T) {
 	dir := t.TempDir()
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 
-	if err := app.InitializeSPDD(dir); err != nil {
-		t.Fatalf("InitializeSPDD: %v", err)
+	if err := app.InitializeYukki(dir); err != nil {
+		t.Fatalf("InitializeYukki: %v", err)
 	}
 
 	// META-005: 9 subdirs total (4 historiques + 3 nouveaux + methodology + templates)
@@ -267,7 +267,7 @@ func TestApp_InitializeSPDD_Success(t *testing.T) {
 		"inbox", "epics", "roadmap",
 		"methodology", "templates",
 	} {
-		path := filepath.Join(dir, "spdd", sub)
+		path := filepath.Join(dir, ".yukki", sub)
 		if info, err := os.Stat(path); err != nil || !info.IsDir() {
 			t.Fatalf("expected directory %s, err=%v", path, err)
 		}
@@ -277,41 +277,41 @@ func TestApp_InitializeSPDD_Success(t *testing.T) {
 		"story.md", "analysis.md", "canvas-reasons.md", "tests.md",
 		"inbox.md", "epic.md", "roadmap.md",
 	} {
-		path := filepath.Join(dir, "spdd", "templates", name)
+		path := filepath.Join(dir, ".yukki", "templates", name)
 		if info, err := os.Stat(path); err != nil || info.IsDir() {
 			t.Fatalf("expected file %s, err=%v", path, err)
 		}
 	}
 }
 
-// TestApp_InitializeSPDD_PreExistingProject vérifie qu'un re-init sur
+// TestApp_InitializeYukki_PreExistingProject vérifie qu'un re-init sur
 // un projet contenant déjà des artefacts (les 4 sous-dossiers historiques
 // avec un fichier dedans) crée les 3 nouveaux sous-dossiers (META-005)
 // sans toucher aux fichiers existants. Couvre AC4 de META-005.
-func TestApp_InitializeSPDD_PreExistingProject(t *testing.T) {
+func TestApp_InitializeYukki_PreExistingProject(t *testing.T) {
 	dir := t.TempDir()
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 
 	// Setup d'un projet "ancien" : 4 sous-dossiers historiques + 1 artefact
 	// custom dans stories/ qui ne doit pas être touché par le re-init.
 	for _, sub := range []string{"stories", "analysis", "prompts", "tests"} {
-		if err := os.MkdirAll(filepath.Join(dir, "spdd", sub), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Join(dir, ".yukki", sub), 0o755); err != nil {
 			t.Fatal(err)
 		}
 	}
 	const customContent = "---\nid: STORY-EXISTING\n---\n# already here\n"
-	customPath := filepath.Join(dir, "spdd", "stories", "STORY-EXISTING.md")
+	customPath := filepath.Join(dir, ".yukki", "stories", "STORY-EXISTING.md")
 	if err := os.WriteFile(customPath, []byte(customContent), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := app.InitializeSPDD(dir); err != nil {
-		t.Fatalf("InitializeSPDD on pre-existing project: %v", err)
+	if err := app.InitializeYukki(dir); err != nil {
+		t.Fatalf("InitializeYukki on pre-existing project: %v", err)
 	}
 
 	// Les 3 nouveaux sous-dossiers ont bien été créés.
 	for _, sub := range []string{"inbox", "epics", "roadmap"} {
-		path := filepath.Join(dir, "spdd", sub)
+		path := filepath.Join(dir, ".yukki", sub)
 		if info, err := os.Stat(path); err != nil || !info.IsDir() {
 			t.Fatalf("expected new META-005 directory %s, err=%v", path, err)
 		}
@@ -327,21 +327,21 @@ func TestApp_InitializeSPDD_PreExistingProject(t *testing.T) {
 	}
 }
 
-func TestApp_InitializeSPDD_Idempotent(t *testing.T) {
+func TestApp_InitializeYukki_Idempotent(t *testing.T) {
 	dir := t.TempDir()
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 
-	if err := app.InitializeSPDD(dir); err != nil {
+	if err := app.InitializeYukki(dir); err != nil {
 		t.Fatalf("first init: %v", err)
 	}
-	if err := app.InitializeSPDD(dir); err != nil {
+	if err := app.InitializeYukki(dir); err != nil {
 		t.Fatalf("second init: %v", err)
 	}
 }
 
-func TestApp_InitializeSPDD_EmptyDirRejected(t *testing.T) {
+func TestApp_InitializeYukki_EmptyDirRejected(t *testing.T) {
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	if err := app.InitializeSPDD(""); err == nil {
+	if err := app.InitializeYukki(""); err == nil {
 		t.Fatal("expected error when dir is empty")
 	}
 }
@@ -350,7 +350,7 @@ func TestApp_InitializeSPDD_EmptyDirRejected(t *testing.T) {
 
 func TestApp_ReadArtifact_Success(t *testing.T) {
 	dir := t.TempDir()
-	storyDir := filepath.Join(dir, "spdd", "stories")
+	storyDir := filepath.Join(dir, ".yukki", "stories")
 	if err := os.MkdirAll(storyDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -379,7 +379,7 @@ func TestApp_ReadArtifact_PathTraversalRejected(t *testing.T) {
 
 	for _, bad := range []string{
 		filepath.Join(dir, "outside.md"),
-		filepath.Join(dir, "spdd", "..", "outside.md"),
+		filepath.Join(dir, ".yukki", "..", "outside.md"),
 		`C:\Windows\System32\drivers\etc\hosts`,
 		"/etc/passwd",
 	} {
@@ -392,13 +392,13 @@ func TestApp_ReadArtifact_PathTraversalRejected(t *testing.T) {
 
 func TestApp_ReadArtifact_FileNotExist(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "spdd", "stories"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dir, ".yukki", "stories"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.projectDir = dir
 
-	_, err := app.ReadArtifact(filepath.Join(dir, "spdd", "stories", "nope.md"))
+	_, err := app.ReadArtifact(filepath.Join(dir, ".yukki", "stories", "nope.md"))
 	if !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("expected os.ErrNotExist, got %v", err)
 	}
@@ -406,7 +406,7 @@ func TestApp_ReadArtifact_FileNotExist(t *testing.T) {
 
 func TestApp_ReadArtifact_NoProject(t *testing.T) {
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	_, err := app.ReadArtifact("/anywhere/spdd/x.md")
+	_, err := app.ReadArtifact("/anywhere/.yukki/x.md")
 	if err == nil {
 		t.Fatal("expected error when no project selected")
 	}
@@ -458,7 +458,7 @@ func runStoryHappyPath(t *testing.T, mock *provider.MockProvider) (*App, string)
 	app.OnStartup(context.Background())
 	app.projectDir = dir
 	// Configure as SelectProject would: loader rooted at projectDir,
-	// writer rooted at <projectDir>/spdd/stories.
+	// writer rooted at <projectDir>/.yukki/stories.
 	cfgLoaderAndWriter(t, app, dir)
 	return app, dir
 }
@@ -483,7 +483,7 @@ func TestApp_RunStory_Success(t *testing.T) {
 	if app.runStoryCancel != nil {
 		t.Fatal("runStoryCancel should be reset to nil after return")
 	}
-	expected := filepath.Join(dir, "spdd", "stories", "STORY-001-stub-story.md")
+	expected := filepath.Join(dir, ".yukki", "stories", "STORY-001-stub-story.md")
 	if path != expected {
 		t.Fatalf("path = %q, want %q", path, expected)
 	}

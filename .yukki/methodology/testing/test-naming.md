@@ -4,7 +4,7 @@ title: Test naming — conventions G/W/T, AAA, MethodName_State_Expected
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03

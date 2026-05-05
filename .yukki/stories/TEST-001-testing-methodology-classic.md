@@ -18,14 +18,14 @@ sibling-stories:
 
 ## Background
 
-Le dossier [`spdd/methodology/`](../methodology/) contient déjà 7 refs
+Le dossier [`.yukki/methodology/`](../methodology/) contient déjà 7 refs
 versionnées (INVEST, acceptance-criteria, SPIDR, edge-cases,
 risk-taxonomy, decisions Y-Statement, domain-modeling) — toutes
 **story-side** (qualité d'une user story, modélisation domaine,
 risques).
 
 **Aucune ref ne traite le testing.** C'est un gap majeur : quand
-`/spdd-generate` produit du code et **doit** embarquer des tests
+`/yukki-generate` produit du code et **doit** embarquer des tests
 (les Operations annoncent "Tests : ..." mais sans cadre méthodo
 sur quoi tester, comment nommer, quelle pyramide cibler), l'agent
 écrit des tests à la louche, et un humain qui review n'a pas de
@@ -43,9 +43,9 @@ TypeScript, etc.), structuré en :
   property-based-testing, contract-testing, snapshot-testing)
 
 Les refs sont **référencées par les skills SPDD** consommatrices
-(`/spdd-reasons-canvas`, `/spdd-generate`) via le frontmatter
+(`/yukki-reasons-canvas`, `/yukki-generate`) via le frontmatter
 `applies-to:`. Création éventuelle d'une nouvelle skill
-**`/spdd-tests`** (étape 6 du workflow SPDD, prévue mais non
+**`/yukki-tests`** (étape 6 du workflow SPDD, prévue mais non
 implémentée à date).
 
 L'**outillage concret** (commandes shell, plugins Maven, scripts
@@ -57,7 +57,7 @@ les outils en annexe seulement, pour ne pas dater.
 ## Catégorisation par cluster (foundation)
 
 TEST-001 introduit aussi le **principe de catégorisation par
-sous-dossier** dans `spdd/methodology/`. Aujourd'hui le dossier
+sous-dossier** dans `.yukki/methodology/`. Aujourd'hui le dossier
 est plat (7 refs racine). Avec l'ajout du cluster testing (9
 refs) puis les futurs clusters anticipés, on passerait à 30-50
 refs flat — non navigable.
@@ -86,7 +86,7 @@ anglais kebab-case par cohérence avec les noms de refs.
 - **Pas de migration des 7 refs existantes en V1** — elles
   restent à la racine. Une story future fera le ménage si
   besoin, sans urgence (volume modeste, accessible).
-- **Le `README.md` de `spdd/methodology/`** orchestre la vue
+- **Le `README.md` de `.yukki/methodology/`** orchestre la vue
   d'ensemble par cluster (tableau comme ci-dessus + index par
   topic).
 - **Nommage des sous-dossiers** : kebab-case anglais (`testing`,
@@ -95,7 +95,7 @@ anglais kebab-case par cohérence avec les noms de refs.
 
 ## Business Value
 
-- **Qualité de tests opposable** : tout `/spdd-generate` produit
+- **Qualité de tests opposable** : tout `/yukki-generate` produit
   des tests cohérents avec un référentiel partagé. Plus de "AC
   testé : à voir au cas par cas".
 - **Couverture mesurable + non-gamable** : les seuils (70% global,
@@ -117,7 +117,7 @@ anglais kebab-case par cohérence avec les noms de refs.
 
 ### Refs entry-points (2 fichiers)
 
-- **`spdd/methodology/testing/testing-frontend.md`** — playbook frontend
+- **`.yukki/methodology/testing/testing-frontend.md`** — playbook frontend
   - Pyramide adaptée frontend : présenter les 3 patterns (Cohn
     classique 70/20/10, Honeycomb Spotify, Testing Trophy
     Kent C. Dodds) et les critères de choix par contexte.
@@ -129,7 +129,7 @@ anglais kebab-case par cohérence avec les noms de refs.
     property-based-testing.
   - Annexe outils : 1-3 lignes par stack frontend (Angular,
     React, Vue) avec lien vers TEST-002 pour le détail.
-- **`spdd/methodology/testing/testing-backend.md`** — playbook backend
+- **`.yukki/methodology/testing/testing-backend.md`** — playbook backend
   - Pyramide adaptée backend : 70/20/10 plus classique, justifie
     pourquoi.
   - Spécificités : business logic, I/O (DB, file, network),
@@ -142,7 +142,7 @@ anglais kebab-case par cohérence avec les noms de refs.
 
 ### Sub-refs factorisées (7 fichiers)
 
-- **`spdd/methodology/testing/test-naming.md`** — conventions de nommage
+- **`.yukki/methodology/testing/test-naming.md`** — conventions de nommage
   - 3 conventions concurrentes : Given/When/Then, AAA,
     `MethodName_StateUnderTest_ExpectedBehavior` (Osherove).
   - Anti-patterns : `test1`, `testFoo`, `it('works')`, magic
@@ -150,13 +150,13 @@ anglais kebab-case par cohérence avec les noms de refs.
   - Décision : **convention par stack** (français vs anglais
     cohérent avec le repo, framework idiomatique respecté).
   - Lien fort avec les AC story (Given/When/Then).
-- **`spdd/methodology/testing/test-smells.md`** — catalogue (Meszaros)
+- **`.yukki/methodology/testing/test-smells.md`** — catalogue (Meszaros)
   - 11 smells : Fragile, Slow, Eager, Lazy, Mystery Guest,
     Test Code Duplication, Conditional Test Logic, Obscure
     Test, Test Interdependence, etc.
   - Tableau : smell → symptôme → fix.
   - "Test code is production code" (Khorikov).
-- **`spdd/methodology/testing/coverage-discipline.md`** — seuils + anti-cheat
+- **`.yukki/methodology/testing/coverage-discipline.md`** — seuils + anti-cheat
   - **Seuils** : branch coverage **≥ 70% global**, **≥ 85%
     modules critiques**. Ignore `main()`, code généré,
     scaffolding.
@@ -175,7 +175,7 @@ anglais kebab-case par cohérence avec les noms de refs.
   - Décision : ces 4 mécanismes sont **non-négociables** ; un
     projet peut affiner les seuils mais pas désactiver les
     contrôles.
-- **`spdd/methodology/testing/mutation-testing.md`**
+- **`.yukki/methodology/testing/mutation-testing.md`**
   - Idée : mesurer la **qualité** des tests (pas du code) en
     injectant des mutations.
   - Quand l'introduire : **après** que coverage standard
@@ -183,7 +183,7 @@ anglais kebab-case par cohérence avec les noms de refs.
   - Seuil indicatif : mutation score ≥ 60-70% sur critiques.
   - Traps : lent (× nombre de mutants), mutants équivalents,
     non substituable à des tests d'architecture / e2e.
-- **`spdd/methodology/testing/property-based-testing.md`**
+- **`.yukki/methodology/testing/property-based-testing.md`**
   - Idée : exprimer un invariant, le runner génère N cas +
     shrinking.
   - 5-6 patterns d'invariants : round-trip, oracle test,
@@ -193,7 +193,7 @@ anglais kebab-case par cohérence avec les noms de refs.
     algorithmiques, math.
   - Quand éviter : I/O lourd, business workflow stateful, GUI.
   - Discipline shrinking + reproducible seeds.
-- **`spdd/methodology/testing/contract-testing.md`** (utilisé surtout
+- **`.yukki/methodology/testing/contract-testing.md`** (utilisé surtout
   backend mais ref autonome)
   - 2 styles : consumer-driven (Pact-like) vs provider-driven
     (schema-first OpenAPI / AsyncAPI).
@@ -202,7 +202,7 @@ anglais kebab-case par cohérence avec les noms de refs.
   - Versioning du contrat, breaking changes, expand-contract.
   - Traps : contract drift, broker non maintenu, contracts
     trop rigides.
-- **`spdd/methodology/testing/snapshot-testing.md`** (utilisé surtout
+- **`.yukki/methodology/testing/snapshot-testing.md`** (utilisé surtout
   frontend)
   - Decision tree : quand utiliser, quand éviter.
   - Quand : caractérisation legacy, output stable
@@ -216,17 +216,17 @@ anglais kebab-case par cohérence avec les noms de refs.
 Les skills SPDD pertinents reçoivent un nouvel item
 `applies-to:` qui pointe vers les refs testing :
 
-- `/spdd-reasons-canvas` — pour que la section `O — Operations`
+- `/yukki-reasons-canvas` — pour que la section `O — Operations`
   annonce des tests conformes à la pyramide + naming
-- `/spdd-generate` — pour que le code généré embarque les tests
+- `/yukki-generate` — pour que le code généré embarque les tests
   selon les patterns
-- (Future) `/spdd-tests` — étape 6, à créer dans une story
+- (Future) `/yukki-tests` — étape 6, à créer dans une story
   ultérieure
 
-Le `README.md` du dossier `spdd/methodology/` est aussi mis à
+Le `README.md` du dossier `.yukki/methodology/` est aussi mis à
 jour pour référencer les 9 nouvelles refs dans son tableau.
 
-### Création optionnelle skill `/spdd-tests`
+### Création optionnelle skill `/yukki-tests`
 
 Pas dans le scope V1 — story future. Mention seulement dans le
 README qu'elle est prévue (étape 6 du workflow SPDD).
@@ -240,9 +240,9 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
 - **AI-aware testing** (LLM evals, prompt regression, agent
   testing, snapshot tolerances sémantiques) — différé à
   **TEST-003** (post-TEST-001 + TEST-002).
-- **Création effective de la skill `/spdd-tests`** — différée. La
+- **Création effective de la skill `/yukki-tests`** — différée. La
   ref `testing-backend.md` / `testing-frontend.md` est conçue
-  pour être consommée par `/spdd-tests` quand cette skill sera
+  pour être consommée par `/yukki-tests` quand cette skill sera
   écrite, mais la skill elle-même n'est pas dans le scope.
 - **Tests de performance / load testing** — différé (cluster
   méthodo dédié).
@@ -261,9 +261,9 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
 > Format Given/When/Then. Validation par lecture humaine + check
 > que les skills consommatrices référencent bien les refs.
 
-### AC1 — 9 refs créées dans `spdd/methodology/`
+### AC1 — 9 refs créées dans `.yukki/methodology/`
 
-- **Given** un état actuel à 7 refs dans `spdd/methodology/`
+- **Given** un état actuel à 7 refs dans `.yukki/methodology/`
 - **When** TEST-001 est livré
 - **Then** **9 nouvelles refs** existent (en plus des 7
   existantes) :
@@ -327,14 +327,14 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
 
 ### AC8 — Refs liées aux skills via `applies-to:`
 
-- **Given** les frontmatters des skills `/spdd-reasons-canvas`
-  et `/spdd-generate` (et leur `.claude/commands/*.md` /
+- **Given** les frontmatters des skills `/yukki-reasons-canvas`
+  et `/yukki-generate` (et leur `.claude/commands/*.md` /
   `.github/skills/*/SKILL.md`)
 - **When** je les lis
 - **Then** ils référencent **explicitement** les refs testing
   pertinentes (au moins `testing-frontend.md` ou
   `testing-backend.md` selon le contexte).
-- **And** le `README.md` de `spdd/methodology/` liste les 9
+- **And** le `README.md` de `.yukki/methodology/` liste les 9
   nouvelles refs dans son tableau.
 
 ### AC9 — Annexe outils minimaliste (renvoi à TEST-002)
@@ -365,13 +365,13 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
 
 ### AC12 — Sous-dossier `testing/` créé + README mis à jour
 
-- **Given** un dossier `spdd/methodology/` plat à 7 refs au
+- **Given** un dossier `.yukki/methodology/` plat à 7 refs au
   départ
 - **When** TEST-001 est livré
 - **Then** :
-  - le sous-dossier `spdd/methodology/testing/` existe avec
+  - le sous-dossier `.yukki/methodology/testing/` existe avec
     les 9 nouvelles refs dedans
-  - le `README.md` de `spdd/methodology/` est mis à jour pour :
+  - le `README.md` de `.yukki/methodology/` est mis à jour pour :
     - documenter la **convention de catégorisation par
       cluster** (1 cluster = 1 sous-dossier)
     - ajouter un tableau "Clusters disponibles" avec ligne
@@ -384,7 +384,7 @@ README qu'elle est prévue (étape 6 du workflow SPDD).
 
 ## Open Questions — toutes tranchées en revue 2026-05-03
 
-- [x] **OQ1 → A** : skill `/spdd-tests` **différée** à une story
+- [x] **OQ1 → A** : skill `/yukki-tests` **différée** à une story
       dédiée (séparation propre code/doc). TEST-001 reste 100%
       méthodo.
 - [x] **OQ2 → A** : a11y/WCAG mentionné en **1 paragraphe** dans

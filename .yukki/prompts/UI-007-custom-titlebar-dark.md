@@ -1,8 +1,8 @@
 ---
 id: UI-007
 slug: custom-titlebar-dark
-story: spdd/stories/UI-007-custom-titlebar-dark.md
-analysis: spdd/analysis/UI-007-custom-titlebar-dark.md
+story: .yukki/stories/UI-007-custom-titlebar-dark.md
+analysis: .yukki/analysis/UI-007-custom-titlebar-dark.md
 status: implemented
 created: 2026-05-02
 updated: 2026-05-02
@@ -10,9 +10,9 @@ updated: 2026-05-02
 
 # Canvas REASONS — Custom title bar minimaliste yukki dark
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**
-> (via `/spdd-prompt-update`).
+> (via `/yukki-prompt-update`).
 >
 > Polish post-UI-006 : passe la fenêtre Wails en frameless et
 > ajoute une `<TitleBar />` HTML/CSS de 32px alignée sur la palette
@@ -284,7 +284,7 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
 
 > Ordre d'exécution : **O1 → O5 → O2 → O3 → O4**. O5 (extension du
 > stub Wails runtime) doit précéder O2 (qui en consomme les exports),
-> mais a été ajouté après coup via `/spdd-prompt-update` 2026-05-02
+> mais a été ajouté après coup via `/yukki-prompt-update` 2026-05-02
 > donc reste numéroté à la fin pour préserver la traçabilité des
 > Operations existantes. Chaque Operation livrable indépendamment
 > en 1 commit atomique.
@@ -491,7 +491,7 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
 
 ### O5 — Étendre le stub Wails runtime (prérequis O2)
 
-> Ajouté via `/spdd-prompt-update` 2026-05-02 — révélé à
+> Ajouté via `/yukki-prompt-update` 2026-05-02 — révélé à
 > l'implémentation : le stub `frontend/wailsjs/runtime/runtime.d.ts`
 > est vide (`export {};`), pas le `wailsjs/wailsjs/runtime/runtime`
 > auto-regénéré (untracked). Pattern AV-workaround à appliquer comme
@@ -576,7 +576,7 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
 - **Convention de commit** : `feat(ui-007)` pour le commit
   d'implémentation final, ou un commit par Operation si on veut
   préserver la granularité (3 commits : O1 frameless, O2 composant,
-  O3 intégration). À trancher au moment du `/spdd-generate`.
+  O3 intégration). À trancher au moment du `/yukki-generate`.
 
 ---
 
@@ -627,8 +627,8 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
     (default). Pas de poignée custom, pas de zones hitbox écrites
     en CSS sur les bords.
 - **Pas de modification des artefacts SPDD existants**
-  - Les fichiers `spdd/stories/*.md`, `spdd/analysis/*.md`,
-    `spdd/prompts/*.md` (sauf cette story / analyse / canvas eux-mêmes)
+  - Les fichiers `.yukki/stories/*.md`, `.yukki/analysis/*.md`,
+    `.yukki/prompts/*.md` (sauf cette story / analyse / canvas eux-mêmes)
     ne sont pas touchés.
 - **Pas de logging frontend bavard**
   - `<TitleBar />` ne log pas via `console.log` au mount, au click,
@@ -658,7 +658,7 @@ theming applicatif, à l'image de VS Code / Cursor / Discord / Zed.
   (orientation VS Code minimaliste). 4 Operations livrables (1 ligne
   Go + 1 nouveau composant + 1 ligne App.tsx + vérifications). 7
   invariants Safeguards. 1 OQ résiduelle (visibilité TitleBar pendant
-  ProjectPicker) à arbitrer en `/spdd-generate`.
+  ProjectPicker) à arbitrer en `/yukki-generate`.
 - **2026-05-02 — implementation** — O1..O5 livrés (ordre O1 → O5 →
   O2 → O3 → O4). Ajustement vs canvas : ajout d'un fichier
   `frontend/src/vite-env.d.ts` (`/// <reference types="vite/client" />`)

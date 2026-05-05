@@ -12,7 +12,7 @@ promoted-to: ~
 
 ## Idée
 
-Aujourd'hui, les skills `/spdd-*` sont des **slash commands** qui
+Aujourd'hui, les skills `/yukki-*` sont des **slash commands** qui
 exécutent dans le **contexte principal** de Claude / Copilot —
 le LLM voit toute la conversation, tous les artefacts précédents,
 toute l'arbo lue. Ça pollue le contexte et dilue la spécialisation.

@@ -1,8 +1,8 @@
 ---
 id: META-005
 slug: inbox-epic-roadmap-foundation
-story: spdd/stories/META-005-inbox-epic-roadmap-foundation.md
-analysis: spdd/analysis/META-005-inbox-epic-roadmap-foundation.md
+story: .yukki/stories/META-005-inbox-epic-roadmap-foundation.md
+analysis: .yukki/analysis/META-005-inbox-epic-roadmap-foundation.md
 status: implemented
 created: 2026-05-04
 updated: 2026-05-04
@@ -10,7 +10,7 @@ updated: 2026-05-04
 
 # Canvas REASONS — Foundation Inbox / Epic / Roadmap
 
-> Spec exécutable. Source de vérité pour `/spdd-generate` et `/spdd-sync`.
+> Spec exécutable. Source de vérité pour `/yukki-generate` et `/yukki-sync`.
 > Toute divergence code ↔ canvas se résout **dans ce fichier d'abord**.
 
 ---
@@ -36,14 +36,14 @@ sont des stories enfants.
   `roadmap.md`) chargeables via `Loader.LoadInbox()`, `LoadEpic()`,
   `LoadRoadmap()` (depuis `embed.FS`, fallback project-first)
 - [ ] DoD4 — `InitializeSPDD` copie les 7 templates (4 existants + 3
-  nouveaux) dans `<projectDir>/spdd/templates/`
+  nouveaux) dans `<projectDir>/.yukki/templates/`
 - [ ] DoD5 — Frontend : `ShellMode` étend de 6 → 9 valeurs ; `SPDD_KINDS`
   étend de 4 → 7 entries ; `TITLES` map 9 entries (couvre AC1 côté UI)
 - [ ] DoD6 — `CLAUDE.md` documente : (a) les 3 nouveaux préfixes
   `INBOX-`, `EPIC-`, `ROADMAP-` dans le tableau de convention, (b) le
   schéma de hiérarchie discovery → delivery, (c) le rôle Roadmap = vue
   projection (couvre AC2)
-- [ ] DoD7 — `spdd/README.md` documente la chaîne Inbox → Epic → Story
+- [ ] DoD7 — `.yukki/README.md` documente la chaîne Inbox → Epic → Story
   → Code (couvre AC2)
 - [ ] DoD8 — Un fichier malformé (frontmatter YAML invalide) dans
   `inbox/`, `epics/`, ou `roadmap/` est listé avec `Meta.Error`
@@ -96,10 +96,10 @@ intégrité bidirectionnelle) est hors scope.
 **Foundation atomique en un seul commit** : on étend simultanément les
 3 sources de vérité (`allowedKinds`, `spddSubdirs`, `ShellMode`/
 `SPDD_KINDS`/`TITLES`), on ajoute les 3 templates en source canonique
-(`internal/templates/embedded/`) + en copie repo (`spdd/templates/`),
+(`internal/templates/embedded/`) + en copie repo (`.yukki/templates/`),
 on étend `Loader` avec 3 méthodes dédiées (`LoadInbox`, `LoadEpic`,
 `LoadRoadmap`) cohérentes avec le pattern existant, et on documente la
-chaîne discovery → delivery dans `CLAUDE.md` + `spdd/README.md`. Aucune
+chaîne discovery → delivery dans `CLAUDE.md` + `.yukki/README.md`. Aucune
 UX (capture, kanban, promotion) n'est livrée — les stories enfants
 (`INBOX-001`, `INBOX-002`, `EPIC-001`, `ROADMAP-001`, `ROADMAP-002`)
 s'appuieront sur cette foundation.
@@ -141,8 +141,8 @@ kanban.
 | `frontend/src/stores` | `shell.ts` | modify (`ShellMode` + `SPDD_KINDS`) |
 | `frontend/src/components/hub` | `SidebarPanel.tsx` | modify (`TITLES` map) |
 | Tests Go | `internal/artifacts/lister_test.go`, `internal/uiapp/app_test.go`, `internal/templates/templates_test.go` (si existe) | modify (fixtures + assertions sur 7 kinds / 9 subdirs / 7 templates) |
-| `spdd/templates/` | `inbox.md`, `epic.md`, `roadmap.md` (copies repo) | create |
-| `spdd/README.md` | section méthodologie | modify (chaîne discovery → delivery) |
+| `.yukki/templates/` | `inbox.md`, `epic.md`, `roadmap.md` (copies repo) | create |
+| `.yukki/README.md` | section méthodologie | modify (chaîne discovery → delivery) |
 | `CLAUDE.md` | tableau préfixes + section vocabulaire | modify (3 nouveaux préfixes + schéma hiérarchie) |
 
 ### Schéma de flux (init du projet)
@@ -168,7 +168,7 @@ yukki ui  →  InitializeSPDD(projectDir)
 ## O — Operations
 
 > 11 Operations atomiques, ordonnées du bas du stack vers le haut.
-> `/spdd-generate` doit produire les Operations dans cet ordre dans
+> `/yukki-generate` doit produire les Operations dans cet ordre dans
 > un seul commit (atomicité requise pour cohérence triple-source).
 
 ### O1 — Créer les 3 templates source dans `internal/templates/embedded/`
@@ -297,8 +297,8 @@ yukki ui  →  InitializeSPDD(projectDir)
   - `TestLoader_LoadInbox_FromProject` — Loader avec `ProjectDir`
     contenant un `templates/inbox.md` custom, vérifie que `LoadInbox()`
     retourne `(content, SourceProject, nil)` avec le contenu custom
-- **Référence testing** : [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
-  + [`spdd/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
+  + [`.yukki/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md).
 
 ### O3 — Étendre `allowedKinds` (4 → 7 entries)
 
@@ -324,7 +324,7 @@ yukki ui  →  InitializeSPDD(projectDir)
 - **Tests** :
   - `TestAllowedKinds_Returns7Entries` — `assert(len(AllowedKinds()) == 7)`
     avec ordre stable
-  - `TestListArtifacts_Inbox` — fixture `<dir>/spdd/inbox/INBOX-001-foo.md`
+  - `TestListArtifacts_Inbox` — fixture `<dir>/.yukki/inbox/INBOX-001-foo.md`
     avec frontmatter Inbox valide → `Meta.ID == "INBOX-001"`,
     `Meta.Error == nil`
   - `TestListArtifacts_Epics` — fixture `EPIC-001-bar.md` valide
@@ -334,7 +334,7 @@ yukki ui  →  InitializeSPDD(projectDir)
   - `TestListArtifacts_InvalidKind_Rejected` (existant, étendre) —
     `kind="invalid"` retourne `ErrInvalidKind`, et la liste d'erreur
     inclut les 7 nouveaux kinds dans son message
-- **Référence testing** : [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
 
 ### O4 — Étendre `spddSubdirs` (6 → 9 entries)
 
@@ -376,25 +376,25 @@ yukki ui  →  InitializeSPDD(projectDir)
   }
   ```
 - **Comportement** : `InitializeSPDD` copie 7 templates (4 existants
-  + 3 nouveaux) sous `<projectDir>/spdd/templates/` à chaque appel.
+  + 3 nouveaux) sous `<projectDir>/.yukki/templates/` à chaque appel.
   `os.WriteFile` overwrite à chaque fois — le binaire embedded est la
   source de vérité (Invariant I4 existant).
 - **Tests** :
   - `TestInitializeSPDD_Creates9Subdirs` — appelle `InitializeSPDD(tmpDir)`,
     vérifie l'existence de `<tmpDir>/spdd/{stories,analysis,prompts,tests,inbox,epics,roadmap,methodology,templates}`
   - `TestInitializeSPDD_Copies7Templates` — vérifie que
-    `<tmpDir>/spdd/templates/` contient les 7 fichiers `.md`
+    `<tmpDir>/.yukki/templates/` contient les 7 fichiers `.md`
     (`story.md`, `analysis.md`, `canvas-reasons.md`, `tests.md`,
     `inbox.md`, `epic.md`, `roadmap.md`)
   - `TestInitializeSPDD_PreExistingProject` — setup
-    `<tmpDir>/spdd/stories/foo.md` (fichier d'artefact existant), appelle
-    `InitializeSPDD`, vérifie que `<tmpDir>/spdd/stories/foo.md` existe
+    `<tmpDir>/.yukki/stories/foo.md` (fichier d'artefact existant), appelle
+    `InitializeSPDD`, vérifie que `<tmpDir>/.yukki/stories/foo.md` existe
     toujours (non écrasé) et que les 3 nouveaux subdirs sont créés
     (couvre AC4)
   - `TestInitializeSPDD_Idempotent` (existant si présent) — 2 appels
     consécutifs n'écrasent pas un fichier custom dans
-    `<tmpDir>/spdd/inbox/X.md`
-- **Référence testing** : [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
+    `<tmpDir>/.yukki/inbox/X.md`
+- **Référence testing** : [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
 
 ### O6 — Étendre `ShellMode` + `SPDD_KINDS` (frontend)
 
@@ -422,7 +422,7 @@ yukki ui  →  InitializeSPDD(projectDir)
     { case 'stories': ... }` sans gérer les 3 nouveaux modes échouera
     en TypeScript (couverture exhaustive avec `Record<ShellMode, T>` en
     O7) — propagation automatique
-- **Référence testing** : [`spdd/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
 
 ### O7 — Étendre `TITLES` (SidebarPanel) + `PRIMARY_ITEMS` (ActivityBar)
 
@@ -464,7 +464,7 @@ yukki ui  →  InitializeSPDD(projectDir)
     l'activity bar verticale, click sur chacune affiche le titre
     correspondant dans le panneau
   - tsc clean : `Record<ShellMode, string>` compile sans erreur
-- **Référence testing** : [`spdd/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
 
 > **Note correction post-impl** : la version initiale du canvas ne
 > mentionnait que `TITLES` ; en pratique l'ActivityBar (`PRIMARY_ITEMS`)
@@ -487,14 +487,14 @@ yukki ui  →  InitializeSPDD(projectDir)
 - **Comportement** : `go test ./...` passe entièrement après update.
 - **Tests** : c'est l'Operation de tests elle-même.
 
-### O9 — Créer les 3 copies repo dans `spdd/templates/`
+### O9 — Créer les 3 copies repo dans `.yukki/templates/`
 
-- **Module** : `spdd/templates/` (artefacts du repo yukki lui-même)
+- **Module** : `.yukki/templates/` (artefacts du repo yukki lui-même)
 - **Fichiers** : `inbox.md`, `epic.md`, `roadmap.md` (copies identiques
   aux versions embedded créées en O1)
 - **Signature** : copier le contenu de `internal/templates/embedded/{inbox,epic,roadmap}.md`
 - **Comportement** : ces copies sont visibles dans l'arborescence du
-  repo pour qu'un contributeur qui parcourt `spdd/templates/` voie les
+  repo pour qu'un contributeur qui parcourt `.yukki/templates/` voie les
   3 nouveaux templates sans avoir à exécuter `InitializeSPDD`. Elles
   jouent aussi le rôle de **project-first override** pour le repo
   yukki lui-même (cf. comportement de `Loader.load`).
@@ -525,16 +525,16 @@ yukki ui  →  InitializeSPDD(projectDir)
 - **Tests** : grep `git grep -l "INBOX-" CLAUDE.md` retourne 1 ligne ;
   visual review pour le schéma.
 
-### O11 — Documenter dans `spdd/README.md`
+### O11 — Documenter dans `.yukki/README.md`
 
 - **Module** : repo `spdd/`
-- **Fichier** : `spdd/README.md`
+- **Fichier** : `.yukki/README.md`
 - **Modifications** : ajouter une section sur la chaîne **discovery →
   delivery** (Inbox → Story ou Inbox → Epic → Stories) avec mention
   explicite de la place de la Roadmap (vue projection). Reprendre le
   schéma ASCII et le tableau vocabulaire.
 - **Comportement** : la doc méthodologique du repo SPDD est cohérente
-  avec `CLAUDE.md` ; un contributeur qui ouvre `spdd/README.md` voit
+  avec `CLAUDE.md` ; un contributeur qui ouvre `.yukki/README.md` voit
   les 4 niveaux d'artefact (au lieu d'un seul aujourd'hui).
 - **Tests** : visual review.
 
@@ -557,22 +557,22 @@ yukki ui  →  InitializeSPDD(projectDir)
   variante `RoadmapMeta` à ce stade.
 - **Templates embedded canoniques** : `internal/templates/embedded/*.md`
   est la **source de vérité** du contenu (Invariant I4 existant).
-  `spdd/templates/*.md` du repo yukki est une copie commit-trackée
+  `.yukki/templates/*.md` du repo yukki est une copie commit-trackée
   pour visibilité ; doit rester identique à l'embedded.
 - **Tests Go** : naming `Test<Symbol>_<Behavior>` (cf.
-  [`spdd/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md)).
+  [`.yukki/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md)).
   Coverage cible des packages `internal/` : ≥ 70 % (existant).
   Tests de fixtures basés sur `t.TempDir()` pour isolation.
 - **Tests frontend** : assertions sur l'existence des 7 kinds dans
   `SPDD_KINDS` et le matching `Record<ShellMode, T>` typé pour
   `TITLES` (compile-time exhaustivity, voir
-  [`spdd/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md)).
+  [`.yukki/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md)).
 - **Convention IDs nouveaux** : l'ordre dans `allowedKinds` est
   **stable** (4 historiques + 3 nouveaux à la fin) — toute consommation
   qui dépend de l'ordre (ex. tableau de tests) doit pouvoir lire en
   l'état.
 - **Documentation** : `CLAUDE.md` reste la doc canonique pour les
-  conventions ; `spdd/README.md` complète avec la pédagogie. Les deux
+  conventions ; `.yukki/README.md` complète avec la pédagogie. Les deux
   doivent rester cohérents.
 
 ---
@@ -626,6 +626,6 @@ yukki ui  →  InitializeSPDD(projectDir)
 
 - **Documentation cohérente**
   - Ne **jamais** committer un changement aux préfixes d'ID
-    (`CLAUDE.md`) sans son pendant dans `spdd/README.md` : la doc
+    (`CLAUDE.md`) sans son pendant dans `.yukki/README.md` : la doc
     diverge, les contributeurs apprennent des conventions
     contradictoires.

@@ -1,7 +1,7 @@
 ---
 id: <ID>                       # même id que la story
 slug: <kebab-case-slug>        # même slug que la story
-story: spdd/stories/<ID>-<slug>.md
+story: .yukki/stories/<ID>-<slug>.md
 status: draft                  # draft | reviewed | accepted
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
@@ -9,7 +9,7 @@ updated: <YYYY-MM-DD>
 
 # Analyse — <titre>
 
-> Contexte stratégique pour la story `<ID>-<slug>`. Produit par `/spdd-analysis`
+> Contexte stratégique pour la story `<ID>-<slug>`. Produit par `/yukki-analysis`
 > à partir d'un scan **ciblé** du codebase (mots-clés métier extraits de la story).
 > Ne dupliquer ni la story ni le canvas REASONS.
 

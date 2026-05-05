@@ -26,7 +26,7 @@ Pistes à explorer :
   diff), bouton copier
 - **Schémas ASCII** : font monospace stable, scroll horizontal propre
   pour les schémas larges (cf. schéma discovery → delivery dans
-  CLAUDE.md / spdd/README.md)
+  CLAUDE.md / .yukki/README.md)
 - **Frontmatter YAML** : rendu typé en panneau dédié (badges status,
   liens cliquables sur `story:` / `analysis:` / `child-stories: [...]`)
 - **Liens internes** : résolution des `[texte](spdd/...)` en

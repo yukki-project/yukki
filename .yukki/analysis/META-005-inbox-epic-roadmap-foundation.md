@@ -1,7 +1,7 @@
 ---
 id: META-005
 slug: inbox-epic-roadmap-foundation
-story: spdd/stories/META-005-inbox-epic-roadmap-foundation.md
+story: .yukki/stories/META-005-inbox-epic-roadmap-foundation.md
 status: reviewed
 created: 2026-05-04
 updated: 2026-05-04
@@ -10,7 +10,7 @@ updated: 2026-05-04
 # Analyse — Foundation Inbox / Epic / Roadmap
 
 > Contexte stratégique pour `META-005-inbox-epic-roadmap-foundation`.
-> Produit par `/spdd-analysis` à partir d'un scan ciblé du codebase
+> Produit par `/yukki-analysis` à partir d'un scan ciblé du codebase
 > (10 mots-clés × 6 modules, beaucoup déjà connu de META-004).
 > Ne duplique ni la story ni le canvas REASONS.
 
@@ -26,7 +26,7 @@ thématique) · `Roadmap` (vue projection Now/Next/Later) ·
 
 ## Concepts de domaine
 
-> Modélisation au sens [`spdd/methodology/domain-modeling.md`](../methodology/domain-modeling.md)
+> Modélisation au sens [`.yukki/methodology/domain-modeling.md`](../methodology/domain-modeling.md)
 > (Entity / Value Object / Invariant / Integration / Domain Event).
 
 ### Existants (déjà dans le code)
@@ -63,7 +63,7 @@ thématique) · `Roadmap` (vue projection Now/Next/Later) ·
 - **InitializeSPDD (Entity)** — Fonction
   ([internal/uiapp/app.go:206-253](../../internal/uiapp/app.go#L206-L253))
   qui crée l'arbo + copie les 4 templates sous
-  `<projectDir>/spdd/templates/`. Idempotente (`os.MkdirAll`,
+  `<projectDir>/.yukki/templates/`. Idempotente (`os.MkdirAll`,
   `os.WriteFile` overwrite). Liste des templates à copier hardcodée
   L228-237.
 
@@ -108,7 +108,7 @@ thématique) · `Roadmap` (vue projection Now/Next/Later) ·
 
 ## Approche stratégique
 
-> Format Y-Statement selon [`spdd/methodology/decisions.md`](../methodology/decisions.md).
+> Format Y-Statement selon [`.yukki/methodology/decisions.md`](../methodology/decisions.md).
 
 **Pour résoudre** l'absence de niveaux discovery (Inbox), engagement
 (Epic + Story) et projection (Roadmap) dans la méthodologie SPDD du
@@ -157,8 +157,8 @@ hub).
 | `frontend/src/stores/shell.ts` | moyen | modification (étendre `ShellMode` + `SPDD_KINDS`) |
 | `frontend/src/components/hub/SidebarPanel.tsx` | faible | modification (étendre `TITLES` map de 6 → 9 entries) |
 | Tests Go (`lister_test.go`, `app_test.go`) | moyen | modification (fixtures + assertions sur les 7 kinds / 9 subdirs) |
-| `spdd/templates/` | fort | création (3 nouveaux fichiers `inbox.md`, `epic.md`, `roadmap.md`) |
-| `spdd/README.md` (méthodologie) | moyen | modification (section sur la chaîne discovery → delivery) |
+| `.yukki/templates/` | fort | création (3 nouveaux fichiers `inbox.md`, `epic.md`, `roadmap.md`) |
+| `.yukki/README.md` (méthodologie) | moyen | modification (section sur la chaîne discovery → delivery) |
 | `CLAUDE.md` | moyen | modification (tableau des préfixes : ajout `INBOX-`, `EPIC-`, `ROADMAP-` ; section vocabulaire de la hiérarchie) |
 
 ## Dépendances et intégrations
@@ -186,7 +186,7 @@ hub).
 
 ## Risques et points d'attention
 
-> Catégories selon [`spdd/methodology/risk-taxonomy.md`](../methodology/risk-taxonomy.md)
+> Catégories selon [`.yukki/methodology/risk-taxonomy.md`](../methodology/risk-taxonomy.md)
 > (Sécurité avec STRIDE / Performance / Opérationnel / Intégration /
 > Data / Compatibilité).
 
@@ -238,7 +238,7 @@ hub).
 
 ## Cas limites identifiés
 
-> Selon [`spdd/methodology/edge-cases.md`](../methodology/edge-cases.md)
+> Selon [`.yukki/methodology/edge-cases.md`](../methodology/edge-cases.md)
 > (BVA + EP + checklist 7 catégories).
 
 - **Roadmap singleton avec frontmatter étendu** — Un fichier

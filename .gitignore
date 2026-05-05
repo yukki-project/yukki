@@ -32,7 +32,7 @@ Thumbs.db
 # (~50 000 mots produits par 14 agents Claude pour préparer SPDD v2 ;
 # matériel de réflexion personnel, ne doit pas vivre dans l'historique
 # du dépôt).
-/spdd/research/
+/.yukki/research/
 
 # PDF locaux générés depuis du markdown — sources versionnées, pas
 # les rendus.

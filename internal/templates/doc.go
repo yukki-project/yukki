@@ -19,6 +19,6 @@
 //   - No global state. Each Loader instance is bound to a single
 //     projectDir.
 //
-// See spdd/stories/CORE-002-isolate-business-core.md for the rationale
+// See .yukki/stories/CORE-002-isolate-business-core.md for the rationale
 // of this isolation.
 package templates

@@ -4,7 +4,7 @@ title: Snapshot testing — caractérisation et golden output
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -145,13 +145,13 @@ Checklist quand un PR modifie des fichiers de snapshots :
 
 ## Heuristiques pour SPDD
 
-- `/spdd-generate` ne devrait **pas** générer de snapshot
+- `/yukki-generate` ne devrait **pas** générer de snapshot
   tests par défaut. Si une Operation produit du code à sortie
   textuelle stable (templates, codegen), un snapshot peut
   être pertinent — mais doit être annoncé explicitement
   dans la section Tests de l'Operation.
 - Pour la caractérisation d'un module legacy avant refactor :
-  `/spdd-prompt-update` peut signaler "ajouter un snapshot
+  `/yukki-prompt-update` peut signaler "ajouter un snapshot
   de l'output actuel comme filet de sécurité avant
   modification".
 - Composants frontend rendus (yukki UI) : utiliser sparingly,

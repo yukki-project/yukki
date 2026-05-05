@@ -1,9 +1,9 @@
 ---
 id: UI-001c
 slug: new-story-flow
-story: spdd/stories/UI-001c-new-story-flow.md
-analysis: spdd/analysis/UI-001c-new-story-flow.md
-family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001c-new-story-flow.md
+analysis: .yukki/analysis/UI-001c-new-story-flow.md
+family-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: synced
 created: 2026-05-02
 updated: 2026-05-02
@@ -11,7 +11,7 @@ updated: 2026-05-02
 
 # Canvas REASONS — New Story flow : modal + RunStory binding + EventsEmit + cancellation
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > Story fille de UI-001 (famille SPIDR), conclut le cycle UI-001a/b/c.
@@ -967,7 +967,7 @@ Le tout sans toucher la CLI.
     fallback côté front qui pourrait diverger (D-C6).
 - **Pas de feature flag, pas de retro-compat fictive**
   - Le canvas est la spec. Si quelque chose semble manquer,
-    `/spdd-prompt-update` plutôt que TODO inline.
+    `/yukki-prompt-update` plutôt que TODO inline.
 - **Pas de dépendance npm tierce au-delà des additions shadcn**
   - `@radix-ui/react-dialog` (peer-dep shadcn Dialog) est la seule
     addition possible. Refusé : tout autre composant Dialog (headless-ui,
@@ -1001,7 +1001,7 @@ Le tout sans toucher la CLI.
   reviewed, 15 décisions D-C1..D-C15 toutes en reco par défaut
   (validées en revue interactive). 10 Operations livrables.
 
-- **2026-05-02 — sync v2** — refactor pur post-`/spdd-generate`,
+- **2026-05-02 — sync v2** — refactor pur post-`/yukki-generate`,
   comportement utilisateur inchangé. 3 dérives consignées :
 
   - **O6** : wrapper `EventsOn` simplifié — Wails 2.x EventsOn retourne
@@ -1026,7 +1026,7 @@ Le tout sans toucher la CLI.
     `wails build -tags mock` produise une story valide en sortie
     de `Writer.Write` (sinon `Generate` retournait `""` et
     `ValidateFrontmatter` rejetait — le mode mock était cassé pour
-    le flow `/spdd-story`). Pas de modif comportementale en prod
+    le flow `/yukki-story`). Pas de modif comportementale en prod
     (build sans `-tags mock` utilise `ClaudeProvider`).
 
   Aucune section d'intention (R / E / A / N / Safeguards) modifiée.

@@ -66,7 +66,7 @@ selon le degré d'autorité donné à la spec :
 | **spec-as-source** | seule la spec est éditée, le code est entièrement généré et marqué *"DO NOT EDIT"* | **Tessl** (préfiguration) | non — yukki garde la lecture humaine du code |
 
 `yukki` choisit le niveau **spec-anchored** : le canvas REASONS est mis à
-jour en boucle (`/spdd-prompt-update`, `/spdd-sync`), mais le code reste
+jour en boucle (`/yukki-prompt-update`, `/yukki-sync`), mais le code reste
 lisible et éditable par un humain.
 
 ### Schéma 2 — Position de yukki dans le paysage SDD
@@ -80,13 +80,13 @@ lisible et éditable par un humain.
       └─────────┘       └─────────┘       └─────────┘
            │                 │                  │
       4 phases:         7 commandes:       1 source unique :
-      /specify          /spdd-story        code généré
-      /plan             /spdd-analysis     marqué // GENERATED
-      /tasks            /spdd-reasons-canvas
-      implement         /spdd-generate
-                        /spdd-api-test
-                        /spdd-prompt-update
-                        /spdd-sync
+      /specify          /yukki-story        code généré
+      /plan             /yukki-analysis     marqué // GENERATED
+      /tasks            /yukki-reasons-canvas
+      implement         /yukki-generate
+                        /yukki-api-test
+                        /yukki-prompt-update
+                        /yukki-sync
 ```
 
 ---
@@ -101,31 +101,31 @@ SPDD se déroule en **6 étapes**, dont **5 commandes** automatisables et
 ```
 exigence métier brute
         │
-        ▼  /spdd-story                                ┐
-[user story versionnée]   spdd/stories/<id>-<slug>.md │ étape 1
+        ▼  /yukki-story                                ┐
+[user story versionnée]   .yukki/stories/<id>-<slug>.md │ étape 1
         │                                              │
         ▼  ⚠ clarification humaine (PO + dev)         │ étape 2 — humaine
         │                                              │
-        ▼  /spdd-analysis                              │
-[analyse stratégique]     spdd/analysis/<id>-<slug>.md │ étape 3
+        ▼  /yukki-analysis                              │
+[analyse stratégique]     .yukki/analysis/<id>-<slug>.md │ étape 3
         │                                              │
         ▼  ⚠ revue humaine                            │
         │                                              │
-        ▼  /spdd-reasons-canvas                        │ étape 4
-[canvas REASONS]          spdd/prompts/<id>-<slug>.md  │
+        ▼  /yukki-reasons-canvas                        │ étape 4
+[canvas REASONS]          .yukki/prompts/<id>-<slug>.md  │
         │                                              │ ← source de vérité
         ▼  ⚠ revue humaine                            │
         │                                              │
-        ▼  /spdd-generate                              │ étape 5
+        ▼  /yukki-generate                              │ étape 5
 [code source]             src/...  +  tests           │
         │                                              │
-        ▼  /spdd-api-test (optionnel, REST seulement) │
-[script de validation]    scripts/spdd/<id>.sh        │
+        ▼  /yukki-api-test (optionnel, REST seulement) │
+[script de validation]    scripts/yukki/<id>.sh        │
         │                                              │
         ▼  ⚠ revue du diff                            │
         │                                              │
         ▼  étape 6 — tests unitaires (template-driven)│
-[prompt de tests]         spdd/tests/<id>-<slug>.md   │
+[prompt de tests]         .yukki/tests/<id>-<slug>.md   │
 [code de tests]           *_test.go                   ┘
 ```
 
@@ -140,8 +140,8 @@ draft ──▶ reviewed ──▶ accepted ──▶ implemented ──▶ sync
    └ écrit    └ revu      └ accepté    └ généré
                                          │
                                          ↓ (back-edges)
-                            implemented ──▶ reviewed (via /spdd-prompt-update)
-                            implemented ──▶ synced (via /spdd-sync)
+                            implemented ──▶ reviewed (via /yukki-prompt-update)
+                            implemented ──▶ synced (via /yukki-sync)
 ```
 
 ---
@@ -211,7 +211,7 @@ les changements suivent un protocole strict**.
    └──────────┬──────────┘         └────────────┬──────────┘
               │                                  │
               ▼                                  ▼
-      /spdd-prompt-update              /spdd-sync
+      /yukki-prompt-update              /yukki-sync
               │                                  │
               ▼                                  ▼
     canvas mis à jour                  canvas resynchronisé
@@ -219,7 +219,7 @@ les changements suivent un protocole strict**.
     implemented → reviewed             implemented → synced
               │                                  │
               ▼                                  │
-      /spdd-generate ciblé                       │
+      /yukki-generate ciblé                       │
               │                                  │
               ▼                                  ▼
     code régénéré                  code & canvas alignés
@@ -246,8 +246,8 @@ les changements suivent un protocole strict**.
 | **Phases** | 5 étapes + 2 boucles | 4 phases (`/specify`, `/plan`, `/tasks`, implement) | linéaire (requirements/design/tasks) | 1 source unique |
 | **Format AC** | Given/When/Then | libre | EARS (Easy Approach to Requirements Syntax) | libre |
 | **Versioning prompt** | obligatoire (canvas committé) | optionnel | hooks automatiques | spec = source |
-| **Boucle prompt-update** | explicite (`/spdd-prompt-update`) | implicite (édit-prompt-régénère) | hooks réactifs | n/a |
-| **Boucle refactor** | explicite (`/spdd-sync`) | n/a | n/a | code = généré |
+| **Boucle prompt-update** | explicite (`/yukki-prompt-update`) | implicite (édit-prompt-régénère) | hooks réactifs | n/a |
+| **Boucle refactor** | explicite (`/yukki-sync`) | n/a | n/a | code = généré |
 | **Code marqué DO NOT EDIT** | non | non | non | oui |
 | **Multi-provider** | oui (claude, copilot) | oui (Copilot, Claude, Gemini) | AWS only | proprietary |
 
@@ -255,7 +255,7 @@ les changements suivent un protocole strict**.
 
 - **Le canvas REASONS structure forte** (7 sections en 3 familles) — les
   autres outils ont des specs plus libres
-- **Les deux boucles `/spdd-prompt-update` + `/spdd-sync` explicites** —
+- **Les deux boucles `/yukki-prompt-update` + `/yukki-sync` explicites** —
   pas de cas implicite, on choisit toujours laquelle on applique
 - **L'humain au cœur** — chaque étape clé impose une revue humaine avec
   changement de `status`
@@ -269,14 +269,14 @@ Voici les principaux risques identifiés et la réponse SPDD.
 
 | Risque (sources 2026) | Symptôme | Réponse SPDD |
 |---|---|---|
-| **Architecture by autocomplete** | l'IA produit du code qui marche localement mais introduit de la dette technique cachée (microservices inutiles, ORM à la place d'un data lake, etc.) | section `S — Structure` du canvas force la décision d'archi en amont, revue humaine obligatoire avant `/spdd-generate` |
+| **Architecture by autocomplete** | l'IA produit du code qui marche localement mais introduit de la dette technique cachée (microservices inutiles, ORM à la place d'un data lake, etc.) | section `S — Structure` du canvas force la décision d'archi en amont, revue humaine obligatoire avant `/yukki-generate` |
 | **Hidden technical debt** | code "qui marche mais qui dérive du domaine" | section `E — Entities` capture le domaine ; `Safeguards` interdisent les écarts |
-| **Hallucinated dependencies** (typosquatting) | l'IA invente des packages qui n'existent pas, qu'un attaquant peut squatter ensuite | `Safeguards` explicites : "aucune dépendance externe non listée dans `Approach`" ; `/spdd-generate` ne peut pas ajouter une dep silencieusement |
-| **Reliability gaps** (pas de retry, timeout, circuit-breaker) | code dev-quality, casse en prod | section `N — Norms` impose les standards de fiabilité projet ; tests via `/spdd-api-test` valident |
+| **Hallucinated dependencies** (typosquatting) | l'IA invente des packages qui n'existent pas, qu'un attaquant peut squatter ensuite | `Safeguards` explicites : "aucune dépendance externe non listée dans `Approach`" ; `/yukki-generate` ne peut pas ajouter une dep silencieusement |
+| **Reliability gaps** (pas de retry, timeout, circuit-breaker) | code dev-quality, casse en prod | section `N — Norms` impose les standards de fiabilité projet ; tests via `/yukki-api-test` valident |
 | **Inconsistency à scale** | "comme si 10 devs avaient codé sans se parler" | `Norms` + `Safeguards` versionnés assurent la cohérence inter-stories |
 | **Architecture-by-autocomplete** sans rôle architectural | l'IA décide seule, pas de Constraint Persona | `Approach` impose un Y-Statement avec alternatives écartées et trade-off accepté — l'humain garde la décision |
 | **Cognitive overhead** ("thinking decelerator") | -19% de vélocité chez les devs expérimentés (data 2025) | la rigueur SPDD coûte au démarrage, mais réduit le debug post-génération |
-| **Spec qui pourrit** ("waterfall strikes back") | la spec devient obsolète, le code dérive | `/spdd-prompt-update` + `/spdd-sync` ferment la boucle — les deux artefacts restent alignés |
+| **Spec qui pourrit** ("waterfall strikes back") | la spec devient obsolète, le code dérive | `/yukki-prompt-update` + `/yukki-sync` ferment la boucle — les deux artefacts restent alignés |
 
 ---
 
@@ -310,12 +310,12 @@ améliorations issues de l'expérience.
 
 | Extension | Description | Pourquoi |
 |---|---|---|
-| **`spdd/methodology/`** — refs versionnées (DDD, STRIDE, BVA, Y-Statement, INVEST, SPIDR, AC formulation) | bibliothèque de techniques transverses, citées par les skills | éviter l'inlining (anti-pattern) — single source of truth |
+| **`.yukki/methodology/`** — refs versionnées (DDD, STRIDE, BVA, Y-Statement, INVEST, SPIDR, AC formulation) | bibliothèque de techniques transverses, citées par les skills | éviter l'inlining (anti-pattern) — single source of truth |
 | **Convention "skill = procédural, methodology = knowledge"** | les skills sont des procédures, les techniques sont externalisées | DRY au niveau méta + cohérence inter-skills |
 | **Examples yukki-only** dans les refs | enforcé par les `Norms` du canvas META-001 v1.2 | éviter la dérive de scope vers d'autres projets |
 | **Mirror Claude / Copilot** | chaque skill existe dans `.claude/commands/` et `.github/skills/` | multi-provider, pas de lock-in |
 | **Status lifecycle explicite** (`draft → reviewed → accepted → implemented → synced`) | le `status` du frontmatter avance à chaque transition humaine ou automatique | machine-parseable, traçable |
-| **Section `## Changelog`** dans les canvas | obligatoire à chaque `/spdd-prompt-update` ou `/spdd-sync` | trace fine des évolutions |
+| **Section `## Changelog`** dans les canvas | obligatoire à chaque `/yukki-prompt-update` ou `/yukki-sync` | trace fine des évolutions |
 | **`TODO.md`** (racine du repo) versionné | matérialise le backlog que SPDD canonical ne formalise pas | combler le gap roadmap du canonical |
 
 ---

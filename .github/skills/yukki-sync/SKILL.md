@@ -1,13 +1,13 @@
 ---
-name: spdd-sync
-description: "Étape 6b du workflow SPDD : après un refactor manuel du code (renommage, extraction de helper, déplacement de fichier, modernisation syntaxique) qui ne change PAS le comportement observable, resynchronise les sections descriptives du canvas REASONS sur le code. Ne jamais utiliser pour un changement de logique — c'est /spdd-prompt-update qu'il faut alors."
-argument-hint: "<id-slug OU chemin vers spdd/prompts/...>"
+name: yukki-sync
+description: "Étape 6b du workflow SPDD : après un refactor manuel du code (renommage, extraction de helper, déplacement de fichier, modernisation syntaxique) qui ne change PAS le comportement observable, resynchronise les sections descriptives du canvas REASONS sur le code. Ne jamais utiliser pour un changement de logique — c'est /yukki-prompt-update qu'il faut alors."
+argument-hint: "<id-slug OU chemin vers .yukki/prompts/...>"
 user-invocable: true
 ---
 
-# /spdd-sync — Resynchronisation canvas ← code (refactor seul)
+# /yukki-sync — Resynchronisation canvas ← code (refactor seul)
 
-Sixième étape (variante "refactor") du workflow [Structured Prompt-Driven Development](../../../spdd/README.md).
+Sixième étape (variante "refactor") du workflow [Structured Prompt-Driven Development](../../../.yukki/README.md).
 
 Quand le code a été refactoré **sans changer le comportement observable**
 (renommage, extraction d'un helper, déplacement d'un fichier, switch de framework,
@@ -19,14 +19,14 @@ pour qu'elles reflètent le code, **sans toucher** aux sections d'intention
 (Requirements, Approach, Norms, Safeguards) qui n'ont pas bougé.
 
 > **Cette commande est interdite si le comportement a changé.** Dans ce cas,
-> utiliser `/spdd-prompt-update` à la place — la règle SPDD est "prompt first"
+> utiliser `/yukki-prompt-update` à la place — la règle SPDD est "prompt first"
 > pour tout changement de logique.
 
 ## Entrée
 
 L'argument doit pointer vers un canvas en statut `implemented` (ou `synced`) :
 - `EXT-014-trivy-csv-export` (id-slug)
-- `spdd/prompts/EXT-014-trivy-csv-export.md` (chemin direct)
+- `.yukki/prompts/EXT-014-trivy-csv-export.md` (chemin direct)
 
 ## Étape 1 — Charger les artefacts et le code courant
 
@@ -49,7 +49,7 @@ Construire un tableau de dérive :
 Si une dérive **modifie le comportement observable** (statut HTTP, payload, side
 effect, validation…) :
 - **Arrêter immédiatement.**
-- Demander à l'utilisateur de confirmer : si oui changement comportemental → `/spdd-prompt-update` ; si juste cosmétique → expliquer et reprendre.
+- Demander à l'utilisateur de confirmer : si oui changement comportemental → `/yukki-prompt-update` ; si juste cosmétique → expliquer et reprendre.
 
 ## Étape 3 — Mettre à jour le canvas
 
@@ -77,7 +77,7 @@ Afficher :
 - Tableau de dérive avant/après (résumé)
 - Sections modifiées (Structure, Operations seulement attendues)
 - Confirmation explicite : **aucun changement comportemental n'a été propagé**
-- Suggestion : relancer le script `scripts/spdd/<id>-<slug>.sh` si présent, pour confirmer que les tests passent toujours (le contrat externe n'ayant pas bougé, ils doivent passer).
+- Suggestion : relancer le script `scripts/yukki/<id>-<slug>.sh` si présent, pour confirmer que les tests passent toujours (le contrat externe n'ayant pas bougé, ils doivent passer).
 
 ## Checklist avant de rendre la main
 

@@ -8,7 +8,7 @@
 //
 // O2 of the UI-001b canvas extends App with project state (projectDir,
 // loader, writer) and 6 bindings consumed by the hub UI (SelectProject,
-// AllowedKinds, ListArtifacts, GetClaudeStatus, InitializeSPDD,
+// AllowedKinds, ListArtifacts, GetClaudeStatus, InitializeYukki,
 // ReadArtifact).
 //
 // O4 of the UI-001c canvas extends App with generation state (running
@@ -49,8 +49,8 @@ var ErrAlreadyRunning = errors.New("a generation is already running")
 // hit the Wails runtime directly.
 var openDirectoryDialog = runtime.OpenDirectoryDialog
 
-// spddSubdirs lists the directories created by InitializeSPDD under
-// <projectDir>/spdd/. Order is stable for testability.
+// spddSubdirs lists the directories created by InitializeYukki under
+// <projectDir>/.yukki/. Order is stable for testability.
 var spddSubdirs = []string{
 	"stories",
 	"analysis",
@@ -160,7 +160,7 @@ func (a *App) SelectProject() (string, error) {
 
 	a.projectDir = dir
 	a.loader = templates.NewLoader(dir)
-	a.writer = artifacts.NewWriter(filepath.Join(dir, "spdd", "stories"))
+	a.writer = artifacts.NewWriter(filepath.Join(dir, artifacts.ProjectDirName, "stories"))
 	if a.logger != nil {
 		a.logger.Info("project selected", "dir", dir)
 	}
@@ -206,18 +206,22 @@ func (a *App) GetClaudeStatus() ClaudeStatus {
 	return ClaudeStatus{Available: true, Version: v}
 }
 
-// InitializeSPDD creates the SPDD directory tree under <dir>/spdd/ and
-// copies the 4 embedded templates into <dir>/spdd/templates/. The
-// operation is idempotent: rerunning it on a populated directory
-// re-creates missing subdirs and overwrites the embedded templates
-// (embed.FS is treated as the source of truth, Invariant I4).
-func (a *App) InitializeSPDD(dir string) error {
+// InitializeYukki creates the yukki project directory tree under
+// <dir>/.yukki/ and copies the embedded templates into
+// <dir>/.yukki/templates/. The operation is idempotent: rerunning it on
+// a populated directory re-creates missing subdirs and overwrites the
+// embedded templates (embed.FS is treated as the source of truth,
+// Invariant I4).
+//
+// Renamed from InitializeSPDD by META-004 (the directory is now
+// `.yukki/`, not `spdd/` — symbol Go aligned with the convention).
+func (a *App) InitializeYukki(dir string) error {
 	if dir == "" {
 		return errors.New("dir must not be empty")
 	}
 
 	for _, sub := range spddSubdirs {
-		path := filepath.Join(dir, "spdd", sub)
+		path := filepath.Join(dir, artifacts.ProjectDirName, sub)
 		if err := os.MkdirAll(path, 0o755); err != nil {
 			return fmt.Errorf("mkdir %s: %w", path, err)
 		}
@@ -246,20 +250,20 @@ func (a *App) InitializeSPDD(dir string) error {
 		if err != nil {
 			return fmt.Errorf("load template %s: %w", t.name, err)
 		}
-		dst := filepath.Join(dir, "spdd", "templates", t.name)
+		dst := filepath.Join(dir, artifacts.ProjectDirName, "templates", t.name)
 		if err := os.WriteFile(dst, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("write template %s: %w", dst, err)
 		}
 	}
 
 	if a.logger != nil {
-		a.logger.Info("spdd initialized", "dir", dir)
+		a.logger.Info("yukki initialized", "dir", dir)
 	}
 	return nil
 }
 
 // ReadArtifact returns the file contents at the given path. Refuses any
-// path that does not resolve under <projectDir>/spdd/ (Invariant I1 —
+// path that does not resolve under <projectDir>/.yukki/ (Invariant I1 —
 // path-traversal guard). Empty projectDir is rejected explicitly so the
 // guard is never bypassed by a missing prefix.
 func (a *App) ReadArtifact(path string) (string, error) {
@@ -270,12 +274,12 @@ func (a *App) ReadArtifact(path string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolve abs path %q: %w", path, err)
 	}
-	prefix, err := filepath.Abs(filepath.Join(a.projectDir, "spdd"))
+	prefix, err := filepath.Abs(filepath.Join(a.projectDir, artifacts.ProjectDirName))
 	if err != nil {
-		return "", fmt.Errorf("resolve project spdd prefix: %w", err)
+		return "", fmt.Errorf("resolve project yukki prefix: %w", err)
 	}
 	if !strings.HasPrefix(absPath, prefix) {
-		return "", fmt.Errorf("path outside project spdd: %s", absPath)
+		return "", fmt.Errorf("path outside project yukki: %s", absPath)
 	}
 	data, err := os.ReadFile(absPath)
 	if err != nil {

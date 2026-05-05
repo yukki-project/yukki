@@ -113,7 +113,7 @@ moment de l'ajout.
   - sert de **témoin vivant** que le cœur peut être consommé en
     isolation
 - **Schéma d'architecture** dans `DEVELOPMENT.md` (et idéalement
-  `spdd/GUIDE.md`) :
+  `.yukki/GUIDE.md`) :
   ```
   ┌─────────────────────────────────────────────────┐
   │  Surfaces de consommation                       │
@@ -148,7 +148,7 @@ moment de l'ajout.
 - **Refactor des signatures publiques** existantes : `RunStory`,
   `NewLoader`, `NewWriter`, `NewClaude` restent **strictement** comme
   ils sont aujourd'hui. Si l'audit révèle un défaut, c'est un signal
-  pour un `/spdd-prompt-update` du canvas CORE-001, pas une dérive
+  pour un `/yukki-prompt-update` du canvas CORE-001, pas une dérive
   silencieuse.
 - **Nouvelle surface de tests** au-delà de l'intégration core-only :
   pas d'API contract test, pas de fuzz, pas de bench. La couverture
@@ -285,9 +285,9 @@ moment de l'ajout.
   (split SPIDR) sur décision utilisateur pour prioriser cette story.
   La story SPIDR vit désormais en `CORE-003-spidr-split-cli-commands.md`.
 - **Lien futur** :
-  - Analyse à venir : `spdd/analysis/CORE-002-isolate-business-core.md`
-  - Canvas REASONS à venir : `spdd/prompts/CORE-002-isolate-business-core.md`
-  - Story future : `spdd/stories/INT-002-mcp-server.md` (à créer après
+  - Analyse à venir : `.yukki/analysis/CORE-002-isolate-business-core.md`
+  - Canvas REASONS à venir : `.yukki/prompts/CORE-002-isolate-business-core.md`
+  - Story future : `.yukki/stories/INT-002-mcp-server.md` (à créer après
     livraison de CORE-002)
 - **MCP context (informationnel)** :
   - SDK Go référent : [github.com/modelcontextprotocol/go-sdk](https://github.com/modelcontextprotocol/go-sdk)

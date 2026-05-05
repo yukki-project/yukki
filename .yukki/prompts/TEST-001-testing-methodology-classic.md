@@ -1,8 +1,8 @@
 ---
 id: TEST-001
 slug: testing-methodology-classic
-story: spdd/stories/TEST-001-testing-methodology-classic.md
-analysis: spdd/analysis/TEST-001-testing-methodology-classic.md
+story: .yukki/stories/TEST-001-testing-methodology-classic.md
+analysis: .yukki/analysis/TEST-001-testing-methodology-classic.md
 status: implemented
 created: 2026-05-03
 updated: 2026-05-03
@@ -10,11 +10,11 @@ updated: 2026-05-03
 
 # Canvas REASONS — Refs méthodo testing classique
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > code ↔ canvas se résout dans ce fichier d'abord.
 >
 > Story doc-only : ajoute 9 refs markdown dans
-> `spdd/methodology/testing/`, met à jour le README et 2 skills
+> `.yukki/methodology/testing/`, met à jour le README et 2 skills
 > SPDD. Aucun code applicatif touché.
 
 ---
@@ -23,19 +23,19 @@ updated: 2026-05-03
 
 ### Problème
 
-Le dossier `spdd/methodology/` ne contient aujourd'hui aucune ref
-testing. Quand `/spdd-generate` écrit du code et doit embarquer
+Le dossier `.yukki/methodology/` ne contient aujourd'hui aucune ref
+testing. Quand `/yukki-generate` écrit du code et doit embarquer
 des tests, l'agent n'a pas de référentiel partagé sur quoi
 tester, comment nommer, quelle pyramide cibler. Les humains qui
 review n'ont pas non plus de cadre opposable. TEST-001 livre un
 **cluster Testing complet** (2 entry-points + 7 sub-refs)
 **langage-agnostique**, dans un nouveau **sous-dossier
-`spdd/methodology/testing/`** qui inaugure la convention de
+`.yukki/methodology/testing/`** qui inaugure la convention de
 catégorisation par cluster.
 
 ### Definition of Done
 
-- [ ] Sous-dossier `spdd/methodology/testing/` créé avec **9
+- [ ] Sous-dossier `.yukki/methodology/testing/` créé avec **9
       refs** :
   - `testing-frontend.md` — playbook frontend (entry-point)
   - `testing-backend.md` — playbook backend (entry-point)
@@ -67,7 +67,7 @@ catégorisation par cluster.
 - [ ] Annexe "Tools by ecosystem" dans les 2 entry-points : **1
   tableau unique** (D-D6) avec 1 ligne par stack, renvoi vers
   TEST-002 pour le détail.
-- [ ] `spdd/methodology/README.md` mis à jour :
+- [ ] `.yukki/methodology/README.md` mis à jour :
   - Ajout d'une section `## Convention de catégorisation par
     cluster` qui explique le principe (1 cluster = 1
     sous-dossier) et liste les futurs clusters anticipés.
@@ -81,13 +81,13 @@ catégorisation par cluster.
   - Les 7 refs existantes restent listées dans leur tableau
     actuel, **non migrées**.
 - [ ] **2 skills mises à jour des 2 côtés** (D-D4) :
-  - `.claude/commands/spdd-reasons-canvas.md` : ajout
+  - `.claude/commands/yukki-reasons-canvas.md` : ajout
     références aux refs testing dans la procédure (section
     Operations doit être conforme aux refs pyramide + naming).
-  - `.claude/commands/spdd-generate.md` : ajout idem (le code
+  - `.claude/commands/yukki-generate.md` : ajout idem (le code
     généré doit embarquer des tests selon les patterns).
-  - `.github/skills/spdd-reasons-canvas/SKILL.md` : miroir.
-  - `.github/skills/spdd-generate/SKILL.md` : miroir.
+  - `.github/skills/yukki-reasons-canvas/SKILL.md` : miroir.
+  - `.github/skills/yukki-generate/SKILL.md` : miroir.
 - [ ] Aucune modification des **7 refs existantes** (INVEST, AC,
   SPIDR, edge-cases, risk-taxonomy, decisions, domain-modeling)
   ni de leurs frontmatter. Pas de back-port `category:` en V1.
@@ -104,14 +104,14 @@ catégorisation par cluster.
 
 | Nom | Description | Champs / Méthodes clés | Cycle de vie |
 |---|---|---|---|
-| **Cluster `testing/`** (sous-dossier nouveau) | 1ʳᵉ catégorie sortie de la racine `spdd/methodology/`. Foundation pour les futurs clusters. | chemin `spdd/methodology/testing/` | created par cette story, persiste |
+| **Cluster `testing/`** (sous-dossier nouveau) | 1ʳᵉ catégorie sortie de la racine `.yukki/methodology/`. Foundation pour les futurs clusters. | chemin `.yukki/methodology/testing/` | created par cette story, persiste |
 | **Ref entry-point** (2 instances) | Playbook par contexte (frontend / backend) : présente la pyramide adaptée + arbitrage par stack + références aux sub-refs | frontmatter `id: TEST-frontend` / `id: TEST-backend` ; sections : Définition, Pyramide, Heuristiques par étape, Sub-refs liées, Annexe Tools, Sources, Changelog | created par cette story |
 | **Ref sub-technique** (7 instances) | Technique focalisée et autonome | frontmatter `id: TEST-<topic>`, `category: testing`, `version: 1`, `status: published` ; sections : Définition, technique, Heuristiques, Sections détaillées, Voir aussi, Sources, Changelog | created par cette story |
 | **Champ `category:` frontmatter** (nouveau) | Catégorie du cluster d'appartenance | type `string` slug, value `testing` pour les 9 refs | introduit en V1 sur les 9 nouvelles, back-port futur |
 | **Section `## Voir aussi`** (footer convention) | Footer optionnel des refs avec overlap, liste mutuelle des refs liées | liste à puces (D-D5) | per-ref, optionnel |
 | **Section `## Cluster: testing`** dans README | Sous-section qui liste les 9 refs testing dans un tableau dédié | tableau Ref / Résumé / applies-to | added par cette story |
 | **Tableau "Clusters disponibles"** dans README | Vue panoramique des catégories (existantes + futures placeholder) | tableau Sous-dossier / Cluster / Statut | added par cette story |
-| **Skills SPDD existantes** | Consommatrices des nouvelles refs via `applies-to:` | `.claude/commands/spdd-{reasons-canvas,generate}.md` + `.github/skills/spdd-{reasons-canvas,generate}/SKILL.md` | modifiées par cette story (ajout références dans la procédure) |
+| **Skills SPDD existantes** | Consommatrices des nouvelles refs via `applies-to:` | `.claude/commands/yukki-{reasons-canvas,generate}.md` + `.github/skills/yukki-{reasons-canvas,generate}/SKILL.md` | modifiées par cette story (ajout références dans la procédure) |
 
 ### Relations
 
@@ -122,13 +122,13 @@ catégorisation par cluster.
 - `sub-ref test-smells.md` ⟵ `## Voir aussi` ⟶ futurs `code-quality/code-smells.md` + `code-quality/refactoring-catalog.md`
 - `sub-ref coverage-discipline.md` ⟵ inclut les 4 anti-cheat (mutation, test size, forbid patterns, drift gate) ; les 2 derniers sont des forks tooling renvoyés à TEST-002
 - README ⟶ tableau "Clusters disponibles" + tableau par cluster (story-side racine + testing sous-dossier)
-- skills `/spdd-{reasons-canvas,generate}` ⟶ `applies-to:` testing-frontend + testing-backend
+- skills `/yukki-{reasons-canvas,generate}` ⟶ `applies-to:` testing-frontend + testing-backend
 
 ### Invariants
 
 - **I1** — **Doc-only** : aucun code applicatif (Go, TS, Java)
   modifié par TEST-001. Modules touchés exclusivement dans
-  `spdd/methodology/`, `.claude/commands/`, `.github/skills/`.
+  `.yukki/methodology/`, `.claude/commands/`, `.github/skills/`.
 - **I2** — **Pas de migration des 7 existantes** : leurs
   frontmatter, leur emplacement (racine), leur contenu sont
   intacts. Le champ `category:` n'est PAS back-porté en V1.
@@ -159,17 +159,17 @@ catégorisation par cluster.
 ### Y-Statement
 
 > Pour résoudre **l'absence de référentiel méthodologique
-> testing dans `spdd/methodology/` (gap qui rend toute
-> génération de tests via `/spdd-generate` non-opposable et
+> testing dans `.yukki/methodology/` (gap qui rend toute
+> génération de tests via `/yukki-generate` non-opposable et
 > non-vérifiable)**, on choisit **de créer un cluster
-> `testing/` sous-dossier dans `spdd/methodology/` contenant 2
+> `testing/` sous-dossier dans `.yukki/methodology/` contenant 2
 > entry-points playbook (frontend / backend) + 7 sub-refs
 > techniques factorisées (naming, smells, coverage-discipline,
 > mutation, property-based, contract, snapshot), tous
 > langage-agnostiques avec annexe minimale renvoyant outils à
 > TEST-002, frontmatter standardisé incluant un nouveau champ
 > `category: testing`, et de mettre à jour le README ainsi que
-> 2 skills SPDD (`/spdd-reasons-canvas`, `/spdd-generate`) pour
+> 2 skills SPDD (`/yukki-reasons-canvas`, `/yukki-generate`) pour
 > les rendre découvrables**, plutôt que **(a) inliner les
 > patterns testing dans chaque skill (anti-DRY, hard à
 > maintenir), (b) écrire une seule ref `testing.md` méga-fichier
@@ -181,7 +181,7 @@ catégorisation par cluster.
 > cross-cluster (futurs CODEQ-001, OPS-001, COMM-001, PROC-001,
 > TEST-002, TEST-003)**, en acceptant **(a) un volume initial
 > dense (~1300 lignes de markdown), (b) un état mixte
-> temporaire dans `spdd/methodology/` (7 racine + 9
+> temporaire dans `.yukki/methodology/` (7 racine + 9
 > sous-dossier testing/) jusqu'à ce qu'une story future migre
 > les 7 existantes vers leurs clusters respectifs, et (c) une
 > peer review obligatoire avant merge (overhead modéré pour
@@ -190,7 +190,7 @@ catégorisation par cluster.
 ### Décisions d'architecture (tranchées en revue 2026-05-03)
 
 **Story-level (OQ1..OQ8)** :
-- OQ1 → A : skill `/spdd-tests` différée
+- OQ1 → A : skill `/yukki-tests` différée
 - OQ2 → A : a11y mention 1 paragraphe dans testing-frontend
 - OQ3 → A : `status: published` direct
 - OQ4 → A : `version: 1`
@@ -222,7 +222,7 @@ catégorisation par cluster.
 - **Migration immédiate des 7 refs racine** — disruption pour
   zéro gain V1 (les 7 marchent très bien), risque de casser
   les liens existants. Différée.
-- **Création concurrente de la skill `/spdd-tests`** —
+- **Création concurrente de la skill `/yukki-tests`** —
   séparation propre code/doc, voir OQ1.
 
 ---
@@ -233,29 +233,29 @@ catégorisation par cluster.
 
 | Module | Fichiers | Nature du changement |
 |---|---|---|
-| `spdd/methodology/testing/testing-frontend.md` | nouveau | playbook entry-point, ~250 lignes |
-| `spdd/methodology/testing/testing-backend.md` | nouveau | playbook entry-point, ~250 lignes |
-| `spdd/methodology/testing/test-naming.md` | nouveau | sub-ref, ~150 lignes |
-| `spdd/methodology/testing/test-smells.md` | nouveau | sub-ref, ~180 lignes (catalogue dense) |
-| `spdd/methodology/testing/coverage-discipline.md` | nouveau | sub-ref, ~180 lignes (4 anti-cheat) |
-| `spdd/methodology/testing/mutation-testing.md` | nouveau | sub-ref, ~120 lignes |
-| `spdd/methodology/testing/property-based-testing.md` | nouveau | sub-ref, ~140 lignes (5-6 patterns invariants) |
-| `spdd/methodology/testing/contract-testing.md` | nouveau | sub-ref, ~140 lignes |
-| `spdd/methodology/testing/snapshot-testing.md` | nouveau | sub-ref, ~100 lignes (decision tree) |
-| `spdd/methodology/README.md` | modif | refactor : ajout sections "Convention catégorisation" + tableau "Clusters disponibles" + section `## Cluster: testing` |
-| `.claude/commands/spdd-reasons-canvas.md` | modif faible | ajout référence aux refs testing dans la procédure (1-2 lignes) |
-| `.claude/commands/spdd-generate.md` | modif faible | idem |
-| `.github/skills/spdd-reasons-canvas/SKILL.md` | modif faible | miroir de la command |
-| `.github/skills/spdd-generate/SKILL.md` | modif faible | miroir |
-| `spdd/methodology/{invest,acceptance-criteria,spidr,edge-cases,risk-taxonomy,decisions,domain-modeling}.md` | **nul** | inchangées (pas de migration, pas de back-port `category:` V1) |
-| `spdd/templates/*.md`, `spdd/stories/*.md` (autres), `spdd/analysis/*.md` (autres), `spdd/prompts/*.md` (autres), `spdd/tests/` | **nul** | inchangés |
+| `.yukki/methodology/testing/testing-frontend.md` | nouveau | playbook entry-point, ~250 lignes |
+| `.yukki/methodology/testing/testing-backend.md` | nouveau | playbook entry-point, ~250 lignes |
+| `.yukki/methodology/testing/test-naming.md` | nouveau | sub-ref, ~150 lignes |
+| `.yukki/methodology/testing/test-smells.md` | nouveau | sub-ref, ~180 lignes (catalogue dense) |
+| `.yukki/methodology/testing/coverage-discipline.md` | nouveau | sub-ref, ~180 lignes (4 anti-cheat) |
+| `.yukki/methodology/testing/mutation-testing.md` | nouveau | sub-ref, ~120 lignes |
+| `.yukki/methodology/testing/property-based-testing.md` | nouveau | sub-ref, ~140 lignes (5-6 patterns invariants) |
+| `.yukki/methodology/testing/contract-testing.md` | nouveau | sub-ref, ~140 lignes |
+| `.yukki/methodology/testing/snapshot-testing.md` | nouveau | sub-ref, ~100 lignes (decision tree) |
+| `.yukki/methodology/README.md` | modif | refactor : ajout sections "Convention catégorisation" + tableau "Clusters disponibles" + section `## Cluster: testing` |
+| `.claude/commands/yukki-reasons-canvas.md` | modif faible | ajout référence aux refs testing dans la procédure (1-2 lignes) |
+| `.claude/commands/yukki-generate.md` | modif faible | idem |
+| `.github/skills/yukki-reasons-canvas/SKILL.md` | modif faible | miroir de la command |
+| `.github/skills/yukki-generate/SKILL.md` | modif faible | miroir |
+| `.yukki/methodology/{invest,acceptance-criteria,spidr,edge-cases,risk-taxonomy,decisions,domain-modeling}.md` | **nul** | inchangées (pas de migration, pas de back-port `category:` V1) |
+| `.yukki/templates/*.md`, `.yukki/stories/*.md` (autres), `.yukki/analysis/*.md` (autres), `.yukki/prompts/*.md` (autres), `.yukki/tests/` | **nul** | inchangés |
 | Code applicatif (Go : `internal/`, `cmd/`, root ; frontend : `frontend/src/`, etc.) | **nul** | scope étranger, story doc-only |
 | `wails.json`, `main.go`, `cmd/yukki/` | **nul** | inchangés |
 
 ### Schéma de structure
 
 ```
-spdd/methodology/
+.yukki/methodology/
 ├── README.md                       (modif : convention + tableau clusters + section testing)
 ├── invest.md                       (inchangé)
 ├── acceptance-criteria.md          (inchangé)
@@ -284,19 +284,19 @@ spdd/methodology/
 > ou en lot par paire (commit par paire pour limiter le bruit
 > git).
 
-### O1 — Créer le sous-dossier `spdd/methodology/testing/`
+### O1 — Créer le sous-dossier `.yukki/methodology/testing/`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/testing/.gitkeep` (transient,
+- **Fichier** : `.yukki/methodology/testing/.gitkeep` (transient,
   supprimé après le 1er fichier réel committé)
-- **Comportement** : `mkdir -p spdd/methodology/testing/` (Bash
+- **Comportement** : `mkdir -p .yukki/methodology/testing/` (Bash
   ou via Write).
 - **Tests** : aucun (filesystem only).
 
 ### O2 — Écrire `test-naming.md`
 
-- **Module** : `spdd/methodology/testing`
-- **Fichier** : `spdd/methodology/testing/test-naming.md`
+- **Module** : `.yukki/methodology/testing`
+- **Fichier** : `.yukki/methodology/testing/test-naming.md`
 - **Frontmatter** :
   ```yaml
   ---
@@ -305,7 +305,7 @@ spdd/methodology/
   version: 1
   status: published
   category: testing
-  applies-to: [spdd-reasons-canvas, spdd-generate]
+  applies-to: [yukki-reasons-canvas, yukki-generate]
   lang: fr
   created: 2026-05-03
   updated: 2026-05-03
@@ -361,7 +361,7 @@ spdd/methodology/
 ### O4 — Écrire `coverage-discipline.md`
 
 - **Frontmatter** : `id: TEST-coverage-discipline`,
-  `applies-to: [spdd-reasons-canvas, spdd-generate]`
+  `applies-to: [yukki-reasons-canvas, yukki-generate]`
 - **Sources** : Khorikov 2020 (chap. 11), Henry Coles (PIT docs)
 - **Sections** :
   1. Définition (coverage ≠ qualité de tests)
@@ -464,7 +464,7 @@ spdd/methodology/
 ### O9 — Écrire `testing-frontend.md` (entry-point playbook)
 
 - **Frontmatter** : `id: TEST-frontend`,
-  `applies-to: [spdd-reasons-canvas, spdd-generate]`
+  `applies-to: [yukki-reasons-canvas, yukki-generate]`
 - **Sources** : Cohn 2009, Spotify Engineering (Honeycomb),
   Kent C. Dodds (Trophy)
 - **Sections** :
@@ -494,7 +494,7 @@ spdd/methodology/
 ### O10 — Écrire `testing-backend.md` (entry-point playbook)
 
 - **Frontmatter** : `id: TEST-backend`,
-  `applies-to: [spdd-reasons-canvas, spdd-generate]`
+  `applies-to: [yukki-reasons-canvas, yukki-generate]`
 - **Sources** : Cohn 2009, Khorikov 2020
 - **Sections** :
   1. Définition (business logic, I/O, APIs)
@@ -516,10 +516,10 @@ spdd/methodology/
 - **Longueur cible** : ~250 lignes
 - **Tests** : aucun.
 
-### O11 — Mettre à jour `spdd/methodology/README.md`
+### O11 — Mettre à jour `.yukki/methodology/README.md`
 
 - **Module** : `spdd/methodology`
-- **Fichier** : `spdd/methodology/README.md` (modif)
+- **Fichier** : `.yukki/methodology/README.md` (modif)
 - **Comportement** :
   1. Ajouter une section `## Convention de catégorisation par
      cluster` qui explique :
@@ -555,15 +555,15 @@ spdd/methodology/
 
 - **Module** : `.claude/commands`
 - **Fichiers** :
-  - `.claude/commands/spdd-reasons-canvas.md` (modif faible)
-  - `.claude/commands/spdd-generate.md` (modif faible)
+  - `.claude/commands/yukki-reasons-canvas.md` (modif faible)
+  - `.claude/commands/yukki-generate.md` (modif faible)
 - **Comportement** :
   - Pour chaque command, dans la section "Méthodologie" ou
     équivalente, ajouter un renvoi explicite aux refs testing :
     "Pour la section `O — Operations` et son sous-champ
     'Tests', se référer à
-    [`spdd/methodology/testing/testing-frontend.md`](...)
-    ou [`spdd/methodology/testing/testing-backend.md`](...)
+    [`.yukki/methodology/testing/testing-frontend.md`](...)
+    ou [`.yukki/methodology/testing/testing-backend.md`](...)
     selon le contexte."
   - Diff minimal (1-3 lignes ajoutées) — ne pas refondre la
     structure de la command.
@@ -575,8 +575,8 @@ spdd/methodology/
 
 - **Module** : `.github/skills`
 - **Fichiers** :
-  - `.github/skills/spdd-reasons-canvas/SKILL.md` (modif faible)
-  - `.github/skills/spdd-generate/SKILL.md` (modif faible)
+  - `.github/skills/yukki-reasons-canvas/SKILL.md` (modif faible)
+  - `.github/skills/yukki-generate/SKILL.md` (modif faible)
 - **Comportement** : miroir exact de O12. Si la convention du
   repo est que skills et commands ont du contenu différent,
   adapter (la command sert l'invocation Claude Code, le SKILL
@@ -590,7 +590,7 @@ spdd/methodology/
 - **Comportement** :
   1. **Audit cohérence** : grep tous les liens internes des 9
      nouvelles refs et du README — vérifier qu'aucun n'est
-     mort. `find spdd/methodology/testing -name "*.md" -exec
+     mort. `find .yukki/methodology/testing -name "*.md" -exec
      grep -l "\[\[" {} \;` ne retourne rien (pas de wiki-links
      malformés).
   2. **Audit frontmatter** : tous les 9 fichiers ont
@@ -601,10 +601,10 @@ spdd/methodology/
      vérifier que les seuils (entry-points 150-300, sub-refs
      80-200) sont respectés.
   4. **Audit catégorisation** : `grep -r "category: testing"
-     spdd/methodology/testing/ | wc -l` retourne 9.
+     .yukki/methodology/testing/ | wc -l` retourne 9.
   5. **Audit pas de régression** : les 7 refs existantes ont
      leurs frontmatter `created` / `updated` inchangés
-     (`git log --oneline -1 spdd/methodology/invest.md` etc.).
+     (`git log --oneline -1 .yukki/methodology/invest.md` etc.).
 - **Tests** : ces audits sont les "tests" de TEST-001 (story
   doc-only, pas de tests Go/TS automatisés à écrire).
 
@@ -653,7 +653,7 @@ spdd/methodology/
   - `invest.md`, `acceptance-criteria.md`, `spidr.md`,
     `edge-cases.md`, `risk-taxonomy.md`, `decisions.md`,
     `domain-modeling.md` : leurs frontmatter, leur contenu,
-    leur emplacement (racine `spdd/methodology/`) restent
+    leur emplacement (racine `.yukki/methodology/`) restent
     intacts.
   - Pas de back-port du champ `category:` sur ces 7 refs en
     V1. Ce sera l'objet d'une story future si pertinent.
@@ -674,8 +674,8 @@ spdd/methodology/
   - Si un concept est traité dans 2 refs, les sections sont
     courtes et pointent l'une vers l'autre via
     `## Voir aussi`. Pas de copy-paste de paragraphes.
-- **Pas de création de la skill `/spdd-tests` (différée)**
-  - TEST-001 est doc-only. La skill `/spdd-tests` (étape 6
+- **Pas de création de la skill `/yukki-tests` (différée)**
+  - TEST-001 est doc-only. La skill `/yukki-tests` (étape 6
     SPDD) sera l'objet d'une story dédiée future.
 - **Pas de création / modification d'autres clusters**
   - `code-quality/`, `operations/`, `communication/`, etc.
@@ -684,8 +684,8 @@ spdd/methodology/
 - **Pas de migration des 7 refs existantes**
   - Elles restent à la racine. Une story future fera le
     ménage si besoin.
-- **Pas de modification de `spdd/templates/`** ni de
-  `spdd/stories/`, `spdd/analysis/`, `spdd/prompts/` (sauf
+- **Pas de modification de `.yukki/templates/`** ni de
+  `.yukki/stories/`, `.yukki/analysis/`, `.yukki/prompts/` (sauf
   les fichiers de cette story).
 - **Pas de modification de `wails.json`, `main.go`, `cmd/`**.
 - **Tonalité descriptive (Invariant I7)** — pas de "vous

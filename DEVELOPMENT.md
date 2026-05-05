@@ -1,8 +1,8 @@
 # DEVELOPMENT.md
 
 Guide rapide pour développer `yukki` en local. Pour la méthodologie SPDD,
-voir [`spdd/README.md`](spdd/README.md) et
-[`spdd/GUIDE.md`](spdd/GUIDE.md). Pour la roadmap, voir
+voir [`.yukki/README.md`](.yukki/README.md) et
+[`.yukki/GUIDE.md`](.yukki/GUIDE.md). Pour la roadmap, voir
 [`TODO.md`](TODO.md).
 
 ## Stack
@@ -53,7 +53,7 @@ et l'intra-cœur sont autorisés). Le job CI `static-checks` invoque
 
 La 3ᵉ surface (serveur MCP, `INT-002`) n'est **pas livrée** —
 préparée par CORE-002, à implémenter en post-MVP. Voir
-[spdd/stories/CORE-002-isolate-business-core.md](spdd/stories/CORE-002-isolate-business-core.md).
+[.yukki/stories/CORE-002-isolate-business-core.md](.yukki/stories/CORE-002-isolate-business-core.md).
 
 ## Build
 
@@ -164,7 +164,7 @@ yukki/
 │   └── e2e/
 │       ├── e2e_test.go              build + run subprocess
 │       └── fakeclaude/              faux binaire claude
-├── spdd/                            artefacts SPDD versionnés (méthodologie)
+├── .yukki/                            artefacts SPDD versionnés (méthodologie)
 │   ├── stories/ analysis/ prompts/ tests/
 │   ├── methodology/                 7 refs (DDD, STRIDE, BVA, Y-Statement, INVEST, SPIDR, AC)
 │   ├── templates/                   squelettes
@@ -179,7 +179,7 @@ yukki/
 
 ## Convention de commit
 
-Voir CLAUDE.md (sera extrait vers `spdd/methodology/commits.md` via
+Voir CLAUDE.md (sera extrait vers `.yukki/methodology/commits.md` via
 **META-005**, cf. [`TODO.md`](TODO.md)). En résumé :
 
 - `feat`, `fix`, `docs`, `chore`, `refactor`, `test` (Conventional Commits)
@@ -275,8 +275,8 @@ de `static-checks` (`needs:`) pour fail-fast.
 ## Pour un agent IA qui débarque
 
 1. Lire [`CLAUDE.md`](CLAUDE.md) (guide projet + méthodologie SPDD)
-2. Lire [`spdd/README.md`](spdd/README.md) (référence opérationnelle)
-3. Lire [`spdd/GUIDE.md`](spdd/GUIDE.md) (vision pédagogique)
+2. Lire [`.yukki/README.md`](.yukki/README.md) (référence opérationnelle)
+3. Lire [`.yukki/GUIDE.md`](.yukki/GUIDE.md) (vision pédagogique)
 4. Lire [`TODO.md`](TODO.md) (état du backlog)
 5. Pour toute nouvelle feature : suivre le cycle SPDD strict
    (story → clarification → analyse → canvas → generate)

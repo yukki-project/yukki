@@ -15,7 +15,7 @@ parent: UI-001
 sibling-stories:
   - UI-001a-app-skeleton-and-subcommand
   - UI-001b-hub-viewer-claude-banner
-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 depends-on:
   - UI-001a-app-skeleton-and-subcommand
   - UI-001b-hub-viewer-claude-banner
@@ -228,7 +228,7 @@ les autres flows SPDD viendront via CORE-002a-f puis UI-005+).
   Sœurs : UI-001a (skeleton), UI-001b (hub viewer).
 - **Dépendances** : nécessite UI-001a + UI-001b mergées. Par construction
   UI-001c est la dernière à livrer dans la famille.
-- **Analyse partagée** : [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md).
+- **Analyse partagée** : [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md).
   Les décisions D3 (interface Progress 2 méthodes), D5 (cancellation
   via OnShutdown), D12 (provider injection) sont déjà tranchées.
 - **Estimation** : ~1.5j (interface Progress + uiProgress 0.3j +
@@ -238,4 +238,4 @@ les autres flows SPDD viendront via CORE-002a-f puis UI-005+).
   mais pourrait migrer ici si UI-001b devient trop grosse en revue.
   Pour l'instant elle reste en UI-001b.
 - **Lien vers le canvas REASONS** (à venir) :
-  `spdd/prompts/UI-001c-new-story-flow.md`
+  `.yukki/prompts/UI-001c-new-story-flow.md`

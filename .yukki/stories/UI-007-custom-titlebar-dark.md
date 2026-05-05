@@ -204,7 +204,7 @@ HTML/CSS qui hérite du theming applicatif. UI-007 fait pareil pour yukki.
   fond pêche arrondi, lapin). Sauvé en `build/appicon.png` (full-res
   pour Wails) et `frontend/src/assets/yukki-logo.png` (64×64 pour
   rendu HiDPI dans la title bar à 20px).
-- Risques pressentis (à creuser en `/spdd-analysis`) :
+- Risques pressentis (à creuser en `/yukki-analysis`) :
   - DPI scaling Windows + fenêtre frameless : bordures, snap zones.
   - Comportement maximize sur écran multi-moniteur (collage bords).
   - Perte des conventions OS pour les utilisateurs power-users (raccourcis

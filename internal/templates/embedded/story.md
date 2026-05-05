@@ -6,7 +6,7 @@ status: draft                  # draft | in-analysis | in-design | in-implementa
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
 owner: <nom ou équipe>
-modules:                       # modules impactés (utile pour /spdd-analysis)
+modules:                       # modules impactés (utile pour /yukki-analysis)
   - backend                    # backend | controller | common | frontend | extensions/<nom> | helm | docs
 ---
 

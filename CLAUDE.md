@@ -36,8 +36,8 @@ Le projet **orchestre** les CLI providers existants (`claude` CLI, `gh copilot` 
 ### État actuel
 
 - `CORE-001` (foundation : `yukki story` end-to-end via `claude` CLI) → story prête, analyse + canvas + génération à venir
-- `META-001` (extraire techniques méthodologiques vers `spdd/methodology/`) → **livré** (8 commits)
-- Stories restantes prévues : `CORE-002` (les 6 autres commandes), `UI-001` (canvas editor), `INT-001` (Copilot CLI), `DOC-001` (publication OSS), `META-002` (backport `/spdd-story`), `META-003` (CI no-inlining)
+- `META-001` (extraire techniques méthodologiques vers `.yukki/methodology/`) → **livré** (8 commits)
+- Stories restantes prévues : `CORE-002` (les 6 autres commandes), `UI-001` (canvas editor), `INT-001` (Copilot CLI), `DOC-001` (publication OSS), `META-002` (backport `/yukki-story`), `META-003` (CI no-inlining)
 
 ---
 
@@ -48,13 +48,13 @@ Le projet `yukki` se construit lui-même via SPDD. Tous les artefacts vivent dan
 ### Règles non-négociables
 
 1. **Prompt first, code after** — quand la réalité diverge de l'intention, on **corrige le canvas d'abord**, puis on régénère le code. **Ne jamais** éditer le code pour un changement de logique sans toucher au canvas.
-2. **Skill = procédural, methodology = knowledge** — les skills (`.claude/commands/spdd-*.md` et `.github/skills/spdd-*/SKILL.md`) ne redéfinissent **jamais** une technique. Ils référencent [`spdd/methodology/<technique>.md`](spdd/methodology/) par lien.
+2. **Skill = procédural, methodology = knowledge** — les skills (`.claude/commands/yukki-*.md` et `.github/skills/yukki-*/SKILL.md`) ne redéfinissent **jamais** une technique. Ils référencent [`.yukki/methodology/<technique>.md`](.yukki/methodology/) par lien.
 3. **Examples yukki uniquement** — toute ref méthodologique illustre avec une story du projet `yukki` (ex. CORE-001), pas avec d'autres projets.
 4. **Miroir Claude / Copilot synchronisé** — chaque skill existe en **deux fichiers identiques** au contenu. Les seules différences autorisées sont :
    - frontmatter `user_invocable: true` (Claude) vs `user-invocable: true` (Copilot)
-   - profondeur de chemin relatif `../../spdd/...` vs `../../../spdd/...`
+   - profondeur de chemin relatif `../../.yukki/...` vs `../../../.yukki/...`
    - mention `subagent Explore` (Claude) vs `#codebase` (Copilot)
-5. **Pas d'inlining** — toute mention de DDD, STRIDE, BVA, Y-Statement, SPIDR, INVEST dans un skill **doit être suivie d'un lien** vers la ref correspondante dans [`spdd/methodology/`](spdd/methodology/).
+5. **Pas d'inlining** — toute mention de DDD, STRIDE, BVA, Y-Statement, SPIDR, INVEST dans un skill **doit être suivie d'un lien** vers la ref correspondante dans [`.yukki/methodology/`](.yukki/methodology/).
 
 ### Les 7 commandes SPDD
 
@@ -62,47 +62,47 @@ Toutes les commandes existent en double format Claude / Copilot.
 
 | Commande | Argument | Rôle | Skill (Claude / Copilot) |
 |---|---|---|---|
-| `/spdd-story` | `<description libre>` | Étape 1 — produit `spdd/stories/<id>-<slug>.md` | [Claude](.claude/commands/spdd-story.md) · [Copilot](.github/skills/spdd-story/SKILL.md) |
-| `/spdd-analysis` | `<id-slug>` | Étape 3 — produit `spdd/analysis/<id>-<slug>.md` | [Claude](.claude/commands/spdd-analysis.md) · [Copilot](.github/skills/spdd-analysis/SKILL.md) |
-| `/spdd-reasons-canvas` | `<id-slug>` | Étape 4 — produit le canvas REASONS | [Claude](.claude/commands/spdd-reasons-canvas.md) · [Copilot](.github/skills/spdd-reasons-canvas/SKILL.md) |
-| `/spdd-generate` | `<id-slug>` | Étape 5 — produit / met à jour le code | [Claude](.claude/commands/spdd-generate.md) · [Copilot](.github/skills/spdd-generate/SKILL.md) |
-| `/spdd-api-test` | `<id-slug>` | Étape 5b — produit `scripts/spdd/<id>.sh` | [Claude](.claude/commands/spdd-api-test.md) · [Copilot](.github/skills/spdd-api-test/SKILL.md) |
-| `/spdd-prompt-update` | `<id-slug> <change>` | Boucle logique — met à jour le canvas | [Claude](.claude/commands/spdd-prompt-update.md) · [Copilot](.github/skills/spdd-prompt-update/SKILL.md) |
-| `/spdd-sync` | `<id-slug>` | Boucle refactor — sync canvas ← code | [Claude](.claude/commands/spdd-sync.md) · [Copilot](.github/skills/spdd-sync/SKILL.md) |
+| `/yukki-story` | `<description libre>` | Étape 1 — produit `.yukki/stories/<id>-<slug>.md` | [Claude](.claude/commands/yukki-story.md) · [Copilot](.github/skills/yukki-story/SKILL.md) |
+| `/yukki-analysis` | `<id-slug>` | Étape 3 — produit `.yukki/analysis/<id>-<slug>.md` | [Claude](.claude/commands/yukki-analysis.md) · [Copilot](.github/skills/yukki-analysis/SKILL.md) |
+| `/yukki-reasons-canvas` | `<id-slug>` | Étape 4 — produit le canvas REASONS | [Claude](.claude/commands/yukki-reasons-canvas.md) · [Copilot](.github/skills/yukki-reasons-canvas/SKILL.md) |
+| `/yukki-generate` | `<id-slug>` | Étape 5 — produit / met à jour le code | [Claude](.claude/commands/yukki-generate.md) · [Copilot](.github/skills/yukki-generate/SKILL.md) |
+| `/yukki-api-test` | `<id-slug>` | Étape 5b — produit `scripts/yukki/<id>.sh` | [Claude](.claude/commands/yukki-api-test.md) · [Copilot](.github/skills/yukki-api-test/SKILL.md) |
+| `/yukki-prompt-update` | `<id-slug> <change>` | Boucle logique — met à jour le canvas | [Claude](.claude/commands/yukki-prompt-update.md) · [Copilot](.github/skills/yukki-prompt-update/SKILL.md) |
+| `/yukki-sync` | `<id-slug>` | Boucle refactor — sync canvas ← code | [Claude](.claude/commands/yukki-sync.md) · [Copilot](.github/skills/yukki-sync/SKILL.md) |
 
 ### Les 4 références méthodologiques
 
-Toutes dans [`spdd/methodology/`](spdd/methodology/), versionnées (`version: <int>` dans le frontmatter) et référencées via `applies-to`.
+Toutes dans [`.yukki/methodology/`](.yukki/methodology/), versionnées (`version: <int>` dans le frontmatter) et référencées via `applies-to`.
 
 | Ref | Sujet | applies-to |
 |---|---|---|
-| [`domain-modeling.md`](spdd/methodology/domain-modeling.md) | DDD tactique allégé (Entity / Value Object / Invariant / Integration / Domain Event) | `spdd-analysis`, `spdd-reasons-canvas` |
-| [`risk-taxonomy.md`](spdd/methodology/risk-taxonomy.md) | 6 catégories de risques + STRIDE en sous-cadre sécurité | `spdd-analysis`, `spdd-reasons-canvas`, `spdd-prompt-update` |
-| [`edge-cases.md`](spdd/methodology/edge-cases.md) | BVA + EP + checklist 7 catégories | `spdd-analysis`, `spdd-reasons-canvas` |
-| [`decisions.md`](spdd/methodology/decisions.md) | Format Y-Statement pour l'approche stratégique | `spdd-analysis`, `spdd-reasons-canvas` |
+| [`domain-modeling.md`](.yukki/methodology/domain-modeling.md) | DDD tactique allégé (Entity / Value Object / Invariant / Integration / Domain Event) | `yukki-analysis`, `yukki-reasons-canvas` |
+| [`risk-taxonomy.md`](.yukki/methodology/risk-taxonomy.md) | 6 catégories de risques + STRIDE en sous-cadre sécurité | `yukki-analysis`, `yukki-reasons-canvas`, `yukki-prompt-update` |
+| [`edge-cases.md`](.yukki/methodology/edge-cases.md) | BVA + EP + checklist 7 catégories | `yukki-analysis`, `yukki-reasons-canvas` |
+| [`decisions.md`](.yukki/methodology/decisions.md) | Format Y-Statement pour l'approche stratégique | `yukki-analysis`, `yukki-reasons-canvas` |
 
-Index : [`spdd/methodology/README.md`](spdd/methodology/README.md).
+Index : [`.yukki/methodology/README.md`](.yukki/methodology/README.md).
 
 ### Workflow d'une feature
 
 ```
 exigence brute
-  → /spdd-story <description>             # spdd/stories/<id>-<slug>.md (draft)
+  → /yukki-story <description>             # .yukki/stories/<id>-<slug>.md (draft)
   → (clarification humaine)               # status: draft → reviewed
-  → /spdd-analysis <id-slug>              # spdd/analysis/<id>-<slug>.md (draft)
+  → /yukki-analysis <id-slug>              # .yukki/analysis/<id>-<slug>.md (draft)
   → (revue humaine)                        # status: draft → reviewed
-  → /spdd-reasons-canvas <id-slug>        # spdd/prompts/<id>-<slug>.md (canvas)
+  → /yukki-reasons-canvas <id-slug>        # .yukki/prompts/<id>-<slug>.md (canvas)
   → (revue humaine)                        # status: draft → reviewed
-  → /spdd-generate <id-slug>              # produit le code, status: reviewed → implemented
-  → /spdd-api-test <id-slug>              # produit scripts/spdd/<id>.sh (si REST)
+  → /yukki-generate <id-slug>              # produit le code, status: reviewed → implemented
+  → /yukki-api-test <id-slug>              # produit scripts/yukki/<id>.sh (si REST)
 
   Boucles de maintenance :
-  → /spdd-prompt-update <id-slug> "<change>"  # logique change, status: implemented → reviewed
-  → /spdd-generate <id-slug>                  # régénération ciblée, status: reviewed → implemented
-  → /spdd-sync <id-slug>                      # refactor pur, status: implemented → synced
+  → /yukki-prompt-update <id-slug> "<change>"  # logique change, status: implemented → reviewed
+  → /yukki-generate <id-slug>                  # régénération ciblée, status: reviewed → implemented
+  → /yukki-sync <id-slug>                      # refactor pur, status: implemented → synced
 ```
 
-Voir [`spdd/README.md`](spdd/README.md) pour l'exemple complet illustré sur META-001.
+Voir [`.yukki/README.md`](.yukki/README.md) pour l'exemple complet illustré sur META-001.
 
 ### Frontmatter normalisé
 
@@ -120,8 +120,8 @@ updated: YYYY-MM-DD
 owner: <nom>
 modules: [<liste>]
 # références croisées :
-story: spdd/stories/<id>-<slug>.md      # dans analysis/canvas
-analysis: spdd/analysis/<id>-<slug>.md  # dans canvas
+story: .yukki/stories/<id>-<slug>.md      # dans analysis/canvas
+analysis: .yukki/analysis/<id>-<slug>.md  # dans canvas
 ---
 ```
 
@@ -150,8 +150,8 @@ sources:
   - `docs(spdd):` — documentation
   - `chore(spdd):` — maintenance (résolutions Open Questions, scaffolding)
   - `review(spdd):` — itération suite à revue humaine
-  - `prompt-update(spdd):` — `/spdd-prompt-update` exécuté
-  - `generate(spdd):` — `/spdd-generate` exécuté
+  - `prompt-update(spdd):` — `/yukki-prompt-update` exécuté
+  - `generate(spdd):` — `/yukki-generate` exécuté
   - `refactor(spdd):` — refactor d'un artefact existant
 - **Pas de `git add -A`** — ajouter explicitement les fichiers
 - **Pas de `--no-verify`, pas de `--amend`** — créer un nouveau commit
@@ -224,21 +224,21 @@ par les stories enfants `INBOX-001/002`, `EPIC-001`, `ROADMAP-001/002`.
 
 ## Pour un agent qui débarque
 
-1. Lire **[`spdd/README.md`](spdd/README.md)** pour la philosophie SPDD complète + exemple META-001 illustré
-2. Lire **[`spdd/methodology/README.md`](spdd/methodology/README.md)** pour l'index des techniques
-3. Consulter les **stories en cours** dans [`spdd/stories/`](spdd/stories/)
+1. Lire **[`.yukki/README.md`](.yukki/README.md)** pour la philosophie SPDD complète + exemple META-001 illustré
+2. Lire **[`.yukki/methodology/README.md`](.yukki/methodology/README.md)** pour l'index des techniques
+3. Consulter les **stories en cours** dans [`.yukki/stories/`](.yukki/stories/)
 4. Pour chaque action, **suivre le canvas REASONS** — c'est la source de vérité
 5. **Respecter les Norms et Safeguards** du canvas (jamais d'inlining, toujours mirror Claude/Copilot, examples yukki only)
-6. **Ne jamais** modifier du code généré sans passer par `/spdd-prompt-update` ou `/spdd-sync`
+6. **Ne jamais** modifier du code généré sans passer par `/yukki-prompt-update` ou `/yukki-sync`
 
 ---
 
 ## Liens essentiels
 
 - [Article SPDD — Martin Fowler](https://martinfowler.com/articles/structured-prompt-driven/)
-- [`spdd/README.md`](spdd/README.md) — méthodologie + exemple META-001
-- [`spdd/methodology/README.md`](spdd/methodology/README.md) — index des techniques
-- [`spdd/templates/`](spdd/templates/) — squelettes des artefacts
+- [`.yukki/README.md`](.yukki/README.md) — méthodologie + exemple META-001
+- [`.yukki/methodology/README.md`](.yukki/methodology/README.md) — index des techniques
+- [`.yukki/templates/`](.yukki/templates/) — squelettes des artefacts
 - [`.claude/commands/`](.claude/commands/) — skills Claude Code
 - [`.github/skills/`](.github/skills/) — skills GitHub Copilot
-- [`spdd/stories/META-001-extract-methodology-references.md`](spdd/stories/META-001-extract-methodology-references.md) — la story exemple
+- [`.yukki/stories/META-001-extract-methodology-references.md`](.yukki/stories/META-001-extract-methodology-references.md) — la story exemple

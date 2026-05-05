@@ -1,34 +1,34 @@
 ---
-name: spdd-reasons-canvas
-description: "Étape 4 du workflow SPDD : à partir d'une analyse SPDD validée, génère le canvas REASONS complet (Requirements-Entities-Approach-Structure-Operations-Norms-Safeguards) avec signatures concrètes en section Operations, et le sauve dans spdd/prompts/<id>-<slug>.md. C'est la spec exécutable consommée par /spdd-generate. Utilise après /spdd-analysis et la revue humaine."
-argument-hint: "<id-slug OU chemin vers spdd/analysis/...>"
+name: yukki-reasons-canvas
+description: "Étape 4 du workflow SPDD : à partir d'une analyse SPDD validée, génère le canvas REASONS complet (Requirements-Entities-Approach-Structure-Operations-Norms-Safeguards) avec signatures concrètes en section Operations, et le sauve dans .yukki/prompts/<id>-<slug>.md. C'est la spec exécutable consommée par /yukki-generate. Utilise après /yukki-analysis et la revue humaine."
+argument-hint: "<id-slug OU chemin vers .yukki/analysis/...>"
 user_invocable: true
 ---
 
-# /spdd-reasons-canvas — Génération du canvas REASONS
+# /yukki-reasons-canvas — Génération du canvas REASONS
 
-Quatrième étape du workflow [Structured Prompt-Driven Development](../../spdd/README.md).
+Quatrième étape du workflow [Structured Prompt-Driven Development](../../.yukki/README.md).
 
 Produit la **spec exécutable** (canvas REASONS) qui sert de source de vérité
 pour la génération de code. Tout changement de logique ultérieur passera **d'abord**
-par ce fichier (via `/spdd-prompt-update`), pas par le code.
+par ce fichier (via `/yukki-prompt-update`), pas par le code.
 
 ## Entrée
 
 `$ARGUMENTS` doit pointer vers une analyse existante :
 - `EXT-014-trivy-csv-export` (id-slug)
-- `spdd/analysis/EXT-014-trivy-csv-export.md` (chemin direct)
+- `.yukki/analysis/EXT-014-trivy-csv-export.md` (chemin direct)
 
 L'analyse doit être en statut `reviewed` ou `accepted` dans son front-matter.
 Si elle est encore en `draft` → demander confirmation avant de continuer.
 
 ## Étape 1 — Charger les artefacts
 
-1. Lire le template [spdd/templates/canvas-reasons.md](../../spdd/templates/canvas-reasons.md).
+1. Lire le template [.yukki/templates/canvas-reasons.md](../../.yukki/templates/canvas-reasons.md).
 2. Lire l'analyse cible.
 3. Lire la story référencée dans le front-matter de l'analyse (`story:`).
-4. Vérifier qu'aucun canvas n'existe déjà à `spdd/prompts/<id>-<slug>.md`. Si oui :
-   - Soit la story est en cours d'itération → proposer `/spdd-prompt-update` à la place.
+4. Vérifier qu'aucun canvas n'existe déjà à `.yukki/prompts/<id>-<slug>.md`. Si oui :
+   - Soit la story est en cours d'itération → proposer `/yukki-prompt-update` à la place.
    - Soit demander explicitement à l'utilisateur s'il veut écraser.
 
 ## Étape 2 — Lecture ciblée du code de référence
@@ -68,7 +68,7 @@ But : que les signatures du canvas reflètent **réellement** les conventions du
 - Schéma ASCII si le flux est non-trivial (REST → service → CRD → UI).
 
 ### O — Operations
-- **Le cœur du canvas** — c'est ce que `/spdd-generate` consommera.
+- **Le cœur du canvas** — c'est ce que `/yukki-generate` consommera.
 - Une opération = une unité testable, avec :
   - Module concerné
   - Fichier (chemin précis)
@@ -78,10 +78,10 @@ But : que les signatures du canvas reflètent **réellement** les conventions du
     et la nature des tests** — pyramide cible, naming, smells à
     éviter, seuils de coverage, choix unit/integration/e2e — se
     référer aux refs cluster testing :
-    [`spdd/methodology/testing/testing-frontend.md`](../../spdd/methodology/testing/testing-frontend.md)
+    [`.yukki/methodology/testing/testing-frontend.md`](../../.yukki/methodology/testing/testing-frontend.md)
     pour les Operations frontend (UI / composants /
     state management) et
-    [`spdd/methodology/testing/testing-backend.md`](../../spdd/methodology/testing/testing-backend.md)
+    [`.yukki/methodology/testing/testing-backend.md`](../../.yukki/methodology/testing/testing-backend.md)
     pour les Operations backend (services / I/O / APIs / CLI).
 - Ordre d'exécution explicite (O1 → O2 → ... — utile pour bâtir incrémentalement).
 
@@ -105,12 +105,12 @@ But : que les signatures du canvas reflètent **réellement** les conventions du
 
 ## Étape 5 — Sauvegarder et restituer
 
-1. Écrire `spdd/prompts/<id>-<slug>.md`.
+1. Écrire `.yukki/prompts/<id>-<slug>.md`.
 2. Afficher :
    - Lien cliquable vers le fichier
    - Liste des Operations (numéros + titres)
    - Liste des Safeguards critiques ajoutés (au-delà du template)
-3. Proposer la suite : `/spdd-generate spdd/prompts/<id>-<slug>.md` — en rappelant
+3. Proposer la suite : `/yukki-generate .yukki/prompts/<id>-<slug>.md` — en rappelant
    qu'une revue humaine du canvas est attendue avant génération de code.
 
 ## Checklist avant de rendre la main

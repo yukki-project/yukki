@@ -5,9 +5,9 @@ status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
 covers-stories:
-  - spdd/stories/UI-001a-app-skeleton-and-subcommand.md
-  - spdd/stories/UI-001b-hub-viewer-claude-banner.md
-  - spdd/stories/UI-001c-new-story-flow.md
+  - .yukki/stories/UI-001a-app-skeleton-and-subcommand.md
+  - .yukki/stories/UI-001b-hub-viewer-claude-banner.md
+  - .yukki/stories/UI-001c-new-story-flow.md
 ---
 
 # Analyse — Initialiser l'app desktop yukki (Wails v2 + React)
@@ -272,7 +272,7 @@ covers-stories:
   rester sur l'écran de sélection ou afficher un état "no project".
 - Sélection du dossier root du repo yukki lui-même → doit fonctionner
   (eat your own dog food : on liste les vraies stories yukki).
-- `*.md` corrompus / frontmatter manquant dans `spdd/stories/` →
+- `*.md` corrompus / frontmatter manquant dans `.yukki/stories/` →
   skip silencieusement avec un log warn, ou afficher dans le hub avec
   un badge "invalid" ?
 - Très grand nombre de stories (>1000) → perf de la liste ; recommandation :
@@ -295,7 +295,7 @@ covers-stories:
 - Stories avec frontmatter en plusieurs langues (mots-clés étrangers,
   emojis dans le titre) → yaml.v3 supporte UTF-8 nativement.
 - Hub onglet *Tests* sans aucun fichier `.md` (les tests ne sont pas
-  toujours sous `spdd/tests/` mais sous `tests/`) → clarifier le contrat
+  toujours sous `.yukki/tests/` mais sous `tests/`) → clarifier le contrat
   "kind" : on liste seulement `spdd/<kind>/*.md`, pas le code de test.
 
 ## Decisions à prendre avant le canvas

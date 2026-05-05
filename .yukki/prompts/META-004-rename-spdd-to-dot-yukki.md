@@ -1,16 +1,16 @@
 ---
 id: META-004
 slug: rename-spdd-to-dot-yukki
-story: spdd/stories/META-004-rename-spdd-to-dot-yukki.md
-analysis: spdd/analysis/META-004-rename-spdd-to-dot-yukki.md
+story: .yukki/stories/META-004-rename-spdd-to-dot-yukki.md
+analysis: .yukki/analysis/META-004-rename-spdd-to-dot-yukki.md
 status: draft
 created: 2026-05-03
 updated: 2026-05-03
 ---
 
-# Canvas REASONS — Renommer `spdd/` en `.yukki/` et `/spdd-*` en `/yukki-*`
+# Canvas REASONS — Renommer `spdd/` en `.yukki/` et `/yukki-*` en `/yukki-*`
 
-> Spec exécutable. Source de vérité pour `/spdd-generate` et `/spdd-sync`.
+> Spec exécutable. Source de vérité pour `/yukki-generate` et `/yukki-sync`.
 > Toute divergence code ↔ canvas se résout **dans ce fichier d'abord**.
 
 ---
@@ -20,7 +20,7 @@ updated: 2026-05-03
 ### Problème
 
 Le projet `yukki` stocke ses artefacts dans un dossier `spdd/` et expose
-ses commandes via `/spdd-*`, alors que ces deux noms portent celui de la
+ses commandes via `/yukki-*`, alors que ces deux noms portent celui de la
 **méthode** et non de l'**outil**. On veut basculer atomiquement sur la
 convention outil — dossier `.yukki/` + commandes `/yukki-*` — sans compat
 ascendante (projet en dev).
@@ -45,7 +45,7 @@ ascendante (projet en dev).
   l'init quand aucun `.yukki/` ni `spdd/` n'est présent (couvre AC6)
 - [ ] DoD7 — Le mapping `kind → /yukki-<verbe>` est appliqué dans
   `CreateNextStageModal.tsx` et `WorkflowPipeline.tsx` ; aucune occurrence
-  `/spdd-` n'apparaît dans le rendu (couvre AC7)
+  `/yukki-` n'apparaît dans le rendu (couvre AC7)
 - [ ] DoD8 — `git grep -n "\bspdd\b"` revient à zéro hors d'une whitelist
   documentée (mention historique, lien externe vers l'article SPDD)
 - [ ] DoD9 — `wails dev` lance l'app, le hub s'ouvre sur un projet
@@ -92,7 +92,7 @@ le blame** :
 
 2. **Commit 2 — substitutions de contenu** : remplace toutes les
    références internes (`"spdd"` Go → `artifacts.ProjectDirName`,
-   `/spdd-* → /yukki-*` dans skills et frontend, `spdd/...` → `.yukki/...`
+   `/yukki-* → /yukki-*` dans skills et frontend, `spdd/...` → `.yukki/...`
    dans frontmatter et corps des artefacts, `applies-to: [spdd-*]` →
    `[yukki-*]` dans methodology, `InitializeSPDD → InitializeYukki`).
 
@@ -111,7 +111,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Migration progressive avec compat ascendante** (lit `spdd/` ET
   `.yukki/`) — Rejetée : double layout = dette permanente, pas
   d'utilisateurs externes installés.
-- **Rename dossier seul, commands `/spdd-*` inchangées** — Rejetée :
+- **Rename dossier seul, commands `/yukki-*` inchangées** — Rejetée :
   incohérence outil persistante, SPIDR axe Interfaces non-scindable
   dans la story.
 - **Un seul commit (mv + subst)** — Rejetée : la heuristique git rename
@@ -145,8 +145,8 @@ divergence des 7 sites Go aujourd'hui codés en dur.
    PR META-004
    ├── Commit 1 : git mv (rename pur)
    │     ├── git mv spdd .yukki
-   │     ├── git mv .claude/commands/spdd-X.md → yukki-X.md  (×8)
-   │     └── git mv .github/skills/spdd-X     → yukki-X     (×8)
+   │     ├── git mv .claude/commands/yukki-X.md → yukki-X.md  (×8)
+   │     └── git mv .github/skills/yukki-X     → yukki-X     (×8)
    │
    └── Commit 2 : substitutions de contenu
          ├── O2 : add internal/artifacts/dirname.go (const ProjectDirName)
@@ -167,20 +167,20 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 
 > Décomposition exécutable. Les Operations sont ordonnées en 2 commits
 > (cf. Approach) : O1 = commit 1 (rename pur), O2..O11 = commit 2
-> (substitutions). `/spdd-generate` doit produire les 2 commits dans
+> (substitutions). `/yukki-generate` doit produire les 2 commits dans
 > cet ordre.
 
 ### O1 — Rename physique : `git mv spdd .yukki` + 16 skills
 
 - **Module** : repo root, `.claude/commands/`, `.github/skills/`
-- **Fichiers** : tout `spdd/` ; 8 fichiers `.claude/commands/spdd-*.md` ;
-  8 dossiers `.github/skills/spdd-*/`
+- **Fichiers** : tout `spdd/` ; 8 fichiers `.claude/commands/yukki-*.md` ;
+  8 dossiers `.github/skills/yukki-*/`
 - **Commandes** :
   ```bash
   git mv spdd .yukki
   for f in story analysis reasons-canvas generate api-test prompt-update sync tests; do
-    git mv ".claude/commands/spdd-$f.md" ".claude/commands/yukki-$f.md"
-    git mv ".github/skills/spdd-$f"      ".github/skills/yukki-$f"
+    git mv ".claude/commands/yukki-$f.md" ".claude/commands/yukki-$f.md"
+    git mv ".github/skills/yukki-$f"      ".github/skills/yukki-$f"
   done
   ```
 - **Comportement** : exclusivement des renames physiques, **aucun
@@ -212,7 +212,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Tests** : aucune assertion directe — la constante est validée par
   les tests des Operations qui la consomment (O3, O4).
 - **Référence testing** : règles de naming et anti-cheat coverage selon
-  [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
+  [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
 
 ### O3 — Use const `ProjectDirName` dans le code Go runtime
 
@@ -245,8 +245,8 @@ divergence des 7 sites Go aujourd'hui codés en dur.
   - Les tests existants `TestInitializeSPDD_*` doivent être renommés en
     `TestInitializeYukki_*` et leurs assertions vérifient que l'arbo
     créée est `<dir>/.yukki/{stories,analysis,prompts,templates,tests}`
-- **Référence testing** : [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
-  + [`spdd/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md)
+- **Référence testing** : [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
+  + [`.yukki/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md)
   pour le renommage des tests.
 
 ### O4 — Tests Go + doc comments
@@ -264,21 +264,21 @@ divergence des 7 sites Go aujourd'hui codés en dur.
     `".yukki"` (dans les fixtures où ré-importer la const seulement pour
     1 test serait du bruit ; choisir au cas par cas, la const reste
     obligatoire pour le code de prod)
-  - `spdd/stories/...` → `.yukki/stories/...` dans les chaînes de
+  - `.yukki/stories/...` → `.yukki/stories/...` dans les chaînes de
     commentaire et messages
 - **Comportement** : `go test ./...` passe ; `go vet ./...` clean ;
   `golangci-lint run` clean.
 - **Tests** : la suite existante après update doit passer, ainsi qu'un
   nouveau cas dans `TestReadArtifact_OutsideYukkiDir` qui injecte
   `<projectDir>/spdd/x.md` (l'ancien chemin) et vérifie le rejet (cf. O3).
-- **Référence testing** : [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md).
 
 ### O5 — Frontend : strings dossier + slash commands
 
 - **Module** : `frontend/src/components/{hub,workflow}`
 - **Fichiers** :
   - `frontend/src/components/hub/NewStoryModal.tsx:157` —
-    `spdd/stories/` → `.yukki/stories/`
+    `.yukki/stories/` → `.yukki/stories/`
   - `frontend/src/components/hub/ProjectPicker.tsx:72` —
     `spdd/` → `.yukki/`
   - `frontend/src/components/workflow/CreateNextStageModal.tsx:16-19` —
@@ -290,7 +290,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
     tests:    () => '/yukki-tests <id-slug> (V2)',
     ```
   - `frontend/src/components/workflow/WorkflowPipeline.tsx:166` —
-    `/spdd-story` → `/yukki-story`
+    `/yukki-story` → `/yukki-story`
 - **Comportement** : les libellés affichés dans l'UI sont alignés
   outil ; aucun comportement runtime ne change (les valeurs ne sont pas
   parsées ailleurs).
@@ -301,7 +301,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
     `ProjectPicker` annonce "no `.yukki/` subtree" ; ouvrir le workflow
     de pipeline → les 4 boutons "Create next stage" affichent
     `/yukki-*`
-- **Référence testing** : [`spdd/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
+- **Référence testing** : [`.yukki/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md).
 
 ### O6 — Skill bodies (Claude + Copilot)
 
@@ -309,18 +309,18 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Fichiers** : 16 (8 fichiers `.claude/commands/yukki-*.md` + 8
   fichiers `.github/skills/yukki-*/SKILL.md` ; déjà renommés en O1)
 - **Substitutions** :
-  - `spdd/templates/` → `.yukki/templates/`
-  - `spdd/methodology/` → `.yukki/methodology/`
-  - `spdd/stories/` → `.yukki/stories/` (et `analysis/`, `prompts/`,
+  - `.yukki/templates/` → `.yukki/templates/`
+  - `.yukki/methodology/` → `.yukki/methodology/`
+  - `.yukki/stories/` → `.yukki/stories/` (et `analysis/`, `prompts/`,
     `tests/`)
-  - `/spdd-` → `/yukki-` (auto-citations + cross-citations entre skills)
+  - `/yukki-` → `/yukki-` (auto-citations + cross-citations entre skills)
   - mention "SPDD directory" dans les commentaires de doc → "yukki
     directory" si elle pointait clairement vers le dossier
 - **Comportement** : les skills lisent les templates depuis
   `.yukki/templates/...`, écrivent dans `.yukki/<kind>/...`, et leur
   texte cite `/yukki-*` partout.
 - **Tests** :
-  - Grep : `git grep -nE "(/spdd-|spdd/(templates|methodology|stories|analysis|prompts|tests))" .claude/ .github/skills/` → 0
+  - Grep : `git grep -nE "(/yukki-|spdd/(templates|methodology|stories|analysis|prompts|tests))" .claude/ .github/skills/` → 0
   - Miroir Claude/Copilot : pour chaque verbe, un `diff` côte-à-côte
     `.claude/commands/yukki-X.md` vs `.github/skills/yukki-X/SKILL.md`
     montre uniquement les écarts attendus (frontmatter `user_invocable`
@@ -335,8 +335,8 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Fichiers** : ~39 artefacts (13 stories + 13 analysis + 13 canvas
   + tests s'ils existent)
 - **Substitutions** :
-  - `story: spdd/stories/` → `story: .yukki/stories/`
-  - `analysis: spdd/analysis/` → `analysis: .yukki/analysis/`
+  - `story: .yukki/stories/` → `story: .yukki/stories/`
+  - `analysis: .yukki/analysis/` → `analysis: .yukki/analysis/`
 - **Comportement** : tous les frontmatter pointent vers la nouvelle arbo.
 - **Tests** :
   - Grep : `git grep -nE "^(story|analysis): spdd/" .yukki/` → 0
@@ -348,10 +348,10 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Module** : `.yukki/methodology/` (incl. sous-dossier `testing/`)
 - **Fichiers** : 17 fichiers methodology
 - **Substitutions** : pour chacun des 7 noms cités —
-  `spdd-story → yukki-story`, `spdd-analysis → yukki-analysis`,
-  `spdd-reasons-canvas → yukki-reasons-canvas`, `spdd-prompt-update →
-  yukki-prompt-update`, `spdd-generate → yukki-generate`,
-  `spdd-sync → yukki-sync`, `spdd-tests → yukki-tests`
+  `yukki-story → yukki-story`, `yukki-analysis → yukki-analysis`,
+  `yukki-reasons-canvas → yukki-reasons-canvas`, `yukki-prompt-update →
+  yukki-prompt-update`, `yukki-generate → yukki-generate`,
+  `yukki-sync → yukki-sync`, `yukki-tests → yukki-tests`
 - **Comportement** : les `applies-to:` listent les skills sous leur
   nouveau nom, cohérent avec O6 (skill bodies renommés) et O1 (fichiers
   renommés).
@@ -368,10 +368,10 @@ divergence des 7 sites Go aujourd'hui codés en dur.
   methodology, README, GUIDE, et templates si applicable)
 - **Fichiers** : ~80 fichiers `.md`
 - **Substitutions** :
-  - `/spdd-` → `/yukki-` (≈400+ occurrences dans les corps)
-  - `spdd/methodology/` → `.yukki/methodology/`
-  - `spdd/stories/` → `.yukki/stories/` (idem analysis/prompts/tests/templates)
-  - `spdd/README.md` → `.yukki/README.md` (et `GUIDE.md`)
+  - `/yukki-` → `/yukki-` (≈400+ occurrences dans les corps)
+  - `.yukki/methodology/` → `.yukki/methodology/`
+  - `.yukki/stories/` → `.yukki/stories/` (idem analysis/prompts/tests/templates)
+  - `.yukki/README.md` → `.yukki/README.md` (et `GUIDE.md`)
   - mentions textuelles littérales "le dossier `spdd/`" → "le dossier
     `.yukki/`" (sauf dans les passages historiques explicitement
     documentés ou whitelist `<<<voir whitelist DoD8>>>`)
@@ -390,11 +390,11 @@ divergence des 7 sites Go aujourd'hui codés en dur.
 - **Module** : repo root + `docs/`
 - **Fichiers** :
   - `.gitignore` (1 ligne : `/spdd/research/` → `/.yukki/research/`)
-  - `.golangci.yml` (1 commentaire : référence à `spdd/stories/CORE-002...`)
+  - `.golangci.yml` (1 commentaire : référence à `.yukki/stories/CORE-002...`)
   - `CLAUDE.md` (45 occurrences — la grosse majorité dans le body
     "démarche SPDD", à traiter au cas par cas : les mentions de la
     **méthode** SPDD restent ; les chemins `spdd/...` deviennent
-    `.yukki/...` ; les commandes `/spdd-*` deviennent `/yukki-*`)
+    `.yukki/...` ; les commandes `/yukki-*` deviennent `/yukki-*`)
   - `DEVELOPMENT.md` (8 lignes — chemins + workflow)
   - `TODO.md` (27 lignes — chemins + commandes)
   - `docs/testing.md` (14 lignes — refs methodology + workflow `/yukki-tests`)
@@ -418,7 +418,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
   golangci-lint run
   cd frontend && pnpm test  # ou npm/yarn selon convention projet
   git grep -n "\bspdd\b"     # doit retourner whitelist seulement
-  git grep -nE "/spdd-"      # doit retourner 0
+  git grep -nE "/yukki-"      # doit retourner 0
   wails dev                   # smoke manuel : hub + workflow + init
   ```
 - **Comportement** : sortie obligatoire = tous les checks passent ; le
@@ -427,7 +427,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
   pédagogique de la méthode dans les corps de skills/README qui
   citent SPDD comme nom de méthode — pas comme chemin).
 - **Tests** : c'est l'Operation de tests elle-même.
-- **Référence testing** : [`spdd/methodology/testing/coverage-discipline.md`](../methodology/testing/coverage-discipline.md)
+- **Référence testing** : [`.yukki/methodology/testing/coverage-discipline.md`](../methodology/testing/coverage-discipline.md)
   pour la stratégie de gate (smoke + grep + suites unitaires) avant
   merge.
 
@@ -447,13 +447,13 @@ divergence des 7 sites Go aujourd'hui codés en dur.
   les écarts autorisés CLAUDE.md règle #4) dans
   `.github/skills/yukki-X/SKILL.md`.
 - **Tests Go** : naming et structure conformes à
-  [`spdd/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
-  + [`spdd/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md).
+  [`.yukki/methodology/testing/testing-backend.md`](../methodology/testing/testing-backend.md)
+  + [`.yukki/methodology/testing/test-naming.md`](../methodology/testing/test-naming.md).
   Les tests doivent porter le nom du nouveau symbole
   (`TestInitializeYukki_*`, `TestReadArtifact_OutsideYukkiDir`).
 - **Tests frontend** : changements de libellés vérifiés par les tests
   composants existants (cf.
-  [`spdd/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md)).
+  [`.yukki/methodology/testing/testing-frontend.md`](../methodology/testing/testing-frontend.md)).
 - **Logging** : message d'init `slog.Info` passe de `"spdd initialized"`
   à `"yukki initialized"`.
 - **Whitelist explicite** : la liste des occurrences `spdd` autorisées
@@ -484,7 +484,7 @@ divergence des 7 sites Go aujourd'hui codés en dur.
     `<projectDir>/spdd/...` après bascule.
 
 - **Cohérence cross-refs**
-  - Ne **jamais** committer un état où `git grep -nE "/spdd-"` retourne
+  - Ne **jamais** committer un état où `git grep -nE "/yukki-"` retourne
     > 0 hors whitelist : un seul skill mal renommé casse la chaîne de
     citations.
   - Ne **jamais** committer un `applies-to:` qui mélange `spdd-X` et

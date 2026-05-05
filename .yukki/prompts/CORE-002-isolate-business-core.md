@@ -1,8 +1,8 @@
 ---
 id: CORE-002
 slug: isolate-business-core
-story: spdd/stories/CORE-002-isolate-business-core.md
-analysis: spdd/analysis/CORE-002-isolate-business-core.md
+story: .yukki/stories/CORE-002-isolate-business-core.md
+analysis: .yukki/analysis/CORE-002-isolate-business-core.md
 status: synced
 created: 2026-05-01
 updated: 2026-05-01
@@ -10,7 +10,7 @@ updated: 2026-05-01
 
 # Canvas REASONS — Isoler le cœur métier de la CLI pour exposition MCP future
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > Story de **prepare the ground** : aucun comportement applicatif n'est
@@ -21,11 +21,11 @@ updated: 2026-05-01
 > ## Changelog
 >
 > - **v1 — 2026-05-01** : canvas initial (6 Operations, status `draft`).
-> - **v2 — 2026-05-01** — `/spdd-generate` (commit `0223a69`). 5
+> - **v2 — 2026-05-01** — `/yukki-generate` (commit `0223a69`). 5
 >   Operations O1-O5 livrées (O6 déjà appliquée via `22bfc6f`). Status
 >   passé `draft → implemented` après validation locale (`go build`,
 >   `go vet` clean ; `golangci-lint` non testé localement, validé en CI).
-> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+> - **v3 — 2026-05-01** — `/yukki-sync` (refactor seul, comportement
 >   inchangé). Une seule dérive détectée et propagée dans Operations :
 >   l'O1 a inclus un **cleanup** non-mentionné dans v1 — la suppression
 >   des doc-packages dupliqués dans `prompt.go` (workflow),
@@ -278,7 +278,7 @@ sans refactor.
   //   - <invariant 1, package-specific>
   //   - <invariant 2, optional>
   //
-  // See spdd/stories/CORE-002-isolate-business-core.md for the
+  // See .yukki/stories/CORE-002-isolate-business-core.md for the
   // rationale of this isolation.
   package <name>
   ```
@@ -309,7 +309,7 @@ sans refactor.
   #
   # CORE-002 scope : only the `depguard` linter is enabled, with a
   # single rule (`core-isolation`) that enforces the architectural
-  # boundary defined in spdd/stories/CORE-002-isolate-business-core.md.
+  # boundary defined in .yukki/stories/CORE-002-isolate-business-core.md.
   #
   # Other useful linters (govet, errcheck, staticcheck, gosec,
   # misspell, ...) are intentionally NOT enabled here — they will be
@@ -400,7 +400,7 @@ sans refactor.
   // internal/workflow et al. are also rejected statically by the
   // `core-isolation` depguard rule (.golangci.yml).
   //
-  // See spdd/stories/CORE-002-isolate-business-core.md for the
+  // See .yukki/stories/CORE-002-isolate-business-core.md for the
   // rationale.
   package integration_test
   ```
@@ -449,7 +449,7 @@ sans refactor.
 
   La 3ᵉ surface (serveur MCP, INT-002) n'est **pas livrée** —
   préparée par CORE-002, à implémenter en post-MVP. Voir
-  [spdd/stories/CORE-002-isolate-business-core.md](spdd/stories/CORE-002-isolate-business-core.md).
+  [.yukki/stories/CORE-002-isolate-business-core.md](.yukki/stories/CORE-002-isolate-business-core.md).
   ```
 - **Tests** : aucun test code-level. Validation manuelle de la
   cohérence du schéma avec le code.
@@ -460,7 +460,7 @@ sans refactor.
 - **Fichier** : `TODO.md`
 - **Nature** : ✅ **déjà appliqué dans le commit `22bfc6f`**
   (commit antérieur à ce canvas, posé pendant la phase d'analyse).
-  L'Operation est listée pour traçabilité — `/spdd-generate` ne fera
+  L'Operation est listée pour traçabilité — `/yukki-generate` ne fera
   **rien** ici, seulement vérifier que l'entrée existe bien.
 - **Contenu de l'entrée** (rappel) :
   ```markdown
@@ -522,7 +522,7 @@ sans refactor.
 - **Pas d'autres linters activés en V1**
   - `.golangci.yml` n'active que `depguard`. Pas de `govet`, pas
     d'`errcheck`, pas de `staticcheck`. Activation différée à DOC-001.
-  - Si `/spdd-generate` est tenté d'activer d'autres linters
+  - Si `/yukki-generate` est tenté d'activer d'autres linters
     *"pendant qu'on y est"*, **arrêter** et lever une Open Question.
 - **Pas de refactor du cœur**
   - Aucun fichier déplacé, aucun package renommé, aucune fonction

@@ -137,9 +137,9 @@ réduite à la part Wails/React qui consomme ce nouveau cœur.
 > Format Given / When / Then. Tous testables en unit pur, sans
 > Wails ni React.
 
-### AC1 — Listing nominal d'un dossier `spdd/stories/`
+### AC1 — Listing nominal d'un dossier `.yukki/stories/`
 
-- **Given** un dossier `<dir>/spdd/stories/` contenant 3 fichiers
+- **Given** un dossier `<dir>/.yukki/stories/` contenant 3 fichiers
   `*.md` valides avec frontmatter complet
 - **When** `ListArtifacts(dir, "stories")` est appelé
 - **Then** le retour est `[]Meta{}` de longueur 3, chaque entrée a
@@ -244,6 +244,6 @@ réduite à la part Wails/React qui consomme ce nouveau cœur.
 - **Estimation** : ~0.5-1j (≈ 80 lignes de Go en `lister.go` +
   `parser.go` + 100 lignes de tests + ajustement doc-package).
 - **Lien futur** :
-  - Analyse à venir : `spdd/analysis/CORE-004-list-and-parse-artifacts.md`
-  - Canvas REASONS : `spdd/prompts/CORE-004-list-and-parse-artifacts.md`
+  - Analyse à venir : `.yukki/analysis/CORE-004-list-and-parse-artifacts.md`
+  - Canvas REASONS : `.yukki/prompts/CORE-004-list-and-parse-artifacts.md`
   - UI-001b modifiée pour `depends-on: CORE-004`

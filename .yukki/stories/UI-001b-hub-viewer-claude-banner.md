@@ -13,7 +13,7 @@ parent: UI-001
 sibling-stories:
   - UI-001a-app-skeleton-and-subcommand
   - UI-001c-new-story-flow
-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 depends-on:
   - UI-001a-app-skeleton-and-subcommand
   - CORE-004-list-and-parse-artifacts
@@ -145,8 +145,8 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
 
 ### AC2 — Hub liste les stories d'un projet existant
 
-- **Given** un projet contenant `spdd/stories/CORE-001-...md` et
-  `spdd/stories/META-001-...md` (frontmatter YAML valide)
+- **Given** un projet contenant `.yukki/stories/CORE-001-...md` et
+  `.yukki/stories/META-001-...md` (frontmatter YAML valide)
 - **When** l'utilisateur navigue sur l'onglet *Stories* du `<Sidebar />`
 - **Then** `<HubList />` affiche 2 lignes avec `id`, `title`, `status`
   (badge coloré : draft=gris, reviewed=bleu, accepted=violet,
@@ -175,7 +175,7 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
 
 ### AC5 — Frontmatter corrompu = ligne flaggée, pas crash
 
-- **Given** un projet contient un `spdd/stories/BROKEN-001.md` avec
+- **Given** un projet contient un `.yukki/stories/BROKEN-001.md` avec
   frontmatter YAML invalide
 - **When** `App.ListStories()` est appelé
 - **Then** la liste retourne les stories valides + une `Meta` avec un
@@ -199,7 +199,7 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
 - **When** l'utilisateur clique sur les onglets *Analyses*, *Canvas*,
   *Tests* dans la sidebar
 - **Then** `<HubList />` recharge les artefacts correspondants
-  (`spdd/analysis/`, `spdd/prompts/`, `spdd/tests/`). L'onglet actif est
+  (`.yukki/analysis/`, `.yukki/prompts/`, `.yukki/tests/`). L'onglet actif est
   visuellement marqué.
 
 ## Open Questions
@@ -229,7 +229,7 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   - **CORE-004** (Go listing/parsing) — à livrer avant UI-001b ;
     extraite du scope UI-001b le 2026-05-01 pour permettre la
     réutilisation par INT-002 / future CLI sans refactor
-- **Analyse partagée** : [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md).
+- **Analyse partagée** : [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](../analysis/UI-001-init-desktop-app-wails-react.md).
   Les décisions structurantes (D11 async Claude check, D6 empty state
   init) sont déjà tranchées. La D2 *"ListArtifacts dans
   `internal/artifacts`"* a été honorée mais via la story dédiée
@@ -238,4 +238,4 @@ flow *New Story*. UI-001b est entièrement *read-side* : viewer + diagnostic.
   + tests Go uiapp 0.5j). *Estimation réduite de 1.5j à 1j depuis
   l'extract du Go core vers CORE-004.*
 - **Lien vers le canvas REASONS** (à venir) :
-  `spdd/prompts/UI-001b-hub-viewer-claude-banner.md`
+  `.yukki/prompts/UI-001b-hub-viewer-claude-banner.md`

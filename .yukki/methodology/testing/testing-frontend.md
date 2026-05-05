@@ -4,7 +4,7 @@ title: Testing frontend — playbook (pyramide adaptée + sub-refs)
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -235,7 +235,7 @@ pyramide Testing Trophy adaptée :
 
 UI-001b/c n'a pas de tests automatisés à date (cohérent UI
 V1 selon la décision SPDD). TEST-001 fournit le cadre pour
-les ajouter quand `/spdd-tests` (étape 6 SPDD) sera
+les ajouter quand `/yukki-tests` (étape 6 SPDD) sera
 implémentée.
 
 ## Annexe — Tools by ecosystem

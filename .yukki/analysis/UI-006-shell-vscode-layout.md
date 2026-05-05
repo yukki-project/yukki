@@ -1,7 +1,7 @@
 ---
 id: UI-006
 slug: shell-vscode-layout
-story: spdd/stories/UI-006-shell-vscode-layout.md
+story: .yukki/stories/UI-006-shell-vscode-layout.md
 status: reviewed
 created: 2026-05-02
 updated: 2026-05-02

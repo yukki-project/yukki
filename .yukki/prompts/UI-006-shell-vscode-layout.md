@@ -1,8 +1,8 @@
 ---
 id: UI-006
 slug: shell-vscode-layout
-story: spdd/stories/UI-006-shell-vscode-layout.md
-analysis: spdd/analysis/UI-006-shell-vscode-layout.md
+story: .yukki/stories/UI-006-shell-vscode-layout.md
+analysis: .yukki/analysis/UI-006-shell-vscode-layout.md
 status: implemented
 created: 2026-05-02
 updated: 2026-05-02
@@ -10,7 +10,7 @@ updated: 2026-05-02
 
 # Canvas REASONS — Shell VS Code-style + theming yukki dark
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > Story de polish post-V1 : refond le shell visuel sans toucher au
@@ -732,8 +732,8 @@ l'API React des composants existants.
     `localStorage` indispo) sont absorbées par `persist`
     middleware silencieusement.
 - **Pas de modification des artefacts SPDD existants**
-  - Les fichiers `spdd/stories/*.md`, `spdd/analysis/*.md`,
-    `spdd/prompts/*.md` ne sont pas touchés (sauf cette story
+  - Les fichiers `.yukki/stories/*.md`, `.yukki/analysis/*.md`,
+    `.yukki/prompts/*.md` ne sont pas touchés (sauf cette story
     elle-même, son analyse, son canvas).
 - **Pas de modification de `cmd/yukki/`, `ui_mock.go`, `ui_prod.go`,
   `ui.go`, `wails.json`, `main.go`, `main_test.go`**

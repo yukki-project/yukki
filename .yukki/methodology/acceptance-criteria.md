@@ -3,7 +3,7 @@ id: METHO-acceptance-criteria
 title: Formulation des Acceptance Criteria (Given/When/Then, déclaratif)
 version: 1
 status: published
-applies-to: [spdd-story, spdd-prompt-update, spdd-reasons-canvas]
+applies-to: [yukki-story, yukki-prompt-update, yukki-reasons-canvas]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30

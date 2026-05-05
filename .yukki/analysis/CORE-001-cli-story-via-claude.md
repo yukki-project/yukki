@@ -1,7 +1,7 @@
 ---
 id: CORE-001
 slug: cli-story-via-claude
-story: spdd/stories/CORE-001-cli-story-via-claude.md
+story: .yukki/stories/CORE-001-cli-story-via-claude.md
 status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
@@ -23,12 +23,12 @@ abstraction`, `prompt structuré système`.
 ### Existants (déjà dans le repo yukki)
 
 - **MethodologyReference** (Entity, posée par META-001/META-002) — 7 refs
-  publiées dans `spdd/methodology/`. Trois concernent directement
-  `/spdd-story` consommé par `yukki story` : `invest.md`, `spidr.md`,
+  publiées dans `.yukki/methodology/`. Trois concernent directement
+  `/yukki-story` consommé par `yukki story` : `invest.md`, `spidr.md`,
   `acceptance-criteria.md`. Quatre concernent le canvas REASONS aval :
   `domain-modeling.md`, `risk-taxonomy.md`, `edge-cases.md`,
   `decisions.md`.
-- **Templates** (Entity) — `spdd/templates/story.md` existe déjà avec
+- **Templates** (Entity) — `.yukki/templates/story.md` existe déjà avec
   frontmatter normalisé et structure 7 sections (Background, Business
   Value, Scope In, Scope Out, AC, Open Questions, Notes). C'est le
   template que `yukki story` doit consommer.
@@ -213,7 +213,7 @@ abstraction`, `prompt structuré système`.
   d'id ? — Reco : rename atomique (plus simple, pas de cleanup en cas
   de crash).
 
-## Signaux d'escalade vers /spdd-story
+## Signaux d'escalade vers /yukki-story
 
 Aucun signal d'escalade détecté pendant l'analyse :
 

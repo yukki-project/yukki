@@ -1,7 +1,7 @@
 ---
 id: TEST-001
 slug: testing-methodology-classic
-story: spdd/stories/TEST-001-testing-methodology-classic.md
+story: .yukki/stories/TEST-001-testing-methodology-classic.md
 status: reviewed
 created: 2026-05-03
 updated: 2026-05-03
@@ -10,7 +10,7 @@ updated: 2026-05-03
 # Analyse — TEST-001 — Refs méthodo testing classique
 
 > Story de tooling méthodo : ajoute un cluster Testing complet
-> (2 entry-points + 7 sub-refs) dans `spdd/methodology/testing/`.
+> (2 entry-points + 7 sub-refs) dans `.yukki/methodology/testing/`.
 > La story a déjà tranché 8 OQs (toutes en reco A : separation
 > code/doc, status published, version 1, descriptive avec recos,
 > peer review obligatoire, etc.). Cette analyse complète avec
@@ -30,7 +30,7 @@ discipline`, `mutation testing`, `property-based testing`,
 
 ### Existants (déjà dans le code)
 
-- **`spdd/methodology/`** plat, **7 refs** racine :
+- **`.yukki/methodology/`** plat, **7 refs** racine :
   `acceptance-criteria.md`, `decisions.md`, `domain-modeling.md`,
   `edge-cases.md`, `invest.md`, `risk-taxonomy.md`, `spidr.md` +
   `README.md`. Toutes en `version: 1`, `lang: fr`,
@@ -42,7 +42,7 @@ discipline`, `mutation testing`, `property-based testing`,
   title: <titre humain>
   version: 1
   status: published
-  applies-to: [spdd-story, spdd-analysis, ...]
+  applies-to: [yukki-story, yukki-analysis, ...]
   lang: fr
   created: YYYY-MM-DD
   updated: YYYY-MM-DD
@@ -60,24 +60,24 @@ discipline`, `mutation testing`, `property-based testing`,
   - `## Exemple concret` (référence à un artefact existant du repo)
   - `## Sources` (URLs / citations)
   - `## Changelog` (entrée par version)
-- **`spdd/methodology/README.md`** : tableau "Refs disponibles"
+- **`.yukki/methodology/README.md`** : tableau "Refs disponibles"
   avec `Ref / Résumé / applies-to`. Convention "1 ref = 1
   technique" déclarée. Longueur cible 80-150 lignes.
 - **Skills SPDD existantes** :
-  - `.claude/commands/spdd-*.md` (commands invocables via slash)
-  - `.github/skills/spdd-*/SKILL.md` (skills autoloadables)
-  - Commands lues : `spdd-story.md`, `spdd-analysis.md`,
-    `spdd-reasons-canvas.md`, `spdd-generate.md`,
-    `spdd-prompt-update.md`, `spdd-sync.md`, `spdd-api-test.md`
-- **Pas de skill `/spdd-tests`** aujourd'hui — étape 6 du
+  - `.claude/commands/yukki-*.md` (commands invocables via slash)
+  - `.github/skills/yukki-*/SKILL.md` (skills autoloadables)
+  - Commands lues : `yukki-story.md`, `yukki-analysis.md`,
+    `yukki-reasons-canvas.md`, `yukki-generate.md`,
+    `yukki-prompt-update.md`, `yukki-sync.md`, `yukki-api-test.md`
+- **Pas de skill `/yukki-tests`** aujourd'hui — étape 6 du
   workflow SPDD prévue mais non implémentée. Hors scope V1
   (cf. story OQ1).
-- **`spdd/tests/`** dossier existe, vide. Réservé pour les
-  prompts de tests générés par `/spdd-tests` futur.
+- **`.yukki/tests/`** dossier existe, vide. Réservé pour les
+  prompts de tests générés par `/yukki-tests` futur.
 
 ### Nouveaux (à introduire)
 
-- **Sous-dossier `spdd/methodology/testing/`** — 1ʳᵉ
+- **Sous-dossier `.yukki/methodology/testing/`** — 1ʳᵉ
   catégorie sortie de la racine. Foundation pour les futurs
   clusters (`code-quality/`, `operations/`, etc.).
 - **Champ frontmatter `category: <slug>`** — nouveau champ
@@ -97,11 +97,11 @@ discipline`, `mutation testing`, `property-based testing`,
   les croisements sans duplication.
 - **Mise à jour `applies-to:`** des skills existantes pour
   référencer les refs testing :
-  - `/spdd-reasons-canvas` → ajout `testing-frontend`,
+  - `/yukki-reasons-canvas` → ajout `testing-frontend`,
     `testing-backend` (pour la section O — Operations qui
     annonce des tests)
-  - `/spdd-generate` → ajout idem
-- **Mise à jour `spdd/methodology/README.md`** :
+  - `/yukki-generate` → ajout idem
+- **Mise à jour `.yukki/methodology/README.md`** :
   - Documentation de la convention catégorisation par cluster
   - Tableau "Clusters disponibles" (story-side racine, testing
     sous-dossier, futurs)
@@ -112,12 +112,12 @@ discipline`, `mutation testing`, `property-based testing`,
 ## Approche stratégique
 
 TEST-001 est une story **doc-only** : aucun code applicatif
-modifié, juste des markdowns dans `spdd/methodology/testing/` +
+modifié, juste des markdowns dans `.yukki/methodology/testing/` +
 mises à jour des skills `applies-to:` + README orchestrateur.
 
-Stratégie en 4 étapes lors du `/spdd-generate` :
+Stratégie en 4 étapes lors du `/yukki-generate` :
 
-1. **Créer le sous-dossier** `spdd/methodology/testing/` et y
+1. **Créer le sous-dossier** `.yukki/methodology/testing/` et y
    poser un `.gitkeep` (pas vraiment nécessaire vu qu'il sera
    immédiatement peuplé, mais explicite).
 2. **Écrire les 7 sub-refs en premier** (techniques fines :
@@ -143,15 +143,15 @@ passer à la suivante, peer review en bloc à la fin (OQ8).
 
 | Module | Impact | Nature |
 |---|---|---|
-| `spdd/methodology/testing/` | **fort** | nouveau sous-dossier, 9 fichiers markdown créés (~1300 lignes) |
-| `spdd/methodology/README.md` | **moyen** | refactor pour introduire la section "Clusters disponibles" + sous-section "Cluster: testing" |
-| `.claude/commands/spdd-reasons-canvas.md` | **faible** | mise à jour `applies-to:` ou références dans la procédure (1-2 lignes) |
-| `.claude/commands/spdd-generate.md` | **faible** | idem |
-| `.github/skills/spdd-reasons-canvas/SKILL.md` | **faible** | idem (si le mécanisme `applies-to` est miroir entre commands et skills) |
-| `.github/skills/spdd-generate/SKILL.md` | **faible** | idem |
-| `spdd/methodology/*.md` (7 refs existantes) | **nul** | aucune modification (pas de migration) |
-| `spdd/templates/*.md` | **nul** | inchangés |
-| `spdd/stories/`, `spdd/analysis/`, `spdd/prompts/` | **nul** | sauf cette story / analyse / canvas eux-mêmes |
+| `.yukki/methodology/testing/` | **fort** | nouveau sous-dossier, 9 fichiers markdown créés (~1300 lignes) |
+| `.yukki/methodology/README.md` | **moyen** | refactor pour introduire la section "Clusters disponibles" + sous-section "Cluster: testing" |
+| `.claude/commands/yukki-reasons-canvas.md` | **faible** | mise à jour `applies-to:` ou références dans la procédure (1-2 lignes) |
+| `.claude/commands/yukki-generate.md` | **faible** | idem |
+| `.github/skills/yukki-reasons-canvas/SKILL.md` | **faible** | idem (si le mécanisme `applies-to` est miroir entre commands et skills) |
+| `.github/skills/yukki-generate/SKILL.md` | **faible** | idem |
+| `.yukki/methodology/*.md` (7 refs existantes) | **nul** | aucune modification (pas de migration) |
+| `.yukki/templates/*.md` | **nul** | inchangés |
+| `.yukki/stories/`, `.yukki/analysis/`, `.yukki/prompts/` | **nul** | sauf cette story / analyse / canvas eux-mêmes |
 | Code applicatif (Go, frontend, backend) | **nul** | TEST-001 est doc-only |
 | `wails.json`, `main.go`, `cmd/` | **nul** | scope étranger |
 
@@ -213,7 +213,7 @@ passer à la suivante, peer review en bloc à la fin (OQ8).
   `category:` sans avoir à lire chaque fichier complet. Vérif
   que le frontmatter est suffisant.
 - **README qui reste plat malgré la sous-folder structure** :
-  le README de `spdd/methodology/` doit lister les refs
+  le README de `.yukki/methodology/` doit lister les refs
   testing dans une section dédiée, pas dans le tableau global.
   Sinon le sous-dossier perd son sens.
 - **Migration future des 7 refs** : si on les déplace en V2
@@ -236,7 +236,7 @@ passer à la suivante, peer review en bloc à la fin (OQ8).
       disponibles" en tête + sections par cluster avec leur
       tableau détaillé.
 - [x] **D-D4 → A** : update **les deux** — `.claude/commands/
-      spdd-*.md` ET `.github/skills/spdd-*/SKILL.md`. Synchros
+      spdd-*.md` ET `.github/skills/yukki-*/SKILL.md`. Synchros
       pour cohérence Claude Code (commands) + autoload (skills).
 - [x] **D-D5 → A** : `## Voir aussi` en **liste à puces simple**.
       Pas de tableau pour 4-5 liens.

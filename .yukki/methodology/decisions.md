@@ -3,7 +3,7 @@ id: METHO-decisions
 title: Format Y-Statement pour l'approche stratégique
 version: 1
 status: published
-applies-to: [spdd-analysis, spdd-reasons-canvas]
+applies-to: [yukki-analysis, yukki-reasons-canvas]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30
@@ -52,7 +52,7 @@ Cinq slots, chacun obligatoire.
 
 > Pour résoudre la **duplication / dérive silencieuse causée par l'inlining
 > des techniques dans les skills**, on choisit de créer un dossier
-> **`spdd/methodology/` avec un fichier markdown par technique**, plutôt
+> **`.yukki/methodology/` avec un fichier markdown par technique**, plutôt
 > qu'un **fichier monolithique unique** ou que **l'inlining persistant**,
 > pour atteindre la **traçabilité bidirectionnelle, la réutilisabilité
 > entre skills et le versionning indépendant**, en acceptant **la

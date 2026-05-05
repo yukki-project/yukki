@@ -1,13 +1,13 @@
 ---
-name: spdd-api-test
-description: "Étape 5b du workflow SPDD : à partir d'un canvas REASONS et du code généré, produit un script bash de validation API (curl + jq) couvrant les Acceptance Criteria de la story et les cas limites des Operations exposant des endpoints REST. Sauvegarde dans scripts/spdd/<id>-<slug>.sh. Utilise après /spdd-generate quand la feature ajoute ou modifie des endpoints REST."
-argument-hint: "<id-slug OU chemin vers spdd/prompts/...>"
+name: yukki-api-test
+description: "Étape 5b du workflow SPDD : à partir d'un canvas REASONS et du code généré, produit un script bash de validation API (curl + jq) couvrant les Acceptance Criteria de la story et les cas limites des Operations exposant des endpoints REST. Sauvegarde dans scripts/yukki/<id>-<slug>.sh. Utilise après /yukki-generate quand la feature ajoute ou modifie des endpoints REST."
+argument-hint: "<id-slug OU chemin vers .yukki/prompts/...>"
 user-invocable: true
 ---
 
-# /spdd-api-test — Génération d'un script de validation API
+# /yukki-api-test — Génération d'un script de validation API
 
-Étape 5b du workflow [Structured Prompt-Driven Development](../../../spdd/README.md).
+Étape 5b du workflow [Structured Prompt-Driven Development](../../../.yukki/README.md).
 
 Produit un script bash exécutable qui valide le comportement des endpoints REST
 décrits dans le canvas, en confrontant les **Acceptance Criteria** (story) et les
@@ -17,7 +17,7 @@ décrits dans le canvas, en confrontant les **Acceptance Criteria** (story) et l
 
 L'argument doit pointer vers un canvas en statut `implemented` (ou `synced`) :
 - `EXT-014-trivy-csv-export`
-- `spdd/prompts/EXT-014-trivy-csv-export.md`
+- `.yukki/prompts/EXT-014-trivy-csv-export.md`
 
 Si le canvas est encore en `draft` ou `reviewed` → arrêter, le code n'est pas
 encore généré.
@@ -48,13 +48,13 @@ Présenter cette matrice à l'utilisateur **avant** de générer le script — i
 
 ## Étape 3 — Générer le script
 
-Conventions du script `scripts/spdd/<id>-<slug>.sh` :
+Conventions du script `scripts/yukki/<id>-<slug>.sh` :
 
 ```bash
 #!/usr/bin/env bash
-# Généré par /spdd-api-test pour <id>-<slug>
-# Canvas : spdd/prompts/<id>-<slug>.md
-# Story  : spdd/stories/<id>-<slug>.md
+# Généré par /yukki-api-test pour <id>-<slug>
+# Canvas : .yukki/prompts/<id>-<slug>.md
+# Story  : .yukki/stories/<id>-<slug>.md
 set -euo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
@@ -71,12 +71,12 @@ assert_status() {  # $1=label  $2=expected  $3=actual
 
 # ---- Test 1 : <description> (AC1) ----
 echo "Test 1 — <description>"
-status=$(curl -sS -o /tmp/spdd-resp -w "%{http_code}" \
+status=$(curl -sS -o /tmp/yukki-resp -w "%{http_code}" \
   -H "Authorization: Bearer $BEARER_TOKEN" \
   "$BASE_URL/api/...")
 assert_status "AC1 nominal" "200" "$status"
-jq -e '.field == "expected"' /tmp/spdd-resp >/dev/null \
-  && green "  PASS payload" || { red "  FAIL payload"; cat /tmp/spdd-resp; exit 1; }
+jq -e '.field == "expected"' /tmp/yukki-resp >/dev/null \
+  && green "  PASS payload" || { red "  FAIL payload"; cat /tmp/yukki-resp; exit 1; }
 
 # ---- Test 2 : ... ----
 # ...
@@ -93,19 +93,19 @@ Règles :
 
 ## Étape 4 — Sauvegarder et rendre exécutable
 
-1. Écrire `scripts/spdd/<id>-<slug>.sh`.
-2. Sous Windows / Git Bash : pas de `chmod +x` nécessaire — la mention `bash scripts/spdd/<id>-<slug>.sh` suffit. Sous Linux/macOS, l'utilisateur devra `chmod +x` (le rappeler).
-3. Créer un README une seule fois la première fois (`scripts/spdd/README.md`) qui documente la convention `BASE_URL` / `BEARER_TOKEN` si absent.
+1. Écrire `scripts/yukki/<id>-<slug>.sh`.
+2. Sous Windows / Git Bash : pas de `chmod +x` nécessaire — la mention `bash scripts/yukki/<id>-<slug>.sh` suffit. Sous Linux/macOS, l'utilisateur devra `chmod +x` (le rappeler).
+3. Créer un README une seule fois la première fois (`scripts/.yukki/README.md`) qui documente la convention `BASE_URL` / `BEARER_TOKEN` si absent.
 
 ## Étape 5 — Restituer
 
 Afficher :
 - Lien cliquable vers le script
 - Matrice des tests effectivement générés (numéro / type / référence AC ou Safeguard)
-- Commande pour l'exécuter : `BEARER_TOKEN=$(oc whoami -t) bash scripts/spdd/<id>-<slug>.sh`
+- Commande pour l'exécuter : `BEARER_TOKEN=$(oc whoami -t) bash scripts/yukki/<id>-<slug>.sh`
 - Rappel : si un test échoue, classer l'écart :
-  - **Logique cassée** → `/spdd-prompt-update` puis `/spdd-generate`
-  - **Refactor / cosmétique** → modifier le code puis `/spdd-sync`
+  - **Logique cassée** → `/yukki-prompt-update` puis `/yukki-generate`
+  - **Refactor / cosmétique** → modifier le code puis `/yukki-sync`
 
 ## Checklist avant de rendre la main
 

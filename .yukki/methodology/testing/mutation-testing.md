@@ -4,7 +4,7 @@ title: Mutation testing — mesurer la qualité des tests, pas du code
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -117,10 +117,10 @@ Si une mutation survit, 4 réactions possibles :
 
 ## Place dans la pipeline SPDD
 
-- `/spdd-generate` : ne lance **pas** de mutation testing
+- `/yukki-generate` : ne lance **pas** de mutation testing
   pendant la génération (trop lent). Les tests générés
   doivent juste passer la suite normale.
-- `/spdd-tests` (étape 6, futur) : peut inclure une passe
+- `/yukki-tests` (étape 6, futur) : peut inclure une passe
   mutation sur les modules critiques annoncés dans le canvas
   comme "critiques" (label à introduire dans le frontmatter
   canvas si TEST-001 le justifie en V2).

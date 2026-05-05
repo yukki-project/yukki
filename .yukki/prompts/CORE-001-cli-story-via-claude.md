@@ -1,8 +1,8 @@
 ---
 id: CORE-001
 slug: cli-story-via-claude
-story: spdd/stories/CORE-001-cli-story-via-claude.md
-analysis: spdd/analysis/CORE-001-cli-story-via-claude.md
+story: .yukki/stories/CORE-001-cli-story-via-claude.md
+analysis: .yukki/analysis/CORE-001-cli-story-via-claude.md
 status: synced
 created: 2026-04-30
 updated: 2026-04-30
@@ -10,7 +10,7 @@ updated: 2026-04-30
 
 # Canvas REASONS — Commande CLI `yukki story` génère une user story SPDD via Claude CLI
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 
 ---
@@ -132,7 +132,7 @@ déclaratif, sweet spot 3-5 AC, couverture happy/erreur/limite) doit
 | `cmd/yukki/` | `main.go`, `main_test.go` | création (entrypoint Cobra + tests unitaires) |
 | `internal/workflow/` | `story.go`, `prompt.go`, `prompts/story-system.md` (embed), `*_test.go` | création |
 | `internal/provider/` | `provider.go`, `claude.go`, `mock.go`, `*_test.go` (TestMain construit un stub Go) | création |
-| `internal/templates/` | `templates.go`, `embedded/{story,analysis,canvas-reasons,tests}.md`, `templates_test.go` | création + embed des 4 templates depuis `spdd/templates/` |
+| `internal/templates/` | `templates.go`, `embedded/{story,analysis,canvas-reasons,tests}.md`, `templates_test.go` | création + embed des 4 templates depuis `.yukki/templates/` |
 | `internal/artifacts/` | `writer.go`, `id.go`, `slug.go`, `writer_test.go`, `writer_concurrent_test.go`, `id_test.go`, `slug_test.go` | création |
 | `internal/clilog/` | `clilog.go`, `clilog_test.go` | création (setup `slog` text/JSON) |
 | `tests/integration/` (nouveau) | `story_integration_test.go` | création — tests cross-package avec MockProvider + file system réel |
@@ -510,7 +510,7 @@ no file created
   `& os.ModeCharDevice == 0` (pattern canonique Go).
 - **Templates embarqués** : 4 templates dès maintenant (`story`,
   `analysis`, `canvas-reasons`, `tests`) via `embed.FS` dans
-  `internal/templates/embedded/`. Source de vérité = `spdd/templates/`
+  `internal/templates/embedded/`. Source de vérité = `.yukki/templates/`
   copié au build via `go generate` ou via tâche CI.
 - **Concurrence** : rename atomique pour l'écriture
   (`<id>-<slug>.md.tmp.<pid>` → `<id>-<slug>.md`). Pas de lock file —
@@ -592,7 +592,7 @@ no file created
 ## Changelog
 
 - 2026-04-30 — v1 — création initiale (status: draft, prêt pour
-  `/spdd-generate`)
+  `/yukki-generate`)
 - 2026-04-30 — v1.1 — toutes les Operations O1-O8 implémentées :
   `go.mod` Go 1.22, `cmd/yukki/main.go` (Cobra + flags + exit-code
   mapping), `internal/clilog`, `internal/templates` (4 templates
@@ -606,14 +606,14 @@ no file created
   `reviewed → implemented`. Tests locaux (Windows) bloqués par
   restriction d'AV sur fork/exec depuis temp ; `go vet` et
   `go build` clean ; tests valideront en CI.
-- 2026-04-30 — **v2 (sync)** — `/spdd-sync` après une déviation
+- 2026-04-30 — **v2 (sync)** — `/yukki-sync` après une déviation
   pragmatique autorisée par l'utilisateur. Le canvas est mis à jour
   pour refléter l'état du code après code-review + ajout de tests
   + CI restructurée. **Note de transparence** : certains changements
   capturés ici sont *behavioralement additifs* (notamment
   `ClaudeProvider.Args` et `ClaudeProvider.Timeout` + constante
   `DefaultClaudeTimeout`) et auraient en discipline stricte SPDD
-  exigé `/spdd-prompt-update` puis `/spdd-generate ciblé`. La
+  exigé `/yukki-prompt-update` puis `/yukki-generate ciblé`. La
   déviation est tracée ici plutôt que dissimulée.
 
   Détail des changements absorbés :
@@ -653,5 +653,5 @@ no file created
 
   Convention prise note pour la suite : si plusieurs changements
   *purement refactor* sont mêlés à un changement *behavioral
-  additif*, scinder en `/spdd-prompt-update` + `/spdd-sync`
+  additif*, scinder en `/yukki-prompt-update` + `/yukki-sync`
   séparés.

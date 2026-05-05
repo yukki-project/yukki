@@ -1,9 +1,9 @@
 ---
 id: UI-001b
 slug: hub-viewer-claude-banner
-story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
-analysis: spdd/analysis/UI-001b-hub-viewer-claude-banner.md
-family-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001b-hub-viewer-claude-banner.md
+analysis: .yukki/analysis/UI-001b-hub-viewer-claude-banner.md
+family-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: implemented
 created: 2026-05-01
 updated: 2026-05-01
@@ -11,7 +11,7 @@ updated: 2026-05-01
 
 # Canvas REASONS — Hub viewer & Claude banner
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > Story fille de UI-001 (famille SPIDR), consume CORE-004 (Go listing
@@ -20,7 +20,7 @@ updated: 2026-05-01
 > et **D-B9** (layout responsive sidebar collapsable < 768px) qui
 > ajoute +0.2j au scope frontend.
 >
-> **D-B13** *(ajout 2026-05-01, `/spdd-prompt-update`)* : le
+> **D-B13** *(ajout 2026-05-01, `/yukki-prompt-update`)* : le
 > `<StoryViewer>` extrait le frontmatter YAML du contenu et le rend
 > séparément en header structuré (titre, badges, listes), tandis que
 > le body markdown est rendu en dessous. Parser maison ; pas de dep
@@ -72,7 +72,7 @@ SPDD vide via *Initialize SPDD here*.
 - [ ] `App.InitializeSPDD(dir)` crée 6 dossiers
       (`stories, analysis, prompts, tests, methodology, templates`)
       + copie 4 templates depuis `embed.FS` vers
-      `<dir>/spdd/templates/`. Idempotent.
+      `<dir>/.yukki/templates/`. Idempotent.
 - [ ] `App.ReadArtifact(path)` vérifie
       `strings.HasPrefix(absPath, filepath.Join(projectDir, "spdd"))`
       avant `os.ReadFile`. Erreur typée si path-traversal.
@@ -504,7 +504,7 @@ SPDD vide via *Initialize SPDD here*.
     - `_Cancelled` : runtime mocké pour retourner `""`, assert
       `(string, error) == ("", nil)`, `a.projectDir` reste vide
     - *(Note implementation : Wails runtime peut être mocké via une
-      var function-pointer remplaçable. À voir en `/spdd-generate`.)*
+      var function-pointer remplaçable. À voir en `/yukki-generate`.)*
   - **`TestApp_ListArtifacts_*`** :
     - `_Delegation` : crée fixtures via `artifacts.Writer.Write`,
       appelle `App.ListArtifacts("stories")`, assert le retour
@@ -522,13 +522,13 @@ SPDD vide via *Initialize SPDD here*.
       retourne erreur → assert `Available: true, Err: <vErr>`
   - **`TestApp_InitializeSPDD_*`** :
     - `_Success` : sur `t.TempDir()`, assert 6 dossiers créés +
-      4 templates dans `spdd/templates/`
+      4 templates dans `.yukki/templates/`
     - `_Idempotent` : appel x2 sur même dir, assert pas d'erreur
       et pas de duplication
     - `_ReadOnlyDir` : crée un dir read-only (chmod 0o555 ou
       équivalent Windows), assert erreur retournée
   - **`TestApp_ReadArtifact_*`** :
-    - `_Success` : écrit un fichier sous `<tempDir>/spdd/stories/X.md`,
+    - `_Success` : écrit un fichier sous `<tempDir>/.yukki/stories/X.md`,
       `App.SelectProject` mocké pour set `projectDir = tempDir`,
       `App.ReadArtifact(absPath)` retourne le contenu
     - `_PathTraversal` : `App.ReadArtifact("/etc/passwd")` ou
@@ -833,7 +833,7 @@ SPDD vide via *Initialize SPDD here*.
   depuis CORE-001/CORE-004 ou créées inline pour cas locaux).
 - **Tests Go** : `t.TempDir()`, table-driven là où ça fait sens
   (3 cas pour `GetClaudeStatus`). Mocks Wails runtime via
-  function-pointer var (à finaliser en `/spdd-generate`).
+  function-pointer var (à finaliser en `/yukki-generate`).
 - **TypeScript** : `strict: true` (déjà config UI-001a). Pas
   d'`any` non documenté. Imports relatifs depuis `wailsjs/go/main/App`
   uniquement (pas d'import absolu via Wails runtime API).
@@ -898,7 +898,7 @@ SPDD vide via *Initialize SPDD here*.
   - Read-only. Ne touche pas le filesystem en écriture.
 - **Pas de feature flag, pas de retro-compat fictive**
   - Le canvas est la spec, le code la suit littéralement. Si
-    quelque chose semble manquer, `/spdd-prompt-update` plutôt
+    quelque chose semble manquer, `/yukki-prompt-update` plutôt
     que TODO inline.
 - **Pas de dépendance npm tierce au-delà des 2 ajoutées**
   - `react-markdown` + `remark-gfm` uniquement. Refusé : `marked`,
@@ -957,7 +957,7 @@ SPDD vide via *Initialize SPDD here*.
   - **State `collapsed` lifté dans `App.tsx`** (O8) : props
     `collapsed`/`onToggle` sur `<SidebarToggle>` ; `collapsed`/`onSelect`
     sur `<Sidebar>`. Source-of-truth unique partagée.
-  - Status remis à `reviewed` pour signaler que `/spdd-generate` doit
+  - Status remis à `reviewed` pour signaler que `/yukki-generate` doit
     régénérer (a minima O7) — les autres Operations sont déjà alignées
     par les fixes commités sur la branche `feature/UI-001b`.
 

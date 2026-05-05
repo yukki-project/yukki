@@ -1,6 +1,6 @@
 ---
 id: INBOX-<NNN>                # ex. INBOX-001
-slug: <kebab-case-slug>        # ex. spdd-pdf-export
+slug: <kebab-case-slug>        # ex. yukki-pdf-export
 title: <titre court>
 status: unsorted               # unsorted | promoted | rejected
 created: <YYYY-MM-DD>

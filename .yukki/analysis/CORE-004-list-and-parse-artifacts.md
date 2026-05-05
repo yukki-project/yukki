@@ -1,7 +1,7 @@
 ---
 id: CORE-004
 slug: list-and-parse-artifacts
-story: spdd/stories/CORE-004-list-and-parse-artifacts.md
+story: .yukki/stories/CORE-004-list-and-parse-artifacts.md
 status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
@@ -148,7 +148,7 @@ if len(m) == 0 { ... }
 - **Conventions externes** :
   - YAML 1.2 via `gopkg.in/yaml.v3`
   - Frontmatter pattern `---\n...\n---\n` (cohérent avec `ValidateFrontmatter`
-    existant et le template `spdd/templates/story.md`)
+    existant et le template `.yukki/templates/story.md`)
   - Path Go `filepath.Join` (cross-OS)
 - **Compatibilité** : Go 1.22+ pour les generics. Déjà figé dans `go.mod`.
 
@@ -174,7 +174,7 @@ if len(m) == 0 { ... }
   abs échoue, fallback path relatif tel-quel + log debug. Documenté
   dans Meta.
 - **R5 — Sous-dossier inattendu dans `spdd/<kind>/`** *(prob. faible,
-  impact faible)*. E.g. un user crée `spdd/stories/archive/` pour
+  impact faible)*. E.g. un user crée `.yukki/stories/archive/` pour
   ranger des old. **Mitigation** : `os.ReadDir` retourne les
   entries ; on filtre sur `entry.Type().IsRegular()` pour ignorer
   dirs et symlinks.
@@ -185,7 +185,7 @@ if len(m) == 0 { ... }
 - **R7 — Caractères non-ASCII dans les paths** *(prob. faible,
   impact faible)*. Tests sur des paths avec espaces ou accents.
   **Mitigation** : test explicite avec un dossier
-  `t.TempDir()/Mon Project SPDD/spdd/stories/`.
+  `t.TempDir()/Mon Project SPDD/.yukki/stories/`.
 - **R8 — Évolution du contrat `Meta`** *(prob. moyenne sur le long
   terme, impact moyen)*. Ajouter un champ à `Meta` casserait les
   consumers qui font de la décomposition struct (rare en Go car les

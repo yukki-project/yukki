@@ -3,7 +3,7 @@ id: METHO-edge-cases
 title: Identification des cas limites (BVA + EP + checklist)
 version: 2
 status: published
-applies-to: [spdd-analysis, spdd-reasons-canvas]
+applies-to: [yukki-analysis, yukki-reasons-canvas]
 lang: fr
 created: 2026-04-30
 updated: 2026-04-30

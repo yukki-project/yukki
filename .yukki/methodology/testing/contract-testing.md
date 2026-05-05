@@ -4,7 +4,7 @@ title: Contract testing — consumer-driven vs schema-first
 version: 1
 status: published
 category: testing
-applies-to: [spdd-reasons-canvas, spdd-generate]
+applies-to: [yukki-reasons-canvas, yukki-generate]
 lang: fr
 created: 2026-05-03
 updated: 2026-05-03
@@ -147,7 +147,7 @@ ou OPS-001) pour le pattern complet.
 
 - Une feature qui ajoute un endpoint REST → annoncer dans
   les Operations du canvas qu'un test contract est attendu
-  (`/spdd-api-test` peut générer un script de validation,
+  (`/yukki-api-test` peut générer un script de validation,
   cf. la skill existante).
 - Un module SPDD qui consomme une API externe (Claude API,
   par exemple) → schema-first (OpenAPI ou validation locale
@@ -160,7 +160,7 @@ ou OPS-001) pour le pattern complet.
 ## Voir aussi
 
 - [`testing-backend.md`](testing-backend.md) — playbook backend complet
-- *(skill SPDD existante)* `/spdd-api-test` — génère un script
+- *(skill SPDD existante)* `/yukki-api-test` — génère un script
   bash de validation API (curl + jq) ; complément au contract
   testing pour les endpoints REST simples
 - [`coverage-discipline.md`](coverage-discipline.md) — les

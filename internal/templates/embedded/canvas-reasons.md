@@ -1,8 +1,8 @@
 ---
 id: <ID>                       # même id que la story et l'analyse
 slug: <kebab-case-slug>
-story: spdd/stories/<ID>-<slug>.md
-analysis: spdd/analysis/<ID>-<slug>.md
+story: .yukki/stories/<ID>-<slug>.md
+analysis: .yukki/analysis/<ID>-<slug>.md
 status: draft                  # draft | reviewed | implemented | synced
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
@@ -10,7 +10,7 @@ updated: <YYYY-MM-DD>
 
 # Canvas REASONS — <titre>
 
-> Spécification exécutable. Source de vérité pour `/spdd-generate` et `/spdd-sync`.
+> Spécification exécutable. Source de vérité pour `/yukki-generate` et `/yukki-sync`.
 > Toute divergence code ↔ canvas se résout **dans ce fichier d'abord**.
 
 ---
@@ -85,7 +85,7 @@ updated: <YYYY-MM-DD>
 
 ## O — Operations
 
-> Décomposition exécutable. Ordre, signatures, types. C'est ce que `/spdd-generate`
+> Décomposition exécutable. Ordre, signatures, types. C'est ce que `/yukki-generate`
 > consomme. Une opération = une unité testable.
 
 ### O1 — <titre>

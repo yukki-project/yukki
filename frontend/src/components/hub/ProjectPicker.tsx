@@ -69,7 +69,7 @@ export function ProjectPicker() {
           {pendingDir && (
             <div className="space-y-2">
               <p className="text-sm">
-                Selected directory has no <code>spdd/</code> subtree:
+                Selected directory has no <code>.yukki/</code> subtree:
                 <span className="block font-mono text-xs mt-1 break-all">
                   {pendingDir}
                 </span>

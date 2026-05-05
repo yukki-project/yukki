@@ -1,15 +1,15 @@
 ---
 id: META-002
 slug: backport-story-techniques
-story: spdd/stories/META-002-backport-story-techniques.md
+story: .yukki/stories/META-002-backport-story-techniques.md
 status: reviewed
 created: 2026-04-30
 updated: 2026-04-30
 ---
 
-# Analyse — Extraire SPIDR / INVEST / formulation des AC depuis /spdd-story vers spdd/methodology/
+# Analyse — Extraire SPIDR / INVEST / formulation des AC depuis /yukki-story vers .yukki/methodology/
 
-> Première analyse produite avec le skill `/spdd-analysis` enrichi par
+> Première analyse produite avec le skill `/yukki-analysis` enrichi par
 > META-001. Sert aussi de **test de boucle complète** : si l'analyse tient
 > debout sans modifier le skill, les 4 refs publiées sont utilisables.
 
@@ -23,28 +23,28 @@ procédural`.
 
 ## Concepts de domaine
 
-> Identification selon [`spdd/methodology/domain-modeling.md`](../methodology/domain-modeling.md).
+> Identification selon [`.yukki/methodology/domain-modeling.md`](../methodology/domain-modeling.md).
 
 ### Existants (déjà dans le repo, posés par META-001)
 
 - **Entity** `Skill` — fichier procédural en deux formats miroirs
-  (`.claude/commands/spdd-*.md` et `.github/skills/spdd-*/SKILL.md`),
+  (`.claude/commands/yukki-*.md` et `.github/skills/yukki-*/SKILL.md`),
   identifiable par son `name`, cycle de vie *implicite* (édité au fil des
   evolutions méthodologiques).
-- **Entity** `MethodologyReference` — fichier dans `spdd/methodology/` avec
+- **Entity** `MethodologyReference` — fichier dans `.yukki/methodology/` avec
   frontmatter étendu (`id`, `version`, `applies-to`, `sources`, `lang`).
   Cycle de vie : `published` puis incréments de `version` tracés via
   `## Changelog`. Quatre instances aujourd'hui (issues de META-001).
-- **Entity** `MethodologyIndex` — fichier `spdd/methodology/README.md`,
+- **Entity** `MethodologyIndex` — fichier `.yukki/methodology/README.md`,
   agrégat de présentation, regénéré à chaque ajout/suppression de ref.
 - **Value Object** `AppliesTo` — liste de strings, chaque string désigne
   un skill par son `name`. Immutable au sens où deux listes identiques
   désignent le même couplage.
-- **Invariant (déjà inscrit dans `spdd/README.md`)** : *"aucun skill ne
+- **Invariant (déjà inscrit dans `.yukki/README.md`)** : *"aucun skill ne
   redéfinit une technique méthodologique ; toute mention d'une technique
-  doit être un lien vers `spdd/methodology/<technique>.md`"*. Cet
+  doit être un lien vers `.yukki/methodology/<technique>.md`"*. Cet
   invariant est précisément ce que META-002 finit de faire respecter sur
-  `/spdd-story`.
+  `/yukki-story`.
 - **Integration point** : aucun externe ; cette story est purement
   documentaire, pas de subprocess ni d'API tierce.
 
@@ -52,17 +52,17 @@ procédural`.
 
 - **MethodologyReference `spidr`** — couvre SPIDR (5 axes) + signaux
   d'alerte + stratégies de découpage + anti-patterns. `applies-to:
-  [spdd-story, spdd-prompt-update]`.
+  [yukki-story, yukki-prompt-update]`.
 - **MethodologyReference `invest`** — couvre les 6 critères Independent /
   Negotiable / Valuable / Estimable / Small / Testable + heuristiques
-  d'application. `applies-to: [spdd-story, spdd-analysis]`.
+  d'application. `applies-to: [yukki-story, yukki-analysis]`.
 - **MethodologyReference `acceptance-criteria`** — couvre Given/When/Then,
   style déclaratif vs impératif, mots bannis, granularité 3-5.
-  `applies-to: [spdd-story, spdd-prompt-update, spdd-reasons-canvas]`.
+  `applies-to: [yukki-story, yukki-prompt-update, yukki-reasons-canvas]`.
 
 ### Inlining résiduel à supprimer (matière première du chantier)
 
-Côté `.claude/commands/spdd-story.md` (et son miroir Copilot) :
+Côté `.claude/commands/yukki-story.md` (et son miroir Copilot) :
 
 | Section actuellement inlinée | Cible |
 |---|---|
@@ -76,30 +76,30 @@ Copilot), soit ~160 lignes au total.
 
 ## Approche stratégique
 
-> Format Y-Statement selon [`spdd/methodology/decisions.md`](../methodology/decisions.md).
+> Format Y-Statement selon [`.yukki/methodology/decisions.md`](../methodology/decisions.md).
 
-> Pour résoudre le **dernier inlining résiduel dans `/spdd-story`** (SPIDR +
+> Pour résoudre le **dernier inlining résiduel dans `/yukki-story`** (SPIDR +
 > INVEST + formulation des AC) qui contredit la convention posée par
 > META-001, on choisit de **créer trois refs autonomes dans
-> `spdd/methodology/` puis de réécrire `/spdd-story` (Claude + Copilot)
+> `.yukki/methodology/` puis de réécrire `/yukki-story` (Claude + Copilot)
 > pour les référencer par lien**, plutôt que de **fusionner les trois
 > techniques dans une ref méta unique** ou de **conserver l'inlining
 > historique au nom de "ce skill est plus didactique que les autres"**,
 > pour atteindre la **cohérence absolue de la convention
 > skill/methodology** et la **réutilisabilité des refs entre skills**
-> (INVEST consommé par `/spdd-analysis`, AC formulation par
-> `/spdd-reasons-canvas`), en acceptant **trois fichiers supplémentaires
-> dans `methodology/` et un skill `/spdd-story` qui exige un Read
+> (INVEST consommé par `/yukki-analysis`, AC formulation par
+> `/yukki-reasons-canvas`), en acceptant **trois fichiers supplémentaires
+> dans `methodology/` et un skill `/yukki-story` qui exige un Read
 > additionnel par l'agent quand il atteint une étape déléguée à une ref**.
 
 ### Alternatives écartées
 
 - **Fusion en `story-techniques.md` unique** — casse la granularité par
-  technique et complique `applies-to` (`/spdd-analysis` consomme INVEST
-  mais pas SPIDR ; `/spdd-reasons-canvas` consomme AC formulation mais pas
+  technique et complique `applies-to` (`/yukki-analysis` consomme INVEST
+  mais pas SPIDR ; `/yukki-reasons-canvas` consomme AC formulation mais pas
   INVEST). Une ref par technique reste la bonne maille.
 - **Conserver l'inlining (statu quo)** — viole l'invariant posé par
-  META-001 et publié dans `spdd/README.md`. Toute la valeur du chantier
+  META-001 et publié dans `.yukki/README.md`. Toute la valeur du chantier
   méthodologie repose sur cet invariant.
 - **Mixer (ref pour SPIDR mais inline pour AC formulation)** — incohérent
   pour le lecteur, sans logique défendable. Tout ou rien.
@@ -108,10 +108,10 @@ Copilot), soit ~160 lignes au total.
 
 | Module | Impact | Nature |
 |---|---|---|
-| `spdd/methodology/` | fort | création de 3 nouveaux fichiers |
-| `.claude/commands/spdd-story.md` | fort | refonte (suppression de ~80 lignes inlinées + ajout de liens) |
-| `.github/skills/spdd-story/SKILL.md` | fort | miroir Copilot synchronisé |
-| `spdd/methodology/README.md` | faible | maj de l'index (+3 lignes table) |
+| `.yukki/methodology/` | fort | création de 3 nouveaux fichiers |
+| `.claude/commands/yukki-story.md` | fort | refonte (suppression de ~80 lignes inlinées + ajout de liens) |
+| `.github/skills/yukki-story/SKILL.md` | fort | miroir Copilot synchronisé |
+| `.yukki/methodology/README.md` | faible | maj de l'index (+3 lignes table) |
 
 ## Dépendances et intégrations
 
@@ -128,22 +128,22 @@ Copilot), soit ~160 lignes au total.
 
 ## Risques et points d'attention
 
-> Catégorisation selon [`spdd/methodology/risk-taxonomy.md`](../methodology/risk-taxonomy.md).
+> Catégorisation selon [`.yukki/methodology/risk-taxonomy.md`](../methodology/risk-taxonomy.md).
 
 - **Compatibilité** — *Impact faible, probabilité faible*. Un agent qui a
-  mémorisé l'ancienne version inlinée du skill `/spdd-story` pourrait
+  mémorisé l'ancienne version inlinée du skill `/yukki-story` pourrait
   appliquer SPIDR/INVEST de mémoire au lieu de relire la ref. **Mitigation**
   : les agents re-lisent les skills à chaque invocation (pas de cache
   long terme), donc l'effet est transitoire.
 - **Opérationnel** — *Impact moyen, probabilité moyenne*. Liens cassés
-  entre `/spdd-story` et `spdd/methodology/<ref>.md` si un fichier est
+  entre `/yukki-story` et `.yukki/methodology/<ref>.md` si un fichier est
   renommé ou si une ancre est modifiée. **Mitigation** : revue manuelle
   des liens à la livraison ; META-003 prévoira un check CI sur les liens
   morts.
 - **Opérationnel (dérive skill ↔ ref)** — *Impact moyen, probabilité
   moyenne*. Une évolution du skill qui ré-introduirait une description
   partielle de SPIDR (sans s'en rendre compte) recréerait le problème.
-  **Mitigation** : convention écrite dans `spdd/README.md`, vérification
+  **Mitigation** : convention écrite dans `.yukki/README.md`, vérification
   manuelle dans les revues de PR ; META-003 portera la vérification
   automatique.
 
@@ -153,22 +153,22 @@ Copilot), soit ~160 lignes au total.
 
 ## Cas limites identifiés
 
-> Identification selon [`spdd/methodology/edge-cases.md`](../methodology/edge-cases.md).
+> Identification selon [`.yukki/methodology/edge-cases.md`](../methodology/edge-cases.md).
 
-- **Equivalence Partitioning** — un agent qui invoque `/spdd-story` après
+- **Equivalence Partitioning** — un agent qui invoque `/yukki-story` après
   ce changement / un humain qui consulte une ref directement / un humain
   qui parcourt `methodology/README.md`. Trois chemins de lecture, tous
   doivent atterrir sur du contenu cohérent.
 - **Null / empty** — `applies-to` vide ne doit jamais arriver. Si un
   contributeur introduit une ref orpheline, l'index ne la liste pas et
-  `/spdd-analysis` ne la référence pas — la ref devient invisible.
+  `/yukki-analysis` ne la référence pas — la ref devient invisible.
   Mitigation manuelle ; META-003 portera la vérification.
-- **Failure modes** — `/spdd-story` invoqué pendant que les refs sont en
+- **Failure modes** — `/yukki-story` invoqué pendant que les refs sont en
   cours de création (état intermédiaire) : peu probable parce que le
-  cycle SPDD `/spdd-generate` produit toutes les Operations dans un même
+  cycle SPDD `/yukki-generate` produit toutes les Operations dans un même
   commit. À surveiller si le workflow change.
 - **Concurrence (édition humaine)** — deux contributeurs éditent
-  simultanément `spidr.md` et `/spdd-story` : conflit Git classique,
+  simultanément `spidr.md` et `/yukki-story` : conflit Git classique,
   pas un risque méthodologique.
 - **Security / negative testing** — n/a sur une story documentaire.
 
@@ -182,7 +182,7 @@ Copilot), soit ~160 lignes au total.
   — recommandation : oui, ancres standard `## Section` markdown auto-générées
   par les titres ; pas de `<a id>` manuel sauf cas particulier.
 - [ ] **Section "Migration v1 → v2"** dans le `## Changelog` du skill
-  `/spdd-story` qui explique le retrait du contenu inliné ?
+  `/yukki-story` qui explique le retrait du contenu inliné ?
   — recommandation : pas de section dédiée ; une entrée changelog suffit.
 - [ ] **Ordre de génération** des refs (impact sur les liens internes
   potentiels) ? — recommandation : `invest.md` d'abord (plus simple),

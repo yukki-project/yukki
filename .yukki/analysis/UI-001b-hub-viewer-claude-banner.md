@@ -1,8 +1,8 @@
 ---
 id: UI-001b
 slug: hub-viewer-claude-banner
-story: spdd/stories/UI-001b-hub-viewer-claude-banner.md
-parent-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001b-hub-viewer-claude-banner.md
+parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: reviewed
 created: 2026-05-01
 updated: 2026-05-01
@@ -13,7 +13,7 @@ updated: 2026-05-01
 > **Analyse de delta** — la stratégie globale, les modules, les 16
 > décisions structurantes, les 10 risques et les 11 cas limites de la
 > famille UI-001 sont dans
-> [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
+> [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
 > Ce document ne couvre que les choix **spécifiques à UI-001b** (hub
 > viewer + Claude banner + init SPDD empty state) qui n'ont pas leur
 > place dans une analyse de famille parce qu'ils n'engagent pas
@@ -37,7 +37,7 @@ updated: 2026-05-01
 | `App.OnStartup/OnShutdown` (UI-001a) | idem | Inchangé. La cancellation `OnShutdown` reste utile pour UI-001c (long ops). |
 | `App.Greet` (UI-001a) | idem | **Conservé** (D-A6 du delta UI-001a) — survit dans le menu *About → Run smoke test* du hub |
 | `internal/artifacts.Meta`, `ListArtifacts`, `AllowedKinds`, `ParseFrontmatter[T]` | `internal/artifacts/{lister,parser}.go` (CORE-004) | Cœur du hub list. `ListArtifacts(projectDir, kind)` invoqué à chaque navigation onglet. `Meta.Error != nil` ⇒ ligne flaggée badge "invalid" |
-| `internal/templates.{NewLoader, LoadStory, LoadAnalysis, LoadCanvasReasons, LoadTests}` (CORE-001) | `internal/templates/templates.go` | Utilisé par `InitializeSPDD` pour copier les 4 templates embed.FS dans `<projectDir>/spdd/templates/` |
+| `internal/templates.{NewLoader, LoadStory, LoadAnalysis, LoadCanvasReasons, LoadTests}` (CORE-001) | `internal/templates/templates.go` | Utilisé par `InitializeSPDD` pour copier les 4 templates embed.FS dans `<projectDir>/.yukki/templates/` |
 | `internal/provider.Provider.CheckVersion(ctx) error` (CORE-001) | `internal/provider/provider.go` | Appelé par `GetClaudeStatus` pour détecter Claude CLI absent (`ErrNotFound`) ou version incompatible (`ErrVersionIncompatible`) |
 | `runtime.OpenDirectoryDialog` (Wails) | `github.com/wailsapp/wails/v2/pkg/runtime` | Appelé par `App.SelectProject` pour le dialog OS-natif de sélection de dossier |
 | `frontend/src/App.tsx` (placeholder UI-001a) | `frontend/src/App.tsx` | Refactoré en layout principal (sidebar + main content + banner) |
@@ -83,7 +83,7 @@ updated: 2026-05-01
   `<dir>/spdd/{stories,analysis,prompts,tests,methodology,templates}/`
   via `os.MkdirAll`, puis copie 4 templates depuis `embed.FS` (via
   `loader.LoadStory/Analysis/CanvasReasons/Tests`) vers
-  `<dir>/spdd/templates/{story,analysis,canvas-reasons,tests}.md`.
+  `<dir>/.yukki/templates/{story,analysis,canvas-reasons,tests}.md`.
   Idempotent. Note : la liste de 6 dossiers déborde des 4 kinds de
   `AllowedKinds` (qui n'inclut pas `methodology` et `templates`) —
   cohérent (on liste 4 kinds mais on crée 6 dossiers fonctionnels).
@@ -231,7 +231,7 @@ updated: 2026-05-01
   Go retourne `""` proprement.
 - **R5 — `InitializeSPDD` overwrite des templates customisés**
   *(prob. moyenne, impact moyen)*. Si un user a customisé
-  `<projet>/spdd/templates/story.md` puis re-clique *Initialize SPDD here*,
+  `<projet>/.yukki/templates/story.md` puis re-clique *Initialize SPDD here*,
   son template custom est overwrité par celui de `embed.FS`.
   **Mitigation** : v1 = on overwrite (cohérent avec idempotence
   stricte). v2 si user feedback = check existence avant overwrite,
@@ -296,7 +296,7 @@ Les 12 décisions ont été tranchées en revue interactive. Recap :
   source de vérité, DRY.
 - [x] **D-B4 = A** — `InitializeSPDD` crée **6 dossiers** :
   `spdd/{stories, analysis, prompts, tests, methodology, templates}/`
-  + copie 4 templates depuis `embed.FS` vers `spdd/templates/`.
+  + copie 4 templates depuis `embed.FS` vers `.yukki/templates/`.
 - [x] **D-B5 = A** — Ajouter `Provider.Version(ctx) (string, error)`
   comme méthode sœur de `CheckVersion`, sans break public.
   `ClaudeProvider` parse `claude --version`, `MockProvider` retourne

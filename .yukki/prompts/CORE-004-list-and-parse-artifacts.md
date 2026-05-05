@@ -1,8 +1,8 @@
 ---
 id: CORE-004
 slug: list-and-parse-artifacts
-story: spdd/stories/CORE-004-list-and-parse-artifacts.md
-analysis: spdd/analysis/CORE-004-list-and-parse-artifacts.md
+story: .yukki/stories/CORE-004-list-and-parse-artifacts.md
+analysis: .yukki/analysis/CORE-004-list-and-parse-artifacts.md
 status: synced
 created: 2026-05-01
 updated: 2026-05-01
@@ -10,7 +10,7 @@ updated: 2026-05-01
 
 # Canvas REASONS — Listing & parsing des artefacts SPDD dans le cœur métier
 
-> Spec exécutable consommée par `/spdd-generate`. Toute divergence
+> Spec exécutable consommée par `/yukki-generate`. Toute divergence
 > ultérieure code ↔ canvas se résout **dans ce fichier d'abord**.
 >
 > Story Go-only multi-consumer (UI-001b, futur INT-002 MCP, futur
@@ -20,12 +20,12 @@ updated: 2026-05-01
 > ## Changelog
 >
 > - **v1 — 2026-05-01** : canvas initial (4 Operations, status `draft`).
-> - **v2 — 2026-05-01** — `/spdd-generate` (commit `b5ac922`).
+> - **v2 — 2026-05-01** — `/yukki-generate` (commit `b5ac922`).
 >   4 Operations livrées (parser.go, lister.go, tests, doc.go).
 >   Status `draft → implemented`. 22 nouveaux tests passent ; aucun
 >   test existant cassé (Invariant I7 préservé : signature publique
 >   de `ValidateFrontmatter` strictement préservée au déménagement).
-> - **v3 — 2026-05-01** — `/spdd-sync` (refactor seul, comportement
+> - **v3 — 2026-05-01** — `/yukki-sync` (refactor seul, comportement
 >   inchangé). 4 dérives mineures détectées et propagées dans
 >   Operations :
 >   1. **O1** : 2 helpers internes non-exportés ajoutés
@@ -147,7 +147,7 @@ YAML. CORE-004 livre une fois pour toutes la couche Go pure :
   doc-comment de la fonction.
 - **I5** — Les sous-dossiers et symlinks dans `<dir>/spdd/<kind>/`
   sont **ignorés silencieusement**. Permet aux users de créer
-  `spdd/stories/archive/` sans pollution du listing.
+  `.yukki/stories/archive/` sans pollution du listing.
 - **I6** — `AllowedKinds()` retourne une **copie** ; toute mutation
   par un consumer n'affecte pas l'état interne du package.
 - **I7** — `ValidateFrontmatter` (déménagée vers parser.go) garde
@@ -290,7 +290,7 @@ Consumer (UI-001b / yukki list / INT-002 MCP)
     longueur byte) et `indexClosingDelim` (cherche `\n---\n` ou
     `\r\n---\n` ou `\n---\r\n` ou `\r\n---\r\n` selon le leading
     détecté + fallback robuste mixed-EOL). *Helpers ajoutés en v3
-    `/spdd-sync` pour factoriser la détection.*
+    `/yukki-sync` pour factoriser la détection.*
   - `internal/artifacts/writer.go` (modification : retrait de
     `ValidateFrontmatter` et `ErrInvalidFrontmatter` qui vivent
     désormais dans `parser.go` ; `Writer.Write` continue de l'appeler
@@ -564,13 +564,13 @@ Consumer (UI-001b / yukki list / INT-002 MCP)
 - **Pas de récursion**
   - Le scan reste à plat. Sous-dossiers ignorés silencieusement
     (Invariant I5). Si un user veut lister
-    `spdd/stories/archive/*.md`, il appelle
+    `.yukki/stories/archive/*.md`, il appelle
     `ListArtifacts(<archive-parent>, "stories")` explicitement.
 - **Pas d'évolution de `Meta` sans canvas-update**
   - Ajouter un champ à `Meta` (ex. `Owner`, `Modules`) est une
     modification de contrat exporté. Nécessite un nouveau cycle
-    SPDD (`/spdd-prompt-update` du présent canvas, puis
-    re-`/spdd-generate`).
+    SPDD (`/yukki-prompt-update` du présent canvas, puis
+    re-`/yukki-generate`).
 - **Pas de dépendance externe ajoutée**
   - `gopkg.in/yaml.v3` reste la seule dep non-stdlib utilisée.
     Refusé : `mapstructure`, `viper`, `sigs.k8s.io/yaml`, etc.

@@ -1,8 +1,8 @@
 ---
 id: UI-001c
 slug: new-story-flow
-story: spdd/stories/UI-001c-new-story-flow.md
-parent-analysis: spdd/analysis/UI-001-init-desktop-app-wails-react.md
+story: .yukki/stories/UI-001c-new-story-flow.md
+parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
 status: reviewed
 created: 2026-05-02
 updated: 2026-05-02
@@ -13,7 +13,7 @@ updated: 2026-05-02
 > **Analyse de delta** — la stratégie globale, les modules, les 16
 > décisions structurantes (D1-D16), les 10 risques et les 11 cas limites
 > de la famille UI-001 sont dans
-> [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
+> [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](UI-001-init-desktop-app-wails-react.md).
 > Ce document ne couvre que les choix **spécifiques à UI-001c** (writing
 > flow) qui n'ont pas leur place dans une analyse de famille parce qu'ils
 > n'engagent pas UI-001a ni UI-001b.
