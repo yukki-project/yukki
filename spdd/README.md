@@ -12,12 +12,61 @@ prompt d'abord**, puis on régénère ou resynchronise le code.
 
 | Dossier | Contenu | Produit par |
 |---|---|---|
+| [`inbox/`](inbox/) | Inbox — capture brute en discovery zone (META-005) | manuel / `INBOX-001` à venir |
 | [`stories/`](stories/) | User stories INVEST + Given/When/Then | `/spdd-story` |
+| [`epics/`](epics/) | Epics — regroupements thématiques de stories (META-005) | manuel / `EPIC-001` à venir |
+| [`roadmap/`](roadmap/) | Roadmap — vue projection Now/Next/Later (META-005) | manuel / `ROADMAP-001` à venir |
 | [`analysis/`](analysis/) | Contexte stratégique (concepts, risques, cas limites) | `/spdd-analysis` |
 | [`prompts/`](prompts/) | Canvas REASONS — spec exécutable | `/spdd-reasons-canvas`, `/spdd-prompt-update`, `/spdd-sync` |
 | [`tests/`](tests/) | Prompts structurés pour les tests unitaires | étape 6 du workflow |
 | [`templates/`](templates/) | Squelettes des artefacts ci-dessus | maintenu manuellement |
 | [`methodology/`](methodology/) | **Techniques méthodologiques réutilisables** (DDD, STRIDE, BVA, Y-Statement…) référencées par les skills | maintenu manuellement, voir [`methodology/README.md`](methodology/README.md) |
+
+## Hiérarchie discovery → delivery (META-005)
+
+yukki étend la méthode SPDD au-delà du seul niveau "story" avec une
+chaîne complète à 4 niveaux :
+
+```
+┌─────────────────┐
+│  Inbox          │  ← Discovery zone, capture brute
+│  faible friction│     PAS sur la roadmap
+└────────┬────────┘
+         │  qualification humaine : "ça vaut le coup ?"
+         ▼
+   Promotion :
+   ┌──────────────────────┬──────────────────────┐
+   │                      │                      │
+ atomique             gros chantier          rejetée
+   │                      │
+   ▼                      ▼
+┌─────────┐          ┌─────────┐
+│ Story   │          │  Epic   │  ← Committed work
+│ (INVEST)│          │         │     parents de stories
+└─────────┘          └────┬────┘
+                          │ décomposition INVEST
+                          ▼
+                     ┌─────────┐
+                     │ Stories │
+                     └─────────┘
+```
+
+La **Roadmap** n'est **pas** un niveau hiérarchique : c'est une **vue
+projection** (Now / Next / Later) des Epics et Stories standalone
+engagés. Les Inbox **n'apparaissent pas** sur la roadmap (zone
+discovery, séparée de l'engagement).
+
+| Artefact | Rôle | Lifecycle |
+|---|---|---|
+| **Inbox** | Capture brute (discovery zone) | `unsorted → promoted (story\|epic) ou rejected` |
+| **Epic** | Regroupement thématique de stories liées | `draft → in-progress → mature → done` |
+| **Story** | Niveau actuel SPDD (INVEST), inchangé | `draft → reviewed → implemented` |
+| **Roadmap** | Vue projection Now/Next/Later | vivante (mise à jour continue) |
+
+`META-005` pose le **scaffolding fondateur** (3 nouveaux types
+reconnus + arbo + templates + doc). Les UX détaillées (capture
+rapide, kanban, transitions) sont portées par les stories enfants
+`INBOX-001/002`, `EPIC-001`, `ROADMAP-001/002`.
 
 ## Convention "skill = procédural, methodology = knowledge"
 

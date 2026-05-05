@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed embedded/story.md embedded/analysis.md embedded/canvas-reasons.md embedded/tests.md
+//go:embed embedded/story.md embedded/analysis.md embedded/canvas-reasons.md embedded/tests.md embedded/inbox.md embedded/epic.md embedded/roadmap.md
 var embeddedFS embed.FS
 
 // Source identifies where a loaded template came from.
@@ -58,6 +58,21 @@ func (l *Loader) LoadCanvasReasons() (string, Source, error) {
 // LoadTests returns the tests template.
 func (l *Loader) LoadTests() (string, Source, error) {
 	return l.load("tests.md")
+}
+
+// LoadInbox returns the inbox template (META-005).
+func (l *Loader) LoadInbox() (string, Source, error) {
+	return l.load("inbox.md")
+}
+
+// LoadEpic returns the epic template (META-005).
+func (l *Loader) LoadEpic() (string, Source, error) {
+	return l.load("epic.md")
+}
+
+// LoadRoadmap returns the roadmap template (META-005).
+func (l *Loader) LoadRoadmap() (string, Source, error) {
+	return l.load("roadmap.md")
 }
 
 func (l *Loader) load(name string) (string, Source, error) {

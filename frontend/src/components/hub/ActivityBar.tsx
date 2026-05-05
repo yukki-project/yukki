@@ -1,4 +1,15 @@
-import { BookOpen, CheckSquare, Cog, FileText, Lightbulb, Workflow, type LucideIcon } from 'lucide-react';
+import {
+  BookOpen,
+  CheckSquare,
+  Cog,
+  FileText,
+  Inbox,
+  Layers,
+  Lightbulb,
+  Map,
+  Workflow,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -15,10 +26,13 @@ interface ActivityItem {
 }
 
 const PRIMARY_ITEMS: ActivityItem[] = [
+  { mode: 'inbox', label: 'Inbox', Icon: Inbox },           // META-005
   { mode: 'stories', label: 'Stories', Icon: BookOpen },
+  { mode: 'epics', label: 'Epics', Icon: Layers },          // META-005
   { mode: 'analysis', label: 'Analyses', Icon: Lightbulb },
   { mode: 'prompts', label: 'Canvas', Icon: FileText },
   { mode: 'tests', label: 'Tests', Icon: CheckSquare },
+  { mode: 'roadmap', label: 'Roadmap', Icon: Map },         // META-005
   { mode: 'workflow', label: 'Workflow', Icon: Workflow },
 ];
 

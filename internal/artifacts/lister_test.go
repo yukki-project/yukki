@@ -255,8 +255,8 @@ func TestListArtifacts_PathIsAbsolute(t *testing.T) {
 
 func TestAllowedKinds_ReturnsCopy(t *testing.T) {
 	a := AllowedKinds()
-	if len(a) != 4 {
-		t.Fatalf("expected 4 kinds, got %d", len(a))
+	if len(a) != 7 {
+		t.Fatalf("expected 7 kinds, got %d", len(a))
 	}
 	// Mutate the returned slice
 	a[0] = "MUTATED"
@@ -264,5 +264,81 @@ func TestAllowedKinds_ReturnsCopy(t *testing.T) {
 	b := AllowedKinds()
 	if b[0] == "MUTATED" {
 		t.Fatal("AllowedKinds() leaked mutation; should return a fresh copy each call")
+	}
+}
+
+// TestAllowedKinds_ContainsMETA005Kinds vérifie que les 3 nouveaux
+// kinds introduits par META-005 (inbox, epics, roadmap) sont reconnus.
+func TestAllowedKinds_ContainsMETA005Kinds(t *testing.T) {
+	a := AllowedKinds()
+	wanted := map[string]bool{"inbox": false, "epics": false, "roadmap": false}
+	for _, k := range a {
+		if _, ok := wanted[k]; ok {
+			wanted[k] = true
+		}
+	}
+	for k, found := range wanted {
+		if !found {
+			t.Errorf("expected AllowedKinds to contain %q (META-005)", k)
+		}
+	}
+}
+
+// TestListArtifacts_Inbox vérifie qu'un fichier Inbox valide est listé
+// sans erreur (META-005).
+func TestListArtifacts_Inbox(t *testing.T) {
+	root := t.TempDir()
+	writeArtifact(t, root, "inbox", "INBOX-001-foo.md",
+		"---\nid: INBOX-001\nslug: foo\ntitle: Foo\nstatus: unsorted\nupdated: 2026-05-04\n---\n# Foo\n")
+
+	out, err := ListArtifacts(root, "inbox")
+	if err != nil {
+		t.Fatalf("ListArtifacts(inbox): %v", err)
+	}
+	if len(out) != 1 || out[0].ID != "INBOX-001" || out[0].Error != nil {
+		t.Fatalf("expected 1 valid Inbox entry, got %+v", out)
+	}
+}
+
+// TestListArtifacts_Epics vérifie qu'un fichier Epic valide est listé
+// sans erreur (META-005).
+func TestListArtifacts_Epics(t *testing.T) {
+	root := t.TempDir()
+	writeArtifact(t, root, "epics", "EPIC-001-bar.md",
+		"---\nid: EPIC-001\nslug: bar\ntitle: Bar\nstatus: draft\nupdated: 2026-05-04\nchild-stories: [STORY-001, STORY-002]\n---\n# Bar\n")
+
+	out, err := ListArtifacts(root, "epics")
+	if err != nil {
+		t.Fatalf("ListArtifacts(epics): %v", err)
+	}
+	if len(out) != 1 || out[0].ID != "EPIC-001" || out[0].Error != nil {
+		t.Fatalf("expected 1 valid Epic entry, got %+v", out)
+	}
+}
+
+// TestListArtifacts_RoadmapWithColumns vérifie qu'un fichier Roadmap
+// avec un frontmatter divergent (champ `columns:` non porté par Meta)
+// est listé sans erreur — yaml.Unmarshal ignore silencieusement les
+// champs inconnus, donc Meta capture id/slug/title/status/updated et
+// la struct ne casse pas (META-005, Safeguard "Schéma frontmatter
+// Roadmap").
+func TestListArtifacts_RoadmapWithColumns(t *testing.T) {
+	root := t.TempDir()
+	writeArtifact(t, root, "roadmap", "current.md",
+		"---\nid: roadmap-current\nslug: current\ntitle: Current Roadmap\nstatus: live\nupdated: 2026-05-04\ncolumns:\n  - id: now\n    label: Now\n    epics: [EPIC-001]\n    standalone-stories: []\n  - id: next\n    label: Next\n    epics: []\n    standalone-stories: []\n  - id: later\n    label: Later\n    epics: []\n    standalone-stories: []\n---\n# Notes\n")
+
+	out, err := ListArtifacts(root, "roadmap")
+	if err != nil {
+		t.Fatalf("ListArtifacts(roadmap): %v", err)
+	}
+	if len(out) != 1 {
+		t.Fatalf("expected 1 Roadmap entry, got %d", len(out))
+	}
+	got := out[0]
+	if got.Error != nil {
+		t.Fatalf("Roadmap with columns: must list without Error, got %v", got.Error)
+	}
+	if got.ID != "roadmap-current" || got.Slug != "current" || got.Status != "live" {
+		t.Fatalf("Meta core fields not parsed; got %+v", got)
 	}
 }

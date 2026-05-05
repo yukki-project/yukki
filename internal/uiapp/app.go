@@ -56,6 +56,9 @@ var spddSubdirs = []string{
 	"analysis",
 	"prompts",
 	"tests",
+	"inbox",   // META-005 — discovery zone (capture brute)
+	"epics",   // META-005 — regroupement de stories
+	"roadmap", // META-005 — vue projection Now/Next/Later
 	"methodology",
 	"templates",
 }
@@ -234,6 +237,9 @@ func (a *App) InitializeSPDD(dir string) error {
 		{"analysis.md", loader.LoadAnalysis},
 		{"canvas-reasons.md", loader.LoadCanvasReasons},
 		{"tests.md", loader.LoadTests},
+		{"inbox.md", loader.LoadInbox},     // META-005
+		{"epic.md", loader.LoadEpic},       // META-005
+		{"roadmap.md", loader.LoadRoadmap}, // META-005
 	}
 	for _, t := range all {
 		content, _, err := t.load()

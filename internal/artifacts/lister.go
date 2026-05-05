@@ -21,7 +21,15 @@ var ErrInvalidKind = errors.New("invalid artifact kind")
 // allowedKinds is the immutable whitelist of artifact kinds that
 // ListArtifacts accepts. Exposed publicly via the AllowedKinds()
 // function which returns a fresh copy on each call.
-var allowedKinds = []string{"stories", "analysis", "prompts", "tests"}
+var allowedKinds = []string{
+	"stories",
+	"analysis",
+	"prompts",
+	"tests",
+	"inbox",   // META-005
+	"epics",   // META-005
+	"roadmap", // META-005
+}
 
 // Meta is the typed view of a SPDD artifact's frontmatter, as returned
 // by ListArtifacts.

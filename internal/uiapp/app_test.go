@@ -261,17 +261,69 @@ func TestApp_InitializeSPDD_Success(t *testing.T) {
 		t.Fatalf("InitializeSPDD: %v", err)
 	}
 
-	for _, sub := range []string{"stories", "analysis", "prompts", "tests", "methodology", "templates"} {
+	// META-005: 9 subdirs total (4 historiques + 3 nouveaux + methodology + templates)
+	for _, sub := range []string{
+		"stories", "analysis", "prompts", "tests",
+		"inbox", "epics", "roadmap",
+		"methodology", "templates",
+	} {
 		path := filepath.Join(dir, "spdd", sub)
 		if info, err := os.Stat(path); err != nil || !info.IsDir() {
 			t.Fatalf("expected directory %s, err=%v", path, err)
 		}
 	}
-	for _, name := range []string{"story.md", "analysis.md", "canvas-reasons.md", "tests.md"} {
+	// META-005: 7 templates copiés (4 historiques + 3 nouveaux)
+	for _, name := range []string{
+		"story.md", "analysis.md", "canvas-reasons.md", "tests.md",
+		"inbox.md", "epic.md", "roadmap.md",
+	} {
 		path := filepath.Join(dir, "spdd", "templates", name)
 		if info, err := os.Stat(path); err != nil || info.IsDir() {
 			t.Fatalf("expected file %s, err=%v", path, err)
 		}
+	}
+}
+
+// TestApp_InitializeSPDD_PreExistingProject vérifie qu'un re-init sur
+// un projet contenant déjà des artefacts (les 4 sous-dossiers historiques
+// avec un fichier dedans) crée les 3 nouveaux sous-dossiers (META-005)
+// sans toucher aux fichiers existants. Couvre AC4 de META-005.
+func TestApp_InitializeSPDD_PreExistingProject(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+
+	// Setup d'un projet "ancien" : 4 sous-dossiers historiques + 1 artefact
+	// custom dans stories/ qui ne doit pas être touché par le re-init.
+	for _, sub := range []string{"stories", "analysis", "prompts", "tests"} {
+		if err := os.MkdirAll(filepath.Join(dir, "spdd", sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	const customContent = "---\nid: STORY-EXISTING\n---\n# already here\n"
+	customPath := filepath.Join(dir, "spdd", "stories", "STORY-EXISTING.md")
+	if err := os.WriteFile(customPath, []byte(customContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := app.InitializeSPDD(dir); err != nil {
+		t.Fatalf("InitializeSPDD on pre-existing project: %v", err)
+	}
+
+	// Les 3 nouveaux sous-dossiers ont bien été créés.
+	for _, sub := range []string{"inbox", "epics", "roadmap"} {
+		path := filepath.Join(dir, "spdd", sub)
+		if info, err := os.Stat(path); err != nil || !info.IsDir() {
+			t.Fatalf("expected new META-005 directory %s, err=%v", path, err)
+		}
+	}
+
+	// L'artefact custom existant n'a PAS été modifié.
+	got, err := os.ReadFile(customPath)
+	if err != nil {
+		t.Fatalf("custom artifact disparu: %v", err)
+	}
+	if string(got) != customContent {
+		t.Fatalf("custom artifact altéré par re-init :\n got: %q\nwant: %q", got, customContent)
 	}
 }
 
