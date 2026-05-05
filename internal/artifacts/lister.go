@@ -59,7 +59,7 @@ func AllowedKinds() []string {
 	return slices.Clone(allowedKinds)
 }
 
-// ListArtifacts scans <dir>/spdd/<kind>/*.md, parses the YAML
+// ListArtifacts scans <dir>/.yukki/<kind>/*.md, parses the YAML
 // frontmatter of each regular file, and returns the typed list sorted
 // by Updated desc with ID lexico ascending as fallback.
 //
@@ -77,7 +77,7 @@ func ListArtifacts(dir, kind string) ([]Meta, error) {
 		return nil, fmt.Errorf("%w: %q (allowed: %v)", ErrInvalidKind, kind, allowedKinds)
 	}
 
-	target := filepath.Join(dir, "spdd", kind)
+	target := filepath.Join(dir, ProjectDirName, kind)
 	entries, err := os.ReadDir(target)
 	if err != nil {
 		return nil, fmt.Errorf("read dir %s: %w", target, err)

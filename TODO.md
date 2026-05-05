@@ -3,7 +3,7 @@
 > Liste des stories SPDD à venir et leur état. Maintenue **manuellement** en
 > attendant la formalisation d'un backlog SPDD propre (cf. discussion
 > *META-006 candidate*). Pour les stories *écrites*, voir
-> [`spdd/stories/`](spdd/stories/).
+> [`.yukki/stories/`](.yukki/stories/).
 >
 > **Note** : ce fichier reflète l'outil interne de session (`TodoWrite` côté
 > Claude Code) et le matérialise pour qu'il survive à la fermeture de la
@@ -21,11 +21,11 @@
 
 - ✅ **META-001** — Extraction des 4 techniques méthodologiques initiales
   (`domain-modeling.md`, `risk-taxonomy.md`, `edge-cases.md`,
-  `decisions.md`) + skill `/spdd-analysis` enrichi + boucle de
+  `decisions.md`) + skill `/yukki-analysis` enrichi + boucle de
   maintenance pour passer à *yukki-only* sur les exemples
-- ✅ **META-002** — Backport des techniques inlinées dans `/spdd-story`
+- ✅ **META-002** — Backport des techniques inlinées dans `/yukki-story`
   vers 3 nouvelles refs (`invest.md`, `spidr.md`,
-  `acceptance-criteria.md`) + skill `/spdd-story` enrichi
+  `acceptance-criteria.md`) + skill `/yukki-story` enrichi
 - ✅ **CORE-001** — Commande CLI `yukki story` via Claude CLI : cycle
   SPDD complet (story → clarification → analyse → canvas → génération
   Go : 8 Operations livrées sur la branche `feature/CORE-001`, en
@@ -45,16 +45,16 @@
   canvas + script qui détecte les techniques inlinées dans les skills
   (`grep -E "SPIDR|INVEST|DDD|STRIDE|BVA|Y-Statement|Given/When/Then"`
   + vérification que chaque match est suivi d'un lien vers
-  `spdd/methodology/`)
+  `.yukki/methodology/`)
 - ⬜ **META-004** — Méthodologie des tests : story + ref
-  `spdd/methodology/testing.md` (test pyramid, table-driven, mock
+  `.yukki/methodology/testing.md` (test pyramid, table-driven, mock
   strategy, niveaux unit/intégration/contrat, coverage). **Couvre le
-  gap actuel** : pas de skill `/spdd-cli-test` pour les CLI Go ; pas
-  de skill `/spdd-tests` formalisé pour l'étape 6 (template-driven
+  gap actuel** : pas de skill `/yukki-cli-test` pour les CLI Go ; pas
+  de skill `/yukki-tests` formalisé pour l'étape 6 (template-driven
   pour l'instant). Évaluera l'opportunité d'un futur
-  `/spdd-tests` ou d'une généralisation de `/spdd-api-test`.
+  `/yukki-tests` ou d'une généralisation de `/yukki-api-test`.
 - ⬜ **META-005** — Méthodologie des commits : story + ref
-  `spdd/methodology/commits.md` (Conventional Commits adaptés SPDD
+  `.yukki/methodology/commits.md` (Conventional Commits adaptés SPDD
   avec préfixes `feat`/`fix`/`docs`/`chore`/`refactor` + spécifiques
   SPDD `prompt-update`/`generate`/`review`/`sync` ; règles HEREDOC,
   interdiction `--amend` / `--no-verify`, footer `Co-Authored-By:`,
@@ -64,17 +64,17 @@
   `[Type]-[ID]-[DateHeure]-[Titre].md` (ex.
   `[Analysis]-CORE-001-202604301100-cli-story-via-claude.md`).
   Cycle SPDD complet (story + analyse + canvas + generate). Touche
-  tous les artefacts existants (rename via `/spdd-sync` ou script),
-  les 3 templates `spdd/templates/`, le writer Go
+  tous les artefacts existants (rename via `/yukki-sync` ou script),
+  les 3 templates `.yukki/templates/`, le writer Go
   `internal/artifacts/writer.go` (préfixe + datetime), les skills
   qui référencent des chemins relatifs, et la doc (README, CLAUDE.md,
   TODO.md, methodology/README.md). Aligne le projet avec la
   convention décrite dans l'article SPDD original.
-- 🔧 **FIX** — Exposer `spdd/templates/tests.md` au niveau projet.
+- 🔧 **FIX** — Exposer `.yukki/templates/tests.md` au niveau projet.
   Actuellement le template existe uniquement dans
   `internal/templates/embedded/tests.md` (créé pendant
-  `/spdd-generate` de CORE-001 comme placeholder). Asymétrie à
-  corriger : copier vers `spdd/templates/tests.md` pour que le loader
+  `/yukki-generate` de CORE-001 comme placeholder). Asymétrie à
+  corriger : copier vers `.yukki/templates/tests.md` pour que le loader
   `templates.NewLoader.LoadTests()` trouve la version projet en
   priorité.
 
@@ -94,22 +94,22 @@
   `ParseFrontmatter[T any]` pour scan + extraction typée du frontmatter.
   Réutilisé par UI-001b (Hub viewer), futur INT-002 (serveur MCP), et
   futur `yukki list` CLI éventuel. Story rédigée en
-  [`spdd/stories/CORE-004-list-and-parse-artifacts.md`](spdd/stories/CORE-004-list-and-parse-artifacts.md).
+  [`.yukki/stories/CORE-004-list-and-parse-artifacts.md`](.yukki/stories/CORE-004-list-and-parse-artifacts.md).
   Estimation ~0.5-1j.
 - 🟡 **UI-001** — Initialiser l'app desktop yukki — Wails v2 + React 18
   + TypeScript + Vite + Tailwind + shadcn/ui + bindings Go. Splittée
   SPIDR axe **I** (Interface) en 3 stories filles
-  (analyse de famille en [`spdd/analysis/UI-001-init-desktop-app-wails-react.md`](spdd/analysis/UI-001-init-desktop-app-wails-react.md)) :
+  (analyse de famille en [`.yukki/analysis/UI-001-init-desktop-app-wails-react.md`](.yukki/analysis/UI-001-init-desktop-app-wails-react.md)) :
   - `UI-001a` ✅ — App skeleton & sub-cmd `yukki ui` + scaffold React +
-    CI build matrix (livré, mergé dans #2) — [story](spdd/stories/UI-001a-app-skeleton-and-subcommand.md)
+    CI build matrix (livré, mergé dans #2) — [story](.yukki/stories/UI-001a-app-skeleton-and-subcommand.md)
   - `UI-001b` — Hub viewer (project picker, sidebar, liste stories
     via `artifacts.ListArtifacts` de **CORE-004**, banner Claude,
     init SPDD empty state). Estim. réduite à **~1j** (depuis l'extract
-    du Go core vers CORE-004 le 2026-05-01) — [story](spdd/stories/UI-001b-hub-viewer-claude-banner.md)
+    du Go core vers CORE-004 le 2026-05-01) — [story](.yukki/stories/UI-001b-hub-viewer-claude-banner.md)
   - `UI-001c` — New Story flow (modal, `RunStory` binding, EventsEmit
-    streaming, cancellation `OnShutdown`) (~1.5j) — [story](spdd/stories/UI-001c-new-story-flow.md)
+    streaming, cancellation `OnShutdown`) (~1.5j) — [story](.yukki/stories/UI-001c-new-story-flow.md)
 - ⬜ **UI-004** — Canvas REASONS éditable (React Flow v12, drag&drop des
-  7 blocs R/E/A/S/O/N/S, save vers `spdd/prompts/<id>-<slug>.md`).
+  7 blocs R/E/A/S/O/N/S, save vers `.yukki/prompts/<id>-<slug>.md`).
   Suite directe d'UI-001.
 - ⬜ **UI-003** — Wizard d'install Claude CLI au premier lancement de
   l'app (détection OS, lien vers binaires Anthropic, vérification post-install).
@@ -154,24 +154,24 @@ Les autres préfixes (`CORE-`, `DOC-`, `UI-`, `INT-`) concernent les
 features du projet.
 
 Quand un item passe de ⬜ à 🟡 :
-1. Créer la story dans `spdd/stories/<id>-<slug>.md` (`status: draft`)
+1. Créer la story dans `.yukki/stories/<id>-<slug>.md` (`status: draft`)
 2. Dérouler le cycle SPDD complet (étape 1 → 5)
 3. Passer la ligne à ✅ une fois `status: implemented` côté canvas
 
-Cf. [`spdd/README.md`](spdd/README.md) pour la philosophie générale et
-l'exemple complet de META-001 ; [`spdd/GUIDE.md`](spdd/GUIDE.md) pour le
+Cf. [`.yukki/README.md`](.yukki/README.md) pour la philosophie générale et
+l'exemple complet de META-001 ; [`.yukki/GUIDE.md`](.yukki/GUIDE.md) pour le
 guide pédagogique avec schémas.
 
 ## Historique de ce fichier
 
-- **2026-04-30** — création initiale en `spdd/TODO.md`, 12 items
+- **2026-04-30** — création initiale en `.yukki/TODO.md`, 12 items
   (4 livrés, 7 pending, 1 fix)
 - **2026-04-30** — ajout META-006 (format de nommage canonical SPDD),
   13 items
 - **2026-04-30** — déplacement à la racine du repo (`/TODO.md`),
   convention plus standard pour la visibilité ; les liens internes ont
-  été ajustés en conséquence (`spdd/stories/`, `spdd/README.md`,
-  `spdd/GUIDE.md`)
+  été ajustés en conséquence (`.yukki/stories/`, `.yukki/README.md`,
+  `.yukki/GUIDE.md`)
 - **2026-04-30** — ajout 🎫 *Ticket IT exclusion AV* (action
   opérationnelle hors code), nouvelle section *"Actions opérationnelles"*
   + légende mise à jour. 14 items au total.

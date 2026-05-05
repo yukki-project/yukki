@@ -154,7 +154,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
           <DialogTitle>New SPDD story</DialogTitle>
           <DialogDescription>
             Describe what you want to build. Claude will generate a complete
-            user story (background, value, scope, AC) under <code>spdd/stories/</code>.
+            user story (background, value, scope, AC) under <code>.yukki/stories/</code>.
           </DialogDescription>
         </DialogHeader>
 

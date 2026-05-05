@@ -1,8 +1,8 @@
 ---
 id: <ID>
 slug: <kebab-case-slug>
-story: spdd/stories/<ID>-<slug>.md
-canvas: spdd/prompts/<ID>-<slug>.md
+story: .yukki/stories/<ID>-<slug>.md
+canvas: .yukki/prompts/<ID>-<slug>.md
 status: draft
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
@@ -15,7 +15,7 @@ updated: <YYYY-MM-DD>
 
 ## Cibles
 
-Pour chaque Operation du canvas (`spdd/prompts/<ID>-<slug>.md` section O) :
+Pour chaque Operation du canvas (`.yukki/prompts/<ID>-<slug>.md` section O) :
 
 - Module / fichier sous test
 - Niveaux : unitaire (logique pure) / intégration (modules collaborant) / contrat (provider mocké)
@@ -42,7 +42,7 @@ Tableau dérivé de la section *Cas limites identifiés* de l'analyse + des
 ## Sources
 
 - Méthodologie SPDD : <https://martinfowler.com/articles/structured-prompt-driven/>
-- Cas limites : `spdd/methodology/edge-cases.md`
+- Cas limites : `.yukki/methodology/edge-cases.md`
 
 ## Changelog
 

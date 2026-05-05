@@ -2,7 +2,7 @@
 #
 # CORE-002 scope: only the `depguard` linter is enabled, with a single
 # rule (`core-isolation`) that enforces the architectural boundary
-# defined in spdd/stories/CORE-002-isolate-business-core.md:
+# defined in .yukki/stories/CORE-002-isolate-business-core.md:
 #
 #   The 4 business-core packages (workflow, provider, templates,
 #   artifacts) MUST NOT import cobra, wails, internal/uiapp, or any

@@ -13,7 +13,7 @@
 //
 // Templates and artifacts touch the real file system in a t.TempDir.
 //
-// See spdd/stories/CORE-002-isolate-business-core.md for the rationale.
+// See .yukki/stories/CORE-002-isolate-business-core.md for the rationale.
 package integration_test
 
 import (

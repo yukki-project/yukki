@@ -163,7 +163,7 @@ export function WorkflowPipeline() {
       <div className="flex flex-1 items-center justify-center p-8">
         <p className="text-sm text-muted-foreground">
           No SPDD artifacts yet. Run{' '}
-          <code className="font-mono">/spdd-story</code> to create one.
+          <code className="font-mono">/yukki-story</code> to create one.
         </p>
       </div>
     );

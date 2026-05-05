@@ -1,7 +1,7 @@
 # Testing — guide opérationnel yukki
 
 > **Doc projet** (instance), pas méthodo. Pour le **pourquoi** et
-> les **patterns**, voir [`spdd/methodology/testing/`](../spdd/methodology/testing/)
+> les **patterns**, voir [`.yukki/methodology/testing/`](../.yukki/methodology/testing/)
 > (cluster TEST-001). Ce document liste les **outils choisis pour
 > yukki** (Go + TypeScript/React + Wails) et leurs commandes.
 
@@ -13,9 +13,9 @@
 
 Toutes les pratiques ci-dessous **respectent** les seuils
 méthodologiques de
-[`coverage-discipline.md`](../spdd/methodology/testing/coverage-discipline.md)
+[`coverage-discipline.md`](../.yukki/methodology/testing/coverage-discipline.md)
 (70% global, 85% modules critiques) et le catalogue de
-[`test-smells.md`](../spdd/methodology/testing/test-smells.md).
+[`test-smells.md`](../.yukki/methodology/testing/test-smells.md).
 
 ---
 
@@ -28,8 +28,8 @@ méthodologiques de
 | Test runner | `testing` (stdlib) | actif |
 | Coverage | `go test -cover` (stdlib) | actif |
 | Mocking | manual interfaces, pas de gomock V1 | actif |
-| Property-based | `gopter` (à introduire selon besoin) | candidat — voir [`property-based-testing.md`](../spdd/methodology/testing/property-based-testing.md) |
-| Mutation testing | `go-mutesting` ciblé sur `internal/artifacts/` | candidat — voir [`mutation-testing.md`](../spdd/methodology/testing/mutation-testing.md) |
+| Property-based | `gopter` (à introduire selon besoin) | candidat — voir [`property-based-testing.md`](../.yukki/methodology/testing/property-based-testing.md) |
+| Mutation testing | `go-mutesting` ciblé sur `internal/artifacts/` | candidat — voir [`mutation-testing.md`](../.yukki/methodology/testing/mutation-testing.md) |
 | Lint | `go vet`, `gofmt`, `staticcheck` (via `golangci-lint`) | actif |
 
 ### Commandes
@@ -92,7 +92,7 @@ Modules secondaires (≥ 70%) : `internal/clilog`, `internal/templates`,
 ### Conventions
 
 - **Naming** : `Test<MethodName>_<Scenario>` (cf.
-  [`test-naming.md`](../spdd/methodology/testing/test-naming.md))
+  [`test-naming.md`](../.yukki/methodology/testing/test-naming.md))
 - **Sous-tests** via `t.Run(name, func(t *testing.T) {...})`
   pour grouper plusieurs cas
 - **Fichiers** : `*_test.go` à côté du fichier sous test
@@ -110,17 +110,17 @@ Modules secondaires (≥ 70%) : `internal/clilog`, `internal/templates`,
 | Component testing | `@testing-library/react` + `@testing-library/jest-dom` | candidat |
 | Coverage | `@vitest/coverage-v8` (V8 native) | candidat |
 | Mocking API | `MSW` (Mock Service Worker) | candidat |
-| Property-based | `fast-check` | candidat — voir [`property-based-testing.md`](../spdd/methodology/testing/property-based-testing.md) |
-| Mutation testing | `Stryker` ciblé sur `frontend/src/stores/` | candidat — voir [`mutation-testing.md`](../spdd/methodology/testing/mutation-testing.md) |
+| Property-based | `fast-check` | candidat — voir [`property-based-testing.md`](../.yukki/methodology/testing/property-based-testing.md) |
+| Mutation testing | `Stryker` ciblé sur `frontend/src/stores/` | candidat — voir [`mutation-testing.md`](../.yukki/methodology/testing/mutation-testing.md) |
 | a11y | `@axe-core/react` (via test setup) | candidat — voir
-  [`testing-frontend.md`](../spdd/methodology/testing/testing-frontend.md) §a11y |
+  [`testing-frontend.md`](../.yukki/methodology/testing/testing-frontend.md) §a11y |
 | Lint | ESLint + TypeScript strict | actif (TS strict, ESLint pas encore) |
 | Type-check | `tsc --noEmit` | actif via `npm run build` |
 
 État actuel : **aucun test automatisé** sur le frontend yukki.
 Cohérent avec la décision SPDD V1 (UI-001b/c/UI-006/UI-007/UI-008
 ont validé manuellement). Cette section décrit la **stack cible**
-quand `/spdd-tests` (étape 6 SPDD, future) sera implémentée.
+quand `/yukki-tests` (étape 6 SPDD, future) sera implémentée.
 
 ### Commandes (cible)
 
@@ -163,20 +163,20 @@ shadcn — déjà testés en amont par shadcn).
 ### Conventions
 
 - **Naming** : `describe('<sujet>', () => { it('<comportement>') })`
-  (cf. [`test-naming.md`](../spdd/methodology/testing/test-naming.md)
+  (cf. [`test-naming.md`](../.yukki/methodology/testing/test-naming.md)
   §Frontend)
 - **Fichiers** : `*.test.ts` ou `*.test.tsx` à côté du fichier
   sous test
 - **Mocks Wails bindings** : `vi.mock('@/wailsjs/go/main/App')`
   pour stub les bindings Go-côté-front en test
 - **Pas de snapshot tests par défaut** (cf.
-  [`snapshot-testing.md`](../spdd/methodology/testing/snapshot-testing.md)
+  [`snapshot-testing.md`](../.yukki/methodology/testing/snapshot-testing.md)
   decision tree — seulement si caractérisation legacy ou
   output stable)
 
 ---
 
-## Anti-cheat appliqués (cf. [`coverage-discipline.md`](../spdd/methodology/testing/coverage-discipline.md))
+## Anti-cheat appliqués (cf. [`coverage-discipline.md`](../.yukki/methodology/testing/coverage-discipline.md))
 
 | Anti-cheat | Statut yukki |
 |---|---|
@@ -214,14 +214,14 @@ backend ; pas de tests frontend automatisés.
 frontend, écrire les tests des stores Zustand (modules critiques).
 
 **Phase 3** — câbler les 4 anti-cheat de
-[`coverage-discipline.md`](../spdd/methodology/testing/coverage-discipline.md)
+[`coverage-discipline.md`](../.yukki/methodology/testing/coverage-discipline.md)
 en CI :
 - mutation testing sur `internal/artifacts/`
 - test size limit lint
 - forbid patterns lint
 - coverage drift gate
 
-**Phase 4** — implémenter la skill SPDD `/spdd-tests` (étape 6
+**Phase 4** — implémenter la skill SPDD `/yukki-tests` (étape 6
 du workflow) qui consomme TEST-001 + ce TESTING.md pour générer
 des tests conformes pour toute Operation.
 
@@ -229,9 +229,9 @@ des tests conformes pour toute Operation.
 
 ## Voir aussi
 
-- [`spdd/methodology/testing/`](../spdd/methodology/testing/) — cluster
+- [`.yukki/methodology/testing/`](../.yukki/methodology/testing/) — cluster
   méthodo TEST-001 (patterns langage-agnostiques)
 - [`README.md`](../README.md) — overview yukki
 - [`DEVELOPMENT.md`](../DEVELOPMENT.md) — environnement de dev (Wails,
   workarounds AV Defender)
-- [`spdd/README.md`](../spdd/README.md) — workflow SPDD général
+- [`.yukki/README.md`](../.yukki/README.md) — workflow SPDD général

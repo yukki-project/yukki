@@ -11,6 +11,6 @@
 //     dependencies (Provider, Logger, TemplateLoader, Writer).
 //   - No global state beyond Go runtime defaults.
 //
-// See spdd/stories/CORE-002-isolate-business-core.md for the rationale
+// See .yukki/stories/CORE-002-isolate-business-core.md for the rationale
 // of this isolation.
 package workflow

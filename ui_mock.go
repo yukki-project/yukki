@@ -50,7 +50,7 @@ without burning Claude tokens.
 //
 // The mock is configured to return mockStoryStub on Generate, which
 // passes ValidateFrontmatter and lets the UI demonstrate a successful
-// /spdd-story round-trip without Claude.
+// /yukki-story round-trip without Claude.
 func newProvider(logger *slog.Logger) provider.Provider {
 	return &provider.MockProvider{
 		NameVal:  "mock",

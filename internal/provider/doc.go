@@ -17,6 +17,6 @@
 //   - No global state. Each Provider instance owns its config (binary
 //     path, args, timeout).
 //
-// See spdd/stories/CORE-002-isolate-business-core.md for the rationale
+// See .yukki/stories/CORE-002-isolate-business-core.md for the rationale
 // of this isolation.
 package provider

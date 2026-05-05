@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-// writeArtifact is a small helper to set up a fixture <dir>/spdd/<kind>/<name>
+// writeArtifact is a small helper to set up a fixture <dir>/.yukki/<kind>/<name>
 // with the given contents. Returns the absolute path of the written file.
 func writeArtifact(t *testing.T, root, kind, name, content string) string {
 	t.Helper()
-	dir := filepath.Join(root, "spdd", kind)
+	dir := filepath.Join(root, ProjectDirName, kind)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatalf("mkdir %s: %v", dir, err)
 	}
@@ -137,7 +137,7 @@ func TestListArtifacts_InvalidKind(t *testing.T) {
 
 func TestListArtifacts_DirNotExist(t *testing.T) {
 	root := t.TempDir()
-	// We never call writeArtifact, so spdd/stories does not exist.
+	// We never call writeArtifact, so .yukki/stories does not exist.
 	_, err := ListArtifacts(root, "stories")
 	if err == nil {
 		t.Fatal("expected error for non-existent dir, got nil")
@@ -151,7 +151,7 @@ func TestListArtifacts_DirNotExist(t *testing.T) {
 
 func TestListArtifacts_EmptyDir(t *testing.T) {
 	root := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(root, "spdd", "stories"), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ProjectDirName, "stories"), 0o755); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	out, err := ListArtifacts(root, "stories")
@@ -174,7 +174,7 @@ func TestListArtifacts_IgnoresSubDirs(t *testing.T) {
 	writeArtifact(t, root, "stories", "STORY-001.md",
 		"---\nid: STORY-001\nupdated: 2026-05-01\n---\n# X\n")
 	// Sub-directory with a .md file inside — should be ignored
-	subdir := filepath.Join(root, "spdd", "stories", "archive")
+	subdir := filepath.Join(root, ProjectDirName, "stories", "archive")
 	if err := os.MkdirAll(subdir, 0o755); err != nil {
 		t.Fatalf("mkdir subdir: %v", err)
 	}
