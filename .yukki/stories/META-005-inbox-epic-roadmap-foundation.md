@@ -2,9 +2,9 @@
 id: META-005
 slug: inbox-epic-roadmap-foundation
 title: Hiérarchie SPDD étendue — Inbox → Epic → Story → Roadmap (foundation)
-status: reviewed
+status: implemented
 created: 2026-05-03
-updated: 2026-05-04
+updated: 2026-05-06
 owner: Thibaut Sannier
 modules:
   - spdd

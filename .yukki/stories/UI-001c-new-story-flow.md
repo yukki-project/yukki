@@ -2,9 +2,9 @@
 id: UI-001c
 slug: new-story-flow
 title: New Story flow — modal, RunStory binding, EventsEmit streaming, cancellation
-status: draft
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-06
 owner: Thibaut Sannier
 modules:
   - cmd/yukki

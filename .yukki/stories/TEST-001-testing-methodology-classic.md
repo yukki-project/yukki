@@ -2,9 +2,9 @@
 id: TEST-001
 slug: testing-methodology-classic
 title: Refs méthodologiques pour les tests classiques (frontend + backend, langage-agnostique)
-status: reviewed
+status: implemented
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-06
 owner: Thibaut Sannier
 modules:
   - docs

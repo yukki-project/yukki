@@ -2,9 +2,9 @@
 id: UI-006
 slug: shell-vscode-layout
 title: Shell VS Code-style — activity bar + sidebar collapsable + theming yukki dark
-status: reviewed
+status: implemented
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-06
 owner: Thibaut Sannier
 modules:
   - frontend

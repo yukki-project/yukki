@@ -2,9 +2,9 @@
 id: TEST-001
 slug: testing-methodology-classic
 story: .yukki/stories/TEST-001-testing-methodology-classic.md
-status: reviewed
+status: implemented
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-06
 ---
 
 # Analyse — TEST-001 — Refs méthodo testing classique

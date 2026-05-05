@@ -2,9 +2,9 @@
 id: UI-007
 slug: custom-titlebar-dark
 title: Custom title bar minimaliste intégré au theming yukki dark
-status: reviewed
+status: implemented
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-06
 owner: yukki-frontend
 modules:
   - frontend

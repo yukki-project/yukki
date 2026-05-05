@@ -2,9 +2,9 @@
 id: META-004
 slug: rename-spdd-to-dot-yukki
 title: Renommer `spdd/` en `.yukki/` et `/yukki-*` en `/yukki-*`
-status: reviewed
+status: implemented
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-06
 owner: Thibaut Sannier
 modules:
   - internal/uiapp

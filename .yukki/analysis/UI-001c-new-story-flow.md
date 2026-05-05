@@ -3,9 +3,9 @@ id: UI-001c
 slug: new-story-flow
 story: .yukki/stories/UI-001c-new-story-flow.md
 parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
-status: reviewed
+status: synced
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-06
 ---
 
 # Analyse — UI-001c (delta) — New Story flow : modal + RunStory binding + EventsEmit + cancellation

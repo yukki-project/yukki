@@ -2,9 +2,9 @@
 id: META-005
 slug: inbox-epic-roadmap-foundation
 story: .yukki/stories/META-005-inbox-epic-roadmap-foundation.md
-status: reviewed
+status: implemented
 created: 2026-05-04
-updated: 2026-05-04
+updated: 2026-05-06
 ---
 
 # Analyse — Foundation Inbox / Epic / Roadmap
