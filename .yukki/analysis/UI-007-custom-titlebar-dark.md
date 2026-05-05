@@ -2,9 +2,9 @@
 id: UI-007
 slug: custom-titlebar-dark
 story: .yukki/stories/UI-007-custom-titlebar-dark.md
-status: reviewed
+status: implemented
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-06
 ---
 
 # Analyse — UI-007 — Custom title bar minimaliste yukki dark

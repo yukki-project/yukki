@@ -2,9 +2,9 @@
 id: META-004
 slug: rename-spdd-to-dot-yukki
 story: .yukki/stories/META-004-rename-spdd-to-dot-yukki.md
-status: reviewed
+status: implemented
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-06
 ---
 
 # Analyse — Renommer `spdd/` en `.yukki/` et `/yukki-*` en `/yukki-*`

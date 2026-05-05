@@ -3,9 +3,9 @@ id: META-004
 slug: rename-spdd-to-dot-yukki
 story: .yukki/stories/META-004-rename-spdd-to-dot-yukki.md
 analysis: .yukki/analysis/META-004-rename-spdd-to-dot-yukki.md
-status: draft
+status: implemented
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-06
 ---
 
 # Canvas REASONS — Renommer `spdd/` en `.yukki/` et `/yukki-*` en `/yukki-*`
