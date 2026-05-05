@@ -170,6 +170,55 @@ sources:
 | `INT-<n>` | intégrations (providers, MCP, etc.) |
 | `DOC-<n>` | documentation |
 | `META-<n>` | méthodologie SPDD elle-même (templates, skills, refs) |
+| `INBOX-<n>` | inbox / capture brute (discovery zone) |
+| `EPIC-<n>` | epic — regroupement thématique de stories |
+| `ROADMAP-<n>` | roadmap — vue projection (kanban Now/Next/Later) |
+
+---
+
+## Hiérarchie discovery → delivery
+
+yukki étend la méthode SPDD avec une chaîne complète à 4 niveaux
+(discovery → delivery), introduits par `META-005` :
+
+```
+┌─────────────────┐
+│  Inbox          │  ← Discovery zone, capture brute
+│  faible friction│     PAS sur la roadmap
+└────────┬────────┘
+         │  qualification humaine : "ça vaut le coup ?"
+         ▼
+   Promotion :
+   ┌──────────────────────┬──────────────────────┐
+   │                      │                      │
+ atomique             gros chantier          rejetée
+   │                      │
+   ▼                      ▼
+┌─────────┐          ┌─────────┐
+│ Story   │          │  Epic   │  ← Committed work
+│ (INVEST)│          │         │     parents de stories
+└─────────┘          └────┬────┘
+                          │ décomposition INVEST
+                          ▼
+                     ┌─────────┐
+                     │ Stories │
+                     └─────────┘
+```
+
+La **Roadmap** n'est **pas** un niveau hiérarchique : c'est une **vue
+projection** (Now / Next / Later, ou Q1/Q2/Q3) qui montre les Epics et
+les Stories standalone engagés sur un axe temporel. Les Inbox
+**n'apparaissent pas** sur la roadmap.
+
+| Artefact | Rôle | Granularité | Lifecycle |
+|---|---|---|---|
+| **Inbox** | Capture brute (discovery zone) | Titre + 1 paragraphe | `unsorted → promoted (story\|epic) ou rejected` |
+| **Epic** | Regroupement thématique de stories liées | Vision + AC haut niveau + liste de stories enfants | `draft → in-progress → mature → done` |
+| **Story** | Niveau actuel SPDD (INVEST), inchangé | Existant (story.md) | `draft → reviewed → implemented` |
+| **Roadmap** | Vue projection des Epics + Stories standalone | Kanban Now/Next/Later (frontmatter YAML structuré) | vivante (mise à jour continue) |
+
+Les UX détaillées (capture rapide, kanban, transitions) sont portées
+par les stories enfants `INBOX-001/002`, `EPIC-001`, `ROADMAP-001/002`.
 
 ---
 

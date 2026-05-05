@@ -9,6 +9,9 @@ const TITLES: Record<ShellMode, string> = {
   analysis: 'Analyses',
   prompts: 'Canvas',
   tests: 'Tests',
+  inbox: 'Inbox',     // META-005
+  epics: 'Epics',     // META-005
+  roadmap: 'Roadmap', // META-005
   settings: 'Settings',
   workflow: 'Workflow',
 };
