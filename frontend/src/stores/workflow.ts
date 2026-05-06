@@ -10,9 +10,6 @@ import { useArtifactsStore } from './artifacts';
 import { KINDS, type StageKind } from '../components/workflow/stages';
 
 export type ColumnState =
-  | 'inbox'
-  | 'epics'
-  | 'roadmap'
   | 'stories'
   | 'analysis'
   | 'prompts'
@@ -20,9 +17,6 @@ export type ColumnState =
   | 'tests';
 
 export const COLUMN_ORDER: ColumnState[] = [
-  'inbox',
-  'epics',
-  'roadmap',
   'stories',
   'analysis',
   'prompts',
@@ -31,9 +25,6 @@ export const COLUMN_ORDER: ColumnState[] = [
 ];
 
 export const COLUMN_LABELS: Record<ColumnState, string> = {
-  inbox: 'Inbox',
-  epics: 'Epic',
-  roadmap: 'Roadmap',
   stories: 'Story',
   analysis: 'Analysis',
   prompts: 'Canvas',
@@ -75,9 +66,6 @@ interface WorkflowState {
 
 function emptyColumns(): Record<ColumnState, WorkflowItem[]> {
   return {
-    inbox: [],
-    epics: [],
-    roadmap: [],
     stories: [],
     analysis: [],
     prompts: [],
@@ -109,13 +97,13 @@ function deriveState(cells: Partial<Record<StageKind, Meta>>): {
     return { state: 'stories', activeKind: 'stories', active: cells.stories };
   }
   if (cells.inbox) {
-    return { state: 'inbox', activeKind: 'inbox', active: cells.inbox };
+    return null;
   }
   if (cells.epics) {
-    return { state: 'epics', activeKind: 'epics', active: cells.epics };
+    return null;
   }
   if (cells.roadmap) {
-    return { state: 'roadmap', activeKind: 'roadmap', active: cells.roadmap };
+    return null;
   }
   return null;
 }
