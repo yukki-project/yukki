@@ -144,7 +144,7 @@ export default function App() {
   }, [refreshClaude]);
 
   return (
-    <main className="min-h-screen flex flex-col bg-background text-foreground">
+    <main className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
       <TitleBar />
       <TabBar />
       {!current ? (

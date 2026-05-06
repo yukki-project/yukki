@@ -57,15 +57,43 @@ préparée par CORE-002, à implémenter en post-MVP. Voir
 
 ## Build
 
+### CLI uniquement (sans surface UI Wails)
+
 ```bash
 go build .          # produit ./yukki(.exe) à la racine
 go build ./...      # build tout (binaires + packages)
 ```
 
+> **Attention** : le binaire produit par `go build .` n'a **pas** le tag
+> `desktop` de Wails. La sous-commande `yukki ui` affichera un dialog
+> d'avertissement Wails. N'utiliser que pour développer / tester le CLI.
+
 **Note layout** : le package `main` (entrée du binaire) vit **à la
 racine du repo** (`main.go`, `ui.go`, etc.), pas dans `cmd/yukki/`.
 Cette convention est imposée par Wails v2 dont le générateur de
 bindings TypeScript scanne le dossier où vit `wails.json`.
+
+### Binaire Wails complet (avec `yukki ui`)
+
+```bash
+# Windows
+scripts\dev\ui-build.bat
+# Linux / macOS
+scripts/dev/ui-build.sh
+```
+
+Produit `build/bin/yukki.exe` (Windows) ou `build/bin/yukki` (Linux/macOS)
+avec le tag `desktop` injecté par Wails. Lancer ensuite :
+
+```bash
+build\bin\yukki ui        # Windows
+./build/bin/yukki ui      # Linux / macOS
+```
+
+Pour ajouter `build/bin/` au `PATH` localement :
+```powershell
+$env:PATH = "$PWD\build\bin;$env:PATH"   # PowerShell (session uniquement)
+```
 
 ## Tests
 

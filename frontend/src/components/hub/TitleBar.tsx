@@ -27,11 +27,10 @@ export function TitleBar(): JSX.Element {
           className="h-5 w-5"
           draggable={false}
         />
-        <span className="text-xs text-muted-foreground">yukki</span>
         <FileMenu />
       </div>
 
-      <div className="flex-1 self-stretch" style={DRAG_REGION} />
+      <div className="flex-1 self-stretch" style={DRAG_REGION} onDoubleClick={() => WindowToggleMaximise()} />
 
       <div className="flex h-full">
         <Button
