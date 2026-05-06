@@ -54,6 +54,10 @@ export function UpdateArtifactPriority(path, priority) {
 }
 
 // UI-009
+export function SelectDirectory() {
+  return window['go']['uiapp']['App']['SelectDirectory']();
+}
+
 export function OpenProject(path) {
   return window['go']['uiapp']['App']['OpenProject'](path);
 }

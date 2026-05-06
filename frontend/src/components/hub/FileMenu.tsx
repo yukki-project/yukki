@@ -4,6 +4,7 @@ import {
   InitializeYukki,
   ListRecentProjects,
   OpenProject,
+  SelectDirectory,
 } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,24 +58,14 @@ export function FileMenu(): JSX.Element {
   const handleInitialize = useCallback(async () => {
     setOpen(false);
     try {
-      const meta = await OpenProject('');
-      if (meta && meta.Path) {
-        addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
-      }
-    } catch (e: unknown) {
-      if (String(e).includes('no .yukki')) {
-        const path = (e as { path?: string })?.path ?? '';
-        if (path) {
-          try {
-            await InitializeYukki(path);
-            await handleOpenProject(path);
-          } catch (ie) {
-            console.error('InitializeYukki failed', ie);
-          }
-        }
-      }
+      const path = await SelectDirectory();
+      if (!path) return; // user cancelled
+      await InitializeYukki(path);
+      await handleOpenProject(path);
+    } catch (e) {
+      console.error('InitializeYukki failed', e);
     }
-  }, [addProject, handleOpenProject]);
+  }, [handleOpenProject]);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
