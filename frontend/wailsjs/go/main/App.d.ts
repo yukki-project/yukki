@@ -21,6 +21,29 @@ export function UpdateArtifactStatus(path: string, newStatus: string): Promise<v
 export function AllowedTransitions(currentStatus: string): Promise<string[]>;
 export function UpdateArtifactPriority(path: string, priority: number): Promise<void>;
 
+// UI-009
+export function OpenProject(path: string): Promise<ProjectMeta>;
+export function CloseProject(idx: number): Promise<void>;
+export function SwitchProject(idx: number): Promise<void>;
+export function ListOpenedProjects(): Promise<ProjectMeta[]>;
+export function ReorderProjects(order: number[]): Promise<void>;
+export function LoadRegistry(): Promise<ProjectsRegistry>;
+export function ListRecentProjects(): Promise<ProjectMeta[]>;
+export function InitializeYukki(dir: string): Promise<void>;
+
+export interface ProjectMeta {
+  Path: string;
+  Name: string;
+  LastOpened: string;
+}
+
+export interface ProjectsRegistry {
+  version: number;
+  active_index: number;
+  opened_projects: Array<{ path: string; name: string; last_opened: string }>;
+  recent_projects: Array<{ path: string; name: string; last_opened: string }>;
+}
+
 export interface Meta {
   ID: string;
   Slug: string;

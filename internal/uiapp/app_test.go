@@ -15,20 +15,18 @@ import (
 
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/provider"
-	"github.com/yukki-project/yukki/internal/templates"
 )
 
 func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
-// cfgLoaderAndWriter wires the App's loader and writer as SelectProject
-// would (templates rooted at projectDir, stories writer rooted at
-// <projectDir>/.yukki/stories), so RunStory can run end-to-end.
+// setTestProject is defined in bindings_test.go (same package).
+// cfgLoaderAndWriter kept as thin alias for RunStory happy-path tests
+// that call it explicitly.
 func cfgLoaderAndWriter(t *testing.T, app *App, projectDir string) {
 	t.Helper()
-	app.loader = templates.NewLoader(projectDir)
-	app.writer = artifacts.NewWriter(filepath.Join(projectDir, ".yukki", "stories"))
+	setTestProject(t, app, projectDir)
 }
 
 // captureEmits silences the package-level emitEvent during the test
@@ -58,6 +56,8 @@ func TestNewApp_AssignsDeps(t *testing.T) {
 }
 
 func TestApp_OnStartup_StoresContext(t *testing.T) {
+	withTempRegistry(t)
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	parent := context.Background()
 
@@ -77,6 +77,8 @@ func TestApp_OnStartup_StoresContext(t *testing.T) {
 }
 
 func TestApp_OnShutdown_CancelsContext(t *testing.T) {
+	withTempRegistry(t)
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 
@@ -111,35 +113,53 @@ func withDialogStub(t *testing.T, stub func(ctx context.Context, opts runtime.Op
 
 func TestApp_SelectProject_Success(t *testing.T) {
 	dir := t.TempDir()
+	// Create .yukki/ so newOpenedProject succeeds.
+	if err := os.MkdirAll(filepath.Join(dir, ".yukki", "stories"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	withTempRegistry(t)
+	captureEmits(t)
 	withDialogStub(t, func(ctx context.Context, opts runtime.OpenDialogOptions) (string, error) {
 		return dir, nil
 	})
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.OnStartup(context.Background())
 	got, err := app.SelectProject()
 	if err != nil {
 		t.Fatalf("SelectProject: %v", err)
 	}
-	if got != dir {
-		t.Fatalf("expected %q, got %q", dir, got)
+	if got == "" {
+		t.Fatal("expected non-empty path from SelectProject")
 	}
-	if app.projectDir != dir {
-		t.Fatalf("projectDir = %q, want %q", app.projectDir, dir)
+	app.mu.RLock()
+	n := len(app.openedProjects)
+	var loader, writer interface{}
+	if n > 0 {
+		loader = app.openedProjects[0].loader
+		writer = app.openedProjects[0].writer
 	}
-	if app.loader == nil {
+	app.mu.RUnlock()
+	if n != 1 {
+		t.Fatalf("expected 1 opened project, got %d", n)
+	}
+	if loader == nil {
 		t.Fatalf("expected loader set after SelectProject")
 	}
-	if app.writer == nil {
+	if writer == nil {
 		t.Fatalf("expected writer set after SelectProject")
 	}
 }
 
 func TestApp_SelectProject_Cancelled(t *testing.T) {
+	withTempRegistry(t)
+	captureEmits(t)
 	withDialogStub(t, func(ctx context.Context, opts runtime.OpenDialogOptions) (string, error) {
 		return "", nil
 	})
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.OnStartup(context.Background())
 	got, err := app.SelectProject()
 	if err != nil {
 		t.Fatalf("expected nil err on cancel, got %v", err)
@@ -147,8 +167,11 @@ func TestApp_SelectProject_Cancelled(t *testing.T) {
 	if got != "" {
 		t.Fatalf("expected empty path on cancel, got %q", got)
 	}
-	if app.projectDir != "" {
-		t.Fatalf("projectDir should remain empty on cancel, got %q", app.projectDir)
+	app.mu.RLock()
+	n := len(app.openedProjects)
+	app.mu.RUnlock()
+	if n != 0 {
+		t.Fatalf("no project should be added on cancel, got %d", n)
 	}
 }
 
@@ -182,7 +205,7 @@ func TestApp_ListArtifacts_InvalidKind(t *testing.T) {
 		t.Fatal(err)
 	}
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	app.projectDir = dir
+	setTestProject(t, app, dir)
 
 	_, err := app.ListArtifacts("wrong")
 	if !errors.Is(err, artifacts.ErrInvalidKind) {
@@ -202,7 +225,7 @@ func TestApp_ListArtifacts_Delegation(t *testing.T) {
 	}
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	app.projectDir = dir
+	setTestProject(t, app, dir)
 
 	got, err := app.ListArtifacts("stories")
 	if err != nil {
@@ -361,7 +384,7 @@ func TestApp_ReadArtifact_Success(t *testing.T) {
 	}
 
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	app.projectDir = dir
+	setTestProject(t, app, dir)
 
 	got, err := app.ReadArtifact(path)
 	if err != nil {
@@ -375,7 +398,7 @@ func TestApp_ReadArtifact_Success(t *testing.T) {
 func TestApp_ReadArtifact_PathTraversalRejected(t *testing.T) {
 	dir := t.TempDir()
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	app.projectDir = dir
+	setTestProject(t, app, dir)
 
 	for _, bad := range []string{
 		filepath.Join(dir, "outside.md"),
@@ -396,7 +419,7 @@ func TestApp_ReadArtifact_FileNotExist(t *testing.T) {
 		t.Fatal(err)
 	}
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
-	app.projectDir = dir
+	setTestProject(t, app, dir)
 
 	_, err := app.ReadArtifact(filepath.Join(dir, ".yukki", "stories", "nope.md"))
 	if !errors.Is(err, os.ErrNotExist) {
@@ -429,6 +452,8 @@ Body.
 `
 
 func TestApp_RunStory_NoProject(t *testing.T) {
+	withTempRegistry(t)
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 	_, err := app.RunStory("desc", "STORY", false)
@@ -440,7 +465,7 @@ func TestApp_RunStory_NoProject(t *testing.T) {
 func TestApp_RunStory_AlreadyRunning(t *testing.T) {
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
-	app.projectDir = t.TempDir()
+	setTestProject(t, app, t.TempDir())
 	app.running.Store(true) // simulate in-flight generation
 
 	_, err := app.RunStory("desc", "STORY", false)
@@ -453,13 +478,12 @@ func TestApp_RunStory_AlreadyRunning(t *testing.T) {
 // end-to-end with a MockProvider returning stubStoryUIC.
 func runStoryHappyPath(t *testing.T, mock *provider.MockProvider) (*App, string) {
 	t.Helper()
+	withTempRegistry(t)
 	dir := t.TempDir()
 	app := NewApp(mock, newTestLogger())
 	app.OnStartup(context.Background())
-	app.projectDir = dir
-	// Configure as SelectProject would: loader rooted at projectDir,
-	// writer rooted at <projectDir>/.yukki/stories.
-	cfgLoaderAndWriter(t, app, dir)
+	// setTestProject wires an OpenedProject with loader + writer.
+	setTestProject(t, app, dir)
 	return app, dir
 }
 

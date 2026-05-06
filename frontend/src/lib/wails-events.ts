@@ -13,6 +13,23 @@ export interface ProviderEndPayload {
   durationMs: number;
 }
 
+// UI-009 — project lifecycle events
+export interface ProjectOpenedPayload {
+  path: string;
+  name: string;
+  lastOpened: string;
+}
+
+export interface ProjectClosedPayload {
+  idx: number;
+}
+
+export interface ProjectSwitchedPayload {
+  path: string;
+  name: string;
+  lastOpened: string;
+}
+
 interface WailsRuntime {
   EventsOn: (eventName: string, callback: (...data: unknown[]) => void) => () => void;
 }
