@@ -31,6 +31,9 @@ export function LoadRegistry(): Promise<ProjectsRegistry>;
 export function ListRecentProjects(): Promise<ProjectMeta[]>;
 export function InitializeYukki(dir: string): Promise<void>;
 
+// UI-010
+export function WriteArtifact(path: string, content: string): Promise<void>;
+
 export interface ProjectMeta {
   Path: string;
   Name: string;

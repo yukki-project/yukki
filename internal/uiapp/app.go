@@ -293,6 +293,39 @@ func (a *App) ReadArtifact(path string) (string, error) {
 	return string(data), nil
 }
 
+// WriteArtifact writes content to the file at path. Refuses any path that does
+// not resolve under the .yukki/ directory of one of the currently opened projects
+// (path-traversal guard, Invariant I1). Returns an error if the file does not
+// already exist (modification only — no silent creation). Content is limited
+// to 1 MB. No ctx parameter (Wails 2.12 D-B5b).
+func (a *App) WriteArtifact(path, content string) error {
+	a.mu.RLock()
+	projs := make([]*OpenedProject, len(a.openedProjects))
+	copy(projs, a.openedProjects)
+	a.mu.RUnlock()
+
+	if len(projs) == 0 {
+		return errors.New("no project selected")
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("resolve abs path %q: %w", path, err)
+	}
+	if !hasYukkiPrefix(absPath, projs) {
+		return fmt.Errorf("path outside any opened project .yukki: %s", absPath)
+	}
+	if len(content) > 1<<20 {
+		return errors.New("content exceeds 1 MB limit")
+	}
+	if _, statErr := os.Stat(absPath); errors.Is(statErr, os.ErrNotExist) {
+		return fmt.Errorf("artifact does not exist %s: %w", absPath, os.ErrNotExist)
+	}
+	if err := os.WriteFile(absPath, []byte(content), 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", absPath, err)
+	}
+	return nil
+}
+
 // RunStory orchestrates workflow.RunStory with a uiProgress sink that
 // emits Wails events. Refuses to run if no project is selected or if
 // another generation is already in progress (ErrAlreadyRunning).
