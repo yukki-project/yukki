@@ -52,6 +52,7 @@ export interface Meta {
   Slug: string;
   Title: string;
   Status: string;
+  Created?: string;
   Updated: string;
   Priority?: number;
   Path: string;

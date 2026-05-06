@@ -46,6 +46,7 @@ type Meta struct {
 	Slug     string `yaml:"slug"`
 	Title    string `yaml:"title"`
 	Status   string `yaml:"status"`
+	Created  string `yaml:"created"`
 	Updated  string `yaml:"updated"`
 	Priority int    `yaml:"priority,omitempty"`
 	Path     string `yaml:"-"`
@@ -114,10 +115,10 @@ func ListArtifacts(dir, kind string) ([]Meta, error) {
 	}
 
 	sort.SliceStable(out, func(i, j int) bool {
-		if out[i].Updated != out[j].Updated {
-			return out[i].Updated > out[j].Updated
+		if out[i].Created != out[j].Created {
+			return out[i].Created > out[j].Created
 		}
-		return out[i].ID < out[j].ID
+		return out[i].Slug < out[j].Slug
 	})
 
 	return out, nil

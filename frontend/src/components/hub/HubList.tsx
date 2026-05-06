@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { AlertCircle, Plus } from 'lucide-react';
+import { AlertCircle, Archive, Plus } from 'lucide-react';
 import { type Meta } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useProjectStore } from '@/stores/project';
 import { NewStoryModal } from './NewStoryModal';
+
+const ARCHIVED_STATUSES = new Set(['synced']);
 
 export const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -29,23 +31,37 @@ export function HubList({ className }: HubListProps) {
   const projectDir = useProjectStore((s) => s.projectDir);
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const visible = showArchived ? items : items.filter((m) => !ARCHIVED_STATUSES.has(m.Status));
 
   return (
     <section className={cn('flex flex-col overflow-y-auto', className)} aria-label="Artefact list">
       <header className="sticky top-0 z-10 flex items-center justify-between bg-background border-b px-4 py-2">
         <div className="text-sm font-semibold capitalize">
           {kind}
-          <span className="ml-2 text-xs text-muted-foreground">{items.length} item(s)</span>
+          <span className="ml-2 text-xs text-muted-foreground">{visible.length} item(s)</span>
         </div>
-        {kind === 'stories' && (
+        <div className="flex items-center gap-1">
           <Button
-            size="sm"
-            onClick={() => setModalOpen(true)}
-            disabled={!projectDir}
+            variant={showArchived ? 'secondary' : 'ghost'}
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setShowArchived((v) => !v)}
+            title={showArchived ? 'Masquer les archivés' : 'Afficher les archivés (synced)'}
           >
-            <Plus className="mr-2 h-3 w-3" /> New Story
+            <Archive className="h-3.5 w-3.5" />
           </Button>
-        )}
+          {kind === 'stories' && (
+            <Button
+              size="sm"
+              onClick={() => setModalOpen(true)}
+              disabled={!projectDir}
+            >
+              <Plus className="mr-2 h-3 w-3" /> New Story
+            </Button>
+          )}
+        </div>
       </header>
       {error && (
         <div className="m-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
@@ -53,14 +69,15 @@ export function HubList({ className }: HubListProps) {
           {error}
         </div>
       )}
-      {!error && items.length === 0 && (
+      {!error && visible.length === 0 && (
         <p className="p-4 text-sm text-muted-foreground">No {kind} yet.</p>
       )}
-      {items.length > 0 && (
+      {visible.length > 0 && (
         <ul className="w-full">
-          {items.map((m: Meta) => {
+          {visible.map((m: Meta) => {
             const broken = !!m.Error;
             const active = m.Path === selectedPath;
+            const archived = ARCHIVED_STATUSES.has(m.Status);
             return (
               <li
                 key={m.Path}
@@ -68,6 +85,7 @@ export function HubList({ className }: HubListProps) {
                 className={cn(
                   'flex items-start gap-1.5 px-3 py-2 cursor-pointer border-b hover:bg-accent/40',
                   active && 'bg-accent/60',
+                  archived && 'opacity-40',
                 )}
               >
                 {/* ID + status */}
