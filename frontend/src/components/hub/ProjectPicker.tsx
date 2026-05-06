@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { FolderOpen, Sparkles } from 'lucide-react';
 import {
-  InitializeSPDD,
-  ListArtifacts,
-  SelectProject,
+  InitializeYukki,
+  OpenProject,
 } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useProjectStore } from '@/stores/project';
-import { useArtifactsStore } from '@/stores/artifacts';
+import { useTabsStore } from '@/stores/tabs';
 
 export function ProjectPicker() {
-  const setProjectDir = useProjectStore((s) => s.setProjectDir);
-  const setHasSpdd = useProjectStore((s) => s.setHasSpdd);
-  const refreshArtifacts = useArtifactsStore((s) => s.refresh);
+  const addProject = useTabsStore((s) => s.addProject);
 
   const [pendingDir, setPendingDir] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -22,18 +18,26 @@ export function ProjectPicker() {
   async function handleOpen() {
     setError('');
     try {
-      const dir = await SelectProject();
-      if (!dir) return;
-      try {
-        await ListArtifacts('stories');
-        setProjectDir(dir);
-        setHasSpdd(true);
-        void refreshArtifacts();
-      } catch {
-        setPendingDir(dir);
+      const meta = await OpenProject('');
+      if (!meta || !meta.Path) return;
+      // project:opened event will be handled by App.tsx EventsOn listener
+      // but in case the event hasn't fired yet we also add locally.
+      addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+    } catch (e: unknown) {
+      if (String(e).includes('no .yukki')) {
+        // Extract the path from the error — it was opened but lacks .yukki.
+        // Use a fresh picker to get the path.
+        try {
+          const meta2 = await OpenProject('');
+          if (meta2 && meta2.Path) {
+            setPendingDir(meta2.Path);
+          }
+        } catch {
+          // ignore
+        }
+      } else {
+        setError(String(e));
       }
-    } catch (e) {
-      setError(String(e));
     }
   }
 
@@ -42,10 +46,11 @@ export function ProjectPicker() {
     setError('');
     setBusy(true);
     try {
-      await InitializeSPDD(pendingDir);
-      setProjectDir(pendingDir);
-      setHasSpdd(true);
-      void refreshArtifacts();
+      await InitializeYukki(pendingDir);
+      const meta = await OpenProject(pendingDir);
+      if (meta && meta.Path) {
+        addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+      }
     } catch (e) {
       setError(String(e));
     } finally {

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { Minus, Square, X } from 'lucide-react';
 import yukkiLogo from '@/assets/yukki-logo.png';
 import { Button } from '@/components/ui/button';
+import { FileMenu } from '@/components/hub/FileMenu';
 import { cn } from '@/lib/utils';
 import {
   Quit,
@@ -27,6 +28,7 @@ export function TitleBar(): JSX.Element {
           draggable={false}
         />
         <span className="text-xs text-muted-foreground">yukki</span>
+        <FileMenu />
       </div>
 
       <div className="flex-1 self-stretch" style={DRAG_REGION} />

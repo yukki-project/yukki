@@ -79,13 +79,19 @@ type ClaudeStatus struct {
 // Public methods (PascalCase) become auto-generated TypeScript bindings
 // under frontend/wailsjs/go/main/App.
 type App struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	logger     *slog.Logger
-	provider   provider.Provider
-	projectDir string
-	loader     *templates.Loader
-	writer     *artifacts.Writer
+	ctx    context.Context
+	cancel context.CancelFunc
+	logger *slog.Logger
+	provider provider.Provider
+
+	// openedProjects holds the ordered list of currently open projects
+	// (one entry per tab in the UI).  activeIndex points to the currently
+	// active project (-1 when no project is open).  recentProjects mirrors
+	// the on-disk recent list in memory.  All three are protected by mu.
+	openedProjects []*OpenedProject
+	activeIndex    int
+	recentProjects []RegistryEntry
+	mu             sync.RWMutex
 
 	// running gates concurrent RunStory calls. Swap(true) at start,
 	// Store(false) at defer. ErrAlreadyRunning is returned if Swap
@@ -109,8 +115,9 @@ type App struct {
 // The context is set later by OnStartup (Wails lifecycle).
 func NewApp(p provider.Provider, logger *slog.Logger) *App {
 	return &App{
-		logger:   logger,
-		provider: p,
+		logger:      logger,
+		provider:    p,
+		activeIndex: -1,
 	}
 }
 
@@ -122,12 +129,14 @@ func (a *App) OnStartup(ctx context.Context) {
 	if a.logger != nil {
 		a.logger.Info("ui startup", "provider", a.provider.Name())
 	}
+	a.restoreRegistry()
 }
 
 // OnShutdown is invoked by Wails when the user closes the window. Cancels
 // the in-flight context so child operations (subprocess `claude` etc.)
 // receive a cancellation signal and clean up promptly.
 func (a *App) OnShutdown(ctx context.Context) {
+	a.persistRegistry()
 	if a.cancel != nil {
 		a.cancel()
 	}
@@ -139,32 +148,29 @@ func (a *App) OnShutdown(ctx context.Context) {
 // (Greet was removed in UI-001c per D-C11 — RunStory with MockProvider
 // covers a broader smoke path.)
 
-// SelectProject opens a native directory-picker dialog and, on a
-// non-empty selection, updates the App's projectDir / loader / writer.
-// A user cancellation returns ("", nil) so the frontend can distinguish
-// it from a real error.
+// SelectProject is a deprecated alias for OpenProject("").
+// It opens a native directory picker, adds the selected project to the
+// session, and returns its canonical path.  Returns ("", nil) on user
+// cancellation.
 //
-// Uses the App's startup context (a.ctx) — Wails 2.12 does not
-// auto-inject context.Context for bound methods, so the canvas-prescribed
-// `(ctx context.Context)` parameter is dropped here. Tracked for sync.
+// Deprecated: use OpenProject.
 func (a *App) SelectProject() (string, error) {
-	dir, err := openDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Select SPDD project root",
-	})
+	meta, err := a.OpenProject("")
 	if err != nil {
-		return "", fmt.Errorf("open directory dialog: %w", err)
+		return "", err
 	}
-	if dir == "" {
-		return "", nil
-	}
+	return meta.Path, nil
+}
 
-	a.projectDir = dir
-	a.loader = templates.NewLoader(dir)
-	a.writer = artifacts.NewWriter(filepath.Join(dir, artifacts.ProjectDirName, "stories"))
-	if a.logger != nil {
-		a.logger.Info("project selected", "dir", dir)
+// activeProject returns the currently active OpenedProject, or an error
+// if no project is selected.  Acquires a read lock on a.mu.
+func (a *App) activeProject() (*OpenedProject, error) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	if a.activeIndex < 0 || a.activeIndex >= len(a.openedProjects) {
+		return nil, errors.New("no project selected")
 	}
-	return dir, nil
+	return a.openedProjects[a.activeIndex], nil
 }
 
 // AllowedKinds is a thin re-export of artifacts.AllowedKinds() so the
@@ -174,14 +180,15 @@ func (a *App) AllowedKinds() []string {
 	return artifacts.AllowedKinds()
 }
 
-// ListArtifacts delegates to artifacts.ListArtifacts(projectDir, kind).
+// ListArtifacts delegates to artifacts.ListArtifacts(activeProject.Path, kind).
 // Returns an explicit error if no project is selected; propagates
 // ErrInvalidKind / OS errors from the underlying call.
 func (a *App) ListArtifacts(kind string) ([]artifacts.Meta, error) {
-	if a.projectDir == "" {
-		return nil, errors.New("no project selected")
+	p, err := a.activeProject()
+	if err != nil {
+		return nil, err
 	}
-	return artifacts.ListArtifacts(a.projectDir, kind)
+	return artifacts.ListArtifacts(p.Path, kind)
 }
 
 // GetClaudeStatus probes the Provider via CheckVersion + Version and maps
@@ -227,10 +234,7 @@ func (a *App) InitializeYukki(dir string) error {
 		}
 	}
 
-	loader := a.loader
-	if loader == nil {
-		loader = templates.NewLoader(dir)
-	}
+	loader := templates.NewLoader(dir)
 
 	type tpl struct {
 		name string
@@ -263,23 +267,24 @@ func (a *App) InitializeYukki(dir string) error {
 }
 
 // ReadArtifact returns the file contents at the given path. Refuses any
-// path that does not resolve under <projectDir>/.yukki/ (Invariant I1 —
-// path-traversal guard). Empty projectDir is rejected explicitly so the
-// guard is never bypassed by a missing prefix.
+// path that does not resolve under the .yukki/ directory of one of the
+// currently opened projects (Invariant I1 extended — path-traversal guard
+// over N projects).  Returns an error if no project is open.
 func (a *App) ReadArtifact(path string) (string, error) {
-	if a.projectDir == "" {
+	a.mu.RLock()
+	projs := make([]*OpenedProject, len(a.openedProjects))
+	copy(projs, a.openedProjects)
+	a.mu.RUnlock()
+
+	if len(projs) == 0 {
 		return "", errors.New("no project selected")
 	}
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return "", fmt.Errorf("resolve abs path %q: %w", path, err)
 	}
-	prefix, err := filepath.Abs(filepath.Join(a.projectDir, artifacts.ProjectDirName))
-	if err != nil {
-		return "", fmt.Errorf("resolve project yukki prefix: %w", err)
-	}
-	if !strings.HasPrefix(absPath, prefix) {
-		return "", fmt.Errorf("path outside project yukki: %s", absPath)
+	if !hasYukkiPrefix(absPath, projs) {
+		return "", fmt.Errorf("path outside any opened project .yukki: %s", absPath)
 	}
 	data, err := os.ReadFile(absPath)
 	if err != nil {
@@ -299,8 +304,9 @@ func (a *App) ReadArtifact(path string) (string, error) {
 //
 // No ctx parameter (Wails 2.12 D-B5b — runtime does not auto-inject).
 func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, error) {
-	if a.projectDir == "" {
-		return "", errors.New("no project selected")
+	p, err := a.activeProject()
+	if err != nil {
+		return "", err
 	}
 	if a.running.Swap(true) {
 		return "", ErrAlreadyRunning
@@ -329,8 +335,8 @@ func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, e
 		StrictPrefix:   strictPrefix,
 		Logger:         a.logger,
 		Provider:       a.provider,
-		TemplateLoader: a.loader,
-		Writer:         a.writer,
+		TemplateLoader: p.loader,
+		Writer:         p.writer,
 		Progress:       prog,
 	}
 	return workflow.RunStory(runStoryCtx, opts)

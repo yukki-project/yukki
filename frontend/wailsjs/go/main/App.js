@@ -52,3 +52,36 @@ export function AllowedTransitions(currentStatus) {
 export function UpdateArtifactPriority(path, priority) {
   return window['go']['uiapp']['App']['UpdateArtifactPriority'](path, priority);
 }
+
+// UI-009
+export function OpenProject(path) {
+  return window['go']['uiapp']['App']['OpenProject'](path);
+}
+
+export function CloseProject(idx) {
+  return window['go']['uiapp']['App']['CloseProject'](idx);
+}
+
+export function SwitchProject(idx) {
+  return window['go']['uiapp']['App']['SwitchProject'](idx);
+}
+
+export function ListOpenedProjects() {
+  return window['go']['uiapp']['App']['ListOpenedProjects']();
+}
+
+export function ReorderProjects(order) {
+  return window['go']['uiapp']['App']['ReorderProjects'](order);
+}
+
+export function LoadRegistry() {
+  return window['go']['uiapp']['App']['LoadRegistry']();
+}
+
+export function ListRecentProjects() {
+  return window['go']['uiapp']['App']['ListRecentProjects']();
+}
+
+export function InitializeYukki(dir) {
+  return window['go']['uiapp']['App']['InitializeYukki'](dir);
+}
