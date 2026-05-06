@@ -435,6 +435,89 @@ func TestApp_ReadArtifact_NoProject(t *testing.T) {
 	}
 }
 
+// --- WriteArtifact (UI-010 O1) -----------------------------------------
+
+func TestApp_WriteArtifact_Success(t *testing.T) {
+	dir := t.TempDir()
+	storyDir := filepath.Join(dir, ".yukki", "stories")
+	if err := os.MkdirAll(storyDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(storyDir, "X.md")
+	if err := os.WriteFile(path, []byte("original"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	setTestProject(t, app, dir)
+
+	if err := app.WriteArtifact(path, "updated content"); err != nil {
+		t.Fatalf("WriteArtifact: %v", err)
+	}
+	got, err := app.ReadArtifact(path)
+	if err != nil {
+		t.Fatalf("ReadArtifact after write: %v", err)
+	}
+	if got != "updated content" {
+		t.Fatalf("content mismatch: got %q", got)
+	}
+}
+
+func TestApp_WriteArtifact_PathTraversalRejected(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	setTestProject(t, app, dir)
+
+	for _, bad := range []string{
+		filepath.Join(dir, "outside.md"),
+		filepath.Join(dir, ".yukki", "..", "outside.md"),
+	} {
+		if err := app.WriteArtifact(bad, "x"); err == nil {
+			t.Fatalf("expected path-traversal error for %q", bad)
+		}
+	}
+}
+
+func TestApp_WriteArtifact_FileNotExist(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, ".yukki", "stories"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	setTestProject(t, app, dir)
+
+	err := app.WriteArtifact(filepath.Join(dir, ".yukki", "stories", "nope.md"), "x")
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("expected os.ErrNotExist for non-existent file, got %v", err)
+	}
+}
+
+func TestApp_WriteArtifact_ContentTooLarge(t *testing.T) {
+	dir := t.TempDir()
+	storyDir := filepath.Join(dir, ".yukki", "stories")
+	if err := os.MkdirAll(storyDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(storyDir, "big.md")
+	if err := os.WriteFile(path, []byte("seed"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	setTestProject(t, app, dir)
+
+	big := make([]byte, 1<<20+1)
+	if err := app.WriteArtifact(path, string(big)); err == nil {
+		t.Fatal("expected error for content > 1 MB")
+	}
+}
+
+func TestApp_WriteArtifact_NoProject(t *testing.T) {
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	if err := app.WriteArtifact("/anywhere/.yukki/x.md", "x"); err == nil {
+		t.Fatal("expected error when no project selected")
+	}
+}
+
 // --- RunStory / AbortRunning / SuggestedPrefixes (UI-001c O4) ---------
 
 const stubStoryUIC = `---

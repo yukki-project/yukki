@@ -85,3 +85,8 @@ export function ListRecentProjects() {
 export function InitializeYukki(dir) {
   return window['go']['uiapp']['App']['InitializeYukki'](dir);
 }
+
+// UI-010
+export function WriteArtifact(path, content) {
+  return window['go']['uiapp']['App']['WriteArtifact'](path, content);
+}
