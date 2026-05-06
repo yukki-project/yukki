@@ -2,7 +2,7 @@
 id: UI-007
 slug: custom-titlebar-dark
 story: .yukki/stories/UI-007-custom-titlebar-dark.md
-status: implemented
+status: synced
 created: 2026-05-02
 updated: 2026-05-06
 ---

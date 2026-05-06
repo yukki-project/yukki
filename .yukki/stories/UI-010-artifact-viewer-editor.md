@@ -2,7 +2,7 @@
 id: UI-010
 slug: artifact-viewer-editor
 title: Artefact viewer — markdown riche, sections pliables, éditeur inline
-status: draft
+status: implemented
 created: 2026-05-06
 updated: 2026-05-06
 owner: tsannier

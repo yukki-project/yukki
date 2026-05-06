@@ -3,7 +3,7 @@ id: UI-010
 slug: artifact-viewer-editor
 title: Artefact viewer — markdown riche, sections pliables, éditeur inline
 story: .yukki/stories/UI-010-artifact-viewer-editor.md
-status: reviewed
+status: implemented
 created: 2026-05-06
 updated: 2026-05-06
 ---

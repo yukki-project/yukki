@@ -2,7 +2,7 @@
 id: UI-013
 slug: archive-toggle-sorted-list
 title: Archive toggle & tri par création dans la HubList
-status: reviewed
+status: implemented
 created: 2026-05-06
 updated: 2026-05-06
 owner: yukki contributors

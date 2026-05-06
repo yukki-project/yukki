@@ -2,7 +2,7 @@
 id: UI-008
 slug: workflow-pipeline-view
 title: Vue pipeline SPDD — progression d'une feature à travers les étapes (kanban-like, gating progressif)
-status: implemented
+status: synced
 created: 2026-05-02
 updated: 2026-05-06
 owner: Thibaut Sannier

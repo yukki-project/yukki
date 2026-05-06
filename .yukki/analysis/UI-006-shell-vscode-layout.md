@@ -2,7 +2,7 @@
 id: UI-006
 slug: shell-vscode-layout
 story: .yukki/stories/UI-006-shell-vscode-layout.md
-status: implemented
+status: synced
 created: 2026-05-02
 updated: 2026-05-06
 ---

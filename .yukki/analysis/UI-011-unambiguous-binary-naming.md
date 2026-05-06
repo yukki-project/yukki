@@ -3,7 +3,7 @@ id: UI-011
 slug: unambiguous-binary-naming
 title: Binaire yukki unique — supprimer la confusion go build vs wails build
 story: .yukki/stories/UI-011-unambiguous-binary-naming.md
-status: reviewed
+status: synced
 created: 2026-05-06
 updated: 2026-05-06
 ---

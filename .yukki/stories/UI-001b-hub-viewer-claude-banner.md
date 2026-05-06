@@ -2,7 +2,7 @@
 id: UI-001b
 slug: hub-viewer-claude-banner
 title: Hub viewer — project picker, sidebar, liste read-only des stories, banner Claude, init SPDD (frontend & bindings, consume CORE-004)
-status: done
+status: synced
 created: 2026-05-01
 updated: 2026-05-01
 owner: Thibaut Sannier

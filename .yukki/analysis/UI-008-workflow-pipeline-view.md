@@ -2,7 +2,7 @@
 id: UI-008
 slug: workflow-pipeline-view
 story: .yukki/stories/UI-008-workflow-pipeline-view.md
-status: implemented
+status: synced
 created: 2026-05-02
 updated: 2026-05-06
 ---

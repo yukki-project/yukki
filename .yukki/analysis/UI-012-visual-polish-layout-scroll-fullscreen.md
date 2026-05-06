@@ -3,7 +3,7 @@ id: UI-012
 slug: visual-polish-layout-scroll-fullscreen
 title: Polissage visuel — logo, barre titre, scrollbars, plein écran, liste artefacts
 story: .yukki/stories/UI-012-visual-polish-layout-scroll-fullscreen.md
-status: reviewed
+status: synced
 created: 2026-05-06
 updated: 2026-05-06
 ---

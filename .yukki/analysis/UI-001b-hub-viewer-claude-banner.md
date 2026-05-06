@@ -3,7 +3,7 @@ id: UI-001b
 slug: hub-viewer-claude-banner
 story: .yukki/stories/UI-001b-hub-viewer-claude-banner.md
 parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
-status: reviewed
+status: synced
 created: 2026-05-01
 updated: 2026-05-01
 ---
