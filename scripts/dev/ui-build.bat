@@ -27,7 +27,7 @@ wails build -tags mock -skipbindings -platform windows/amd64 %*
 
 set EXITCODE=%ERRORLEVEL%
 echo.
-echo ^>^> Built. Binary at: %REPO_ROOT%build\bin\yukki-ui.exe
-if exist "%REPO_ROOT%build\bin\yukki-ui.exe" dir /b "%REPO_ROOT%build\bin\"
+echo ^>^> Built. Binary at: %REPO_ROOT%build\bin\yukki.exe
+if exist "%REPO_ROOT%build\bin\yukki.exe" dir /b "%REPO_ROOT%build\bin\"
 popd >nul
 exit /b %EXITCODE%

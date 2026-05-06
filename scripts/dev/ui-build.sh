@@ -60,5 +60,5 @@ else
 fi
 
 echo ""
-echo ">> Built. Binary at: $repo_root/build/bin/yukki-ui*"
+echo ">> Built. Binary at: $repo_root/build/bin/yukki*"
 ls -la "$repo_root/build/bin/" 2>/dev/null || true
