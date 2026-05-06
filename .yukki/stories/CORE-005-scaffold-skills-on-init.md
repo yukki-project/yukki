@@ -2,7 +2,7 @@
 id: CORE-005
 slug: scaffold-skills-on-init
 title: Scaffolding des skills Claude/Copilot lors de l'initialisation d'un projet
-status: draft
+status: implemented
 created: 2026-05-06
 updated: 2026-05-06
 owner: Thibaut Sannier

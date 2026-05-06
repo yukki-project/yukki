@@ -35,6 +35,7 @@ import (
 
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/provider"
+	"github.com/yukki-project/yukki/internal/skills"
 	"github.com/yukki-project/yukki/internal/templates"
 	"github.com/yukki-project/yukki/internal/workflow"
 )
@@ -213,6 +214,28 @@ func (a *App) GetClaudeStatus() ClaudeStatus {
 	return ClaudeStatus{Available: true, Version: v}
 }
 
+// scaffoldSkills writes each SkillEntry from entries into dir, skipping any
+// file that already exists. Parent directories are created as needed.
+// Returns the first error encountered (fail-fast).
+func scaffoldSkills(dir string, entries []skills.SkillEntry) error {
+	for _, entry := range entries {
+		dst := filepath.Join(dir, entry.DestPath)
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return fmt.Errorf("mkdir %s: %w", filepath.Dir(dst), err)
+		}
+		if _, err := os.Stat(dst); err == nil {
+			// File already exists — skip to preserve user customisations.
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("stat %s: %w", dst, err)
+		}
+		if err := os.WriteFile(dst, entry.Content, 0o644); err != nil {
+			return fmt.Errorf("write skill %s: %w", dst, err)
+		}
+	}
+	return nil
+}
+
 // InitializeYukki creates the yukki project directory tree under
 // <dir>/.yukki/ and copies the embedded templates into
 // <dir>/.yukki/templates/. The operation is idempotent: rerunning it on
@@ -258,6 +281,10 @@ func (a *App) InitializeYukki(dir string) error {
 		if err := os.WriteFile(dst, []byte(content), 0o644); err != nil {
 			return fmt.Errorf("write template %s: %w", dst, err)
 		}
+	}
+
+	if err := scaffoldSkills(dir, skills.Entries()); err != nil {
+		return fmt.Errorf("scaffold skills: %w", err)
 	}
 
 	if a.logger != nil {

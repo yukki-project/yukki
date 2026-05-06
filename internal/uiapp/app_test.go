@@ -305,6 +305,16 @@ func TestApp_InitializeYukki_Success(t *testing.T) {
 			t.Fatalf("expected file %s, err=%v", path, err)
 		}
 	}
+	// CORE-005: spot-check two skill files (one per provider).
+	for _, rel := range []string{
+		filepath.Join(".claude", "commands", "yukki-story.md"),
+		filepath.Join(".github", "skills", "yukki-story", "SKILL.md"),
+	} {
+		path := filepath.Join(dir, rel)
+		if info, err := os.Stat(path); err != nil || info.IsDir() {
+			t.Fatalf("expected skill file %s, err=%v", path, err)
+		}
+	}
 }
 
 // TestApp_InitializeYukki_PreExistingProject vérifie qu'un re-init sur
@@ -366,6 +376,111 @@ func TestApp_InitializeYukki_EmptyDirRejected(t *testing.T) {
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	if err := app.InitializeYukki(""); err == nil {
 		t.Fatal("expected error when dir is empty")
+	}
+}
+
+// TestApp_InitializeYukki_SkillsCreated verifies that all 14 skills
+// (7 Claude + 7 Copilot) are written when initialising an empty project.
+func TestApp_InitializeYukki_SkillsCreated(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	if err := app.InitializeYukki(dir); err != nil {
+		t.Fatalf("InitializeYukki: %v", err)
+	}
+	claudeSkills := []string{
+		"yukki-story.md", "yukki-analysis.md", "yukki-reasons-canvas.md",
+		"yukki-generate.md", "yukki-api-test.md", "yukki-prompt-update.md",
+		"yukki-sync.md",
+	}
+	for _, name := range claudeSkills {
+		path := filepath.Join(dir, ".claude", "commands", name)
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("expected Claude skill %s: %v", name, err)
+		}
+	}
+	copilotSkills := []string{
+		"yukki-story", "yukki-analysis", "yukki-reasons-canvas",
+		"yukki-generate", "yukki-api-test", "yukki-prompt-update",
+		"yukki-sync",
+	}
+	for _, slug := range copilotSkills {
+		path := filepath.Join(dir, ".github", "skills", slug, "SKILL.md")
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("expected Copilot skill %s/SKILL.md: %v", slug, err)
+		}
+	}
+}
+
+// TestApp_InitializeYukki_SkillsNotOverwritten verifies that a pre-existing
+// skill file with custom content is not overwritten by InitializeYukki.
+func TestApp_InitializeYukki_SkillsNotOverwritten(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+
+	// Pre-create a custom Claude skill.
+	skillDir := filepath.Join(dir, ".claude", "commands")
+	if err := os.MkdirAll(skillDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const customContent = "# my custom skill — do not overwrite"
+	customPath := filepath.Join(skillDir, "yukki-story.md")
+	if err := os.WriteFile(customPath, []byte(customContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := app.InitializeYukki(dir); err != nil {
+		t.Fatalf("InitializeYukki: %v", err)
+	}
+
+	got, err := os.ReadFile(customPath)
+	if err != nil {
+		t.Fatalf("custom skill disappeared: %v", err)
+	}
+	if string(got) != customContent {
+		t.Fatalf("custom skill was overwritten:\n got: %q\nwant: %q", got, customContent)
+	}
+}
+
+// TestApp_InitializeYukki_PartialSkills verifies that when some skills are
+// already present, only the missing ones are created.
+func TestApp_InitializeYukki_PartialSkills(t *testing.T) {
+	dir := t.TempDir()
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+
+	// Pre-create 3 of the 7 Claude skills with custom content.
+	skillDir := filepath.Join(dir, ".claude", "commands")
+	if err := os.MkdirAll(skillDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	existing := []string{"yukki-story.md", "yukki-analysis.md", "yukki-generate.md"}
+	const customContent = "# pre-existing"
+	for _, name := range existing {
+		if err := os.WriteFile(filepath.Join(skillDir, name), []byte(customContent), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := app.InitializeYukki(dir); err != nil {
+		t.Fatalf("InitializeYukki: %v", err)
+	}
+
+	// The 4 missing Claude skills must now exist.
+	missing := []string{"yukki-reasons-canvas.md", "yukki-api-test.md", "yukki-prompt-update.md", "yukki-sync.md"}
+	for _, name := range missing {
+		path := filepath.Join(skillDir, name)
+		if _, err := os.Stat(path); err != nil {
+			t.Errorf("expected missing skill to be created: %s: %v", name, err)
+		}
+	}
+	// The 3 pre-existing files must still have their custom content.
+	for _, name := range existing {
+		got, err := os.ReadFile(filepath.Join(skillDir, name))
+		if err != nil {
+			t.Fatalf("pre-existing skill disappeared: %s: %v", name, err)
+		}
+		if string(got) != customContent {
+			t.Fatalf("pre-existing skill overwritten: %s", name)
+		}
 	}
 }
 

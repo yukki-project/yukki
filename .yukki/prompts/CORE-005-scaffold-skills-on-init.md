@@ -3,9 +3,9 @@ id: CORE-005
 slug: scaffold-skills-on-init
 story: .yukki/stories/CORE-005-scaffold-skills-on-init.md
 analysis: .yukki/analysis/CORE-005-scaffold-skills-on-init.md
-status: draft
+status: implemented
 created: 2026-05-06
-updated: 2026-05-06
+updated: 2026-05-07
 ---
 
 # Canvas REASONS — Scaffolding des skills Claude/Copilot lors de l'initialisation d'un projet
