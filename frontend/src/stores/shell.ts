@@ -28,11 +28,13 @@ const SPDD_KINDS: ShellMode[] = [
 interface ShellState {
   activeMode: ShellMode;
   sidebarOpen: boolean;
+  showArchived: boolean;
 
   setActiveMode: (mode: ShellMode) => void;
   toggleSidebar: () => void;
   closeSidebar: () => void;
   openSidebar: () => void;
+  setShowArchived: (v: boolean) => void;
 }
 
 export const useShellStore = create<ShellState>()(
@@ -40,6 +42,7 @@ export const useShellStore = create<ShellState>()(
     (set, get) => ({
       activeMode: 'stories',
       sidebarOpen: true,
+      showArchived: false,
 
       setActiveMode: (mode) => {
         const { activeMode, sidebarOpen } = get();
@@ -56,6 +59,7 @@ export const useShellStore = create<ShellState>()(
       toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
       closeSidebar: () => set({ sidebarOpen: false }),
       openSidebar: () => set({ sidebarOpen: true }),
+      setShowArchived: (v) => set({ showArchived: v }),
     }),
     {
       name: 'yukki:shell-prefs',

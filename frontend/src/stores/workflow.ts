@@ -96,6 +96,15 @@ function deriveState(cells: Partial<Record<StageKind, Meta>>): {
   if (cells.stories) {
     return { state: 'stories', activeKind: 'stories', active: cells.stories };
   }
+  if (cells.inbox) {
+    return { state: 'stories', activeKind: 'inbox', active: cells.inbox };
+  }
+  if (cells.epics) {
+    return { state: 'stories', activeKind: 'epics', active: cells.epics };
+  }
+  if (cells.roadmap) {
+    return { state: 'stories', activeKind: 'roadmap', active: cells.roadmap };
+  }
   return null;
 }
 

@@ -17,6 +17,9 @@ const COMMAND_BY_KIND: Record<StageKind, (sourcePath: string) => string> = {
   analysis: (p) => `/yukki-analysis ${p}`,
   prompts: (p) => `/yukki-reasons-canvas ${p}`,
   tests: () => '/yukki-tests <id-slug> (V2)',
+  inbox: () => '/yukki-story <description>',
+  epics: (p) => `/yukki-analysis ${p}`,
+  roadmap: () => '—',
 };
 
 interface CreateNextStageModalProps {

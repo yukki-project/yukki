@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useProjectStore } from '@/stores/project';
+import { useShellStore } from '@/stores/shell';
 import { NewStoryModal } from './NewStoryModal';
 
 const ARCHIVED_STATUSES = new Set(['synced']);
@@ -31,7 +32,8 @@ export function HubList({ className }: HubListProps) {
   const projectDir = useProjectStore((s) => s.projectDir);
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [showArchived, setShowArchived] = useState(false);
+  const showArchived = useShellStore((s) => s.showArchived);
+  const setShowArchived = useShellStore((s) => s.setShowArchived);
 
   const visible = showArchived ? items : items.filter((m) => !ARCHIVED_STATUSES.has(m.Status));
 
@@ -47,7 +49,7 @@ export function HubList({ className }: HubListProps) {
             variant={showArchived ? 'secondary' : 'ghost'}
             size="icon"
             className="h-7 w-7"
-            onClick={() => setShowArchived((v) => !v)}
+            onClick={() => setShowArchived(!showArchived)}
             title={showArchived ? 'Masquer les archivés' : 'Afficher les archivés (synced)'}
           >
             <Archive className="h-3.5 w-3.5" />

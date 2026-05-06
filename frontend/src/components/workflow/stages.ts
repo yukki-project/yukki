@@ -1,4 +1,4 @@
-export type StageKind = 'stories' | 'analysis' | 'prompts' | 'tests';
+export type StageKind = 'stories' | 'analysis' | 'prompts' | 'tests' | 'inbox' | 'epics' | 'roadmap';
 
 export interface Stage {
   kind: StageKind;
@@ -10,6 +10,9 @@ export const STAGES: Stage[] = [
   { kind: 'analysis', label: 'Analysis' },
   { kind: 'prompts', label: 'Canvas' },
   { kind: 'tests', label: 'Tests' },
+  { kind: 'inbox', label: 'Inbox' },
+  { kind: 'epics', label: 'Epic' },
+  { kind: 'roadmap', label: 'Roadmap' },
 ];
 
 export const IMPLEMENTATION_LABEL = 'Implementation';

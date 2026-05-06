@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Archive } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -16,10 +17,14 @@ import {
   type ColumnState,
   type WorkflowItem,
 } from '@/stores/workflow';
+import { Button } from '@/components/ui/button';
+import { useShellStore } from '@/stores/shell';
 import { WorkflowColumn } from './WorkflowColumn';
 import { WorkflowDrawer } from './WorkflowDrawer';
 import { CreateNextStageModal } from './CreateNextStageModal';
 import { type StageKind } from './stages';
+
+const ARCHIVED_STATUSES = new Set(['synced']);
 
 interface DragData {
   type: 'card';
@@ -62,6 +67,8 @@ export function WorkflowPipeline() {
   const createModal = useWorkflowStore((s) => s.createModal);
   const openCreateModal = useWorkflowStore((s) => s.openCreateModal);
   const closeCreateModal = useWorkflowStore((s) => s.closeCreateModal);
+  const showArchived = useShellStore((s) => s.showArchived);
+  const setShowArchived = useShellStore((s) => s.setShowArchived);
   const [activeItem, setActiveItem] = useState<WorkflowItem | null>(null);
   const { toast } = useToast();
 
@@ -172,21 +179,37 @@ export function WorkflowPipeline() {
   return (
     <section
       aria-label="Workflow Kanban board"
-      className="flex flex-1 overflow-hidden"
+      className="flex flex-1 flex-col overflow-hidden"
     >
+      <header className="flex h-10 shrink-0 items-center justify-end border-b border-border bg-card px-3">
+        <Button
+          variant={showArchived ? 'secondary' : 'ghost'}
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => setShowArchived(!showArchived)}
+          title={showArchived ? 'Masquer les archivés' : 'Afficher les archivés (synced)'}
+        >
+          <Archive className="h-3.5 w-3.5" />
+        </Button>
+      </header>
       <DndContext
         sensors={sensors}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
         <div className="flex flex-1 divide-x divide-border overflow-auto">
-          {COLUMN_ORDER.map((state) => (
-            <WorkflowColumn
-              key={state}
-              state={state}
-              items={columns[state]}
-            />
-          ))}
+          {COLUMN_ORDER.map((state) => {
+            const visibleItems = showArchived
+              ? columns[state]
+              : columns[state].filter((it) => !ARCHIVED_STATUSES.has(it.active.Status));
+            return (
+              <WorkflowColumn
+                key={state}
+                state={state}
+                items={visibleItems}
+              />
+            );
+          })}
         </div>
         <DragOverlay>
           {activeItem ? (
