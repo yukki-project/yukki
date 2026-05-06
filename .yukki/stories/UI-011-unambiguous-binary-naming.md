@@ -2,7 +2,7 @@
 id: UI-011
 slug: unambiguous-binary-naming
 title: Binaire yukki unique — supprimer la confusion go build vs wails build
-status: draft
+status: reviewed
 created: 2026-05-06
 updated: 2026-05-06
 owner: yukki contributors
@@ -87,15 +87,17 @@ le bon. L'onboarding est réduit à deux commandes : `ui-build.bat` puis
 
 ## Open Questions
 
-- Faut-il ajouter `build/bin/` au `.gitignore` ou documenter
-  explicitement qu'il n'est pas versionné ?
-- Le script `ui-build.sh` (Linux/macOS) doit être mis à jour de
-  façon symétrique — vérifier si le nom y est hardcodé.
+- ~~Faut-il ajouter `build/bin/` au `.gitignore` ou documenter
+  explicitement qu'il n'est pas versionné ?~~ → `build/bin/` est déjà
+  dans `.gitignore` (patterns `build/bin/` et `*.exe`). Documenté.
+- ~~Le script `ui-build.sh` (Linux/macOS) doit être mis à jour de
+  façon symétrique~~ → fait dans le même commit.
 
 ## Notes
 
-Fix partiel déjà appliqué dans le commit de cette story :
-- `wails.json` : `outputfilename` → `yukki`
-- `scripts/dev/ui-build.bat` : références `yukki-ui.exe` → `yukki.exe`
+Tous les changements ont été livrés dans un seul commit sur `main` :
+- `wails.json` : `outputfilename` → `yukki` → produit `build/bin/yukki.exe`
+- `scripts/dev/ui-build.bat` + `ui-build.sh` : echo mis à jour
+- `DEVELOPMENT.md` : section Build scindée CLI / Wails, avertissement tag desktop ajouté
 
-Reste à faire : `ui-build.sh` + `DEVELOPMENT.md` (dans la génération).
+Validé manuellement : `yukki ui` lancé depuis `build/bin/yukki.exe` — aucun dialog Wails.

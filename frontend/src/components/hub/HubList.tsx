@@ -57,55 +57,46 @@ export function HubList({ className }: HubListProps) {
         <p className="p-4 text-sm text-muted-foreground">No {kind} yet.</p>
       )}
       {items.length > 0 && (
-        <table className="w-full text-sm">
-          <thead className="text-xs text-muted-foreground">
-            <tr>
-              <th className="px-4 py-2 text-left">id</th>
-              <th className="px-4 py-2 text-left">title</th>
-              <th className="px-4 py-2 text-left">status</th>
-              <th className="px-4 py-2 text-left">updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((m: Meta) => {
-              const broken = !!m.Error;
-              const active = m.Path === selectedPath;
-              return (
-                <tr
-                  key={m.Path}
-                  onClick={() => setSelectedPath(m.Path)}
-                  className={cn(
-                    'cursor-pointer border-b hover:bg-accent/40',
-                    active && 'bg-accent/60',
+        <ul className="w-full">
+          {items.map((m: Meta) => {
+            const broken = !!m.Error;
+            const active = m.Path === selectedPath;
+            return (
+              <li
+                key={m.Path}
+                onClick={() => setSelectedPath(m.Path)}
+                className={cn(
+                  'flex items-start gap-1.5 px-3 py-2 cursor-pointer border-b hover:bg-accent/40',
+                  active && 'bg-accent/60',
+                )}
+              >
+                {/* ID + status */}
+                <div className="flex flex-col shrink-0 min-w-0 w-24 gap-0.5">
+                  <span className="font-mono text-[11px] leading-tight truncate">{m.ID || '?'}</span>
+                  {broken ? (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive w-fit"
+                      title={m.Error}
+                    >
+                      <AlertCircle className="h-2.5 w-2.5" /> err
+                    </span>
+                  ) : (
+                    <span
+                      className={cn(
+                        'inline-block rounded-md px-1.5 py-0.5 text-[10px] w-fit',
+                        STATUS_BADGE[m.Status] ?? 'bg-muted text-muted-foreground',
+                      )}
+                    >
+                      {m.Status || '?'}
+                    </span>
                   )}
-                >
-                  <td className="px-4 py-2 font-mono text-xs">{m.ID || '?'}</td>
-                  <td className="px-4 py-2">{m.Title || m.Slug || '—'}</td>
-                  <td className="px-4 py-2">
-                    {broken ? (
-                      <span
-                        className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-2 py-0.5 text-xs text-destructive"
-                        title={m.Error}
-                      >
-                        <AlertCircle className="h-3 w-3" /> invalid
-                      </span>
-                    ) : (
-                      <span
-                        className={cn(
-                          'inline-block rounded-md px-2 py-0.5 text-xs',
-                          STATUS_BADGE[m.Status] ?? 'bg-muted text-muted-foreground',
-                        )}
-                      >
-                        {m.Status || '?'}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">{m.Updated || '—'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                </div>
+                {/* Title */}
+                <span className="flex-1 text-xs leading-snug line-clamp-2 pt-px" title={m.Title || m.Slug || ''}>{m.Title || m.Slug || '—'}</span>
+              </li>
+            );
+          })}
+        </ul>
       )}
       <NewStoryModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
