@@ -12,6 +12,20 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// SelectDirectory opens a native directory-picker dialog and returns the
+// chosen path. Returns ("", nil) if the user cancels. Unlike OpenProject it
+// does not validate the .yukki/ tree — callers use it to obtain a path before
+// deciding whether to open or initialise the project.
+func (a *App) SelectDirectory() (string, error) {
+	path, err := openDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select project directory",
+	})
+	if err != nil {
+		return "", fmt.Errorf("select directory: %w", err)
+	}
+	return path, nil
+}
+
 // OpenProject opens a yukki project from the given path.  If path is "",
 // a native directory-picker dialog is presented to the user.
 //

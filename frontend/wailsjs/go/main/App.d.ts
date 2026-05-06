@@ -22,6 +22,7 @@ export function AllowedTransitions(currentStatus: string): Promise<string[]>;
 export function UpdateArtifactPriority(path: string, priority: number): Promise<void>;
 
 // UI-009
+export function SelectDirectory(): Promise<string>;
 export function OpenProject(path: string): Promise<ProjectMeta>;
 export function CloseProject(idx: number): Promise<void>;
 export function SwitchProject(idx: number): Promise<void>;

@@ -3,6 +3,7 @@ import { FolderOpen, Sparkles } from 'lucide-react';
 import {
   InitializeYukki,
   OpenProject,
+  SelectDirectory,
 } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,26 +19,24 @@ export function ProjectPicker() {
   async function handleOpen() {
     setError('');
     try {
-      const meta = await OpenProject('');
-      if (!meta || !meta.Path) return;
-      // project:opened event will be handled by App.tsx EventsOn listener
-      // but in case the event hasn't fired yet we also add locally.
-      addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
-    } catch (e: unknown) {
-      if (String(e).includes('no .yukki')) {
-        // Extract the path from the error — it was opened but lacks .yukki.
-        // Use a fresh picker to get the path.
-        try {
-          const meta2 = await OpenProject('');
-          if (meta2 && meta2.Path) {
-            setPendingDir(meta2.Path);
-          }
-        } catch {
-          // ignore
+      const path = await SelectDirectory();
+      if (!path) return; // user cancelled
+      try {
+        const meta = await OpenProject(path);
+        if (meta && meta.Path) {
+          // project:opened event will be handled by App.tsx EventsOn listener
+          // but in case the event hasn't fired yet we also add locally.
+          addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
         }
-      } else {
-        setError(String(e));
+      } catch (e2: unknown) {
+        if (String(e2).includes('no .yukki')) {
+          setPendingDir(path);
+        } else {
+          setError(String(e2));
+        }
       }
+    } catch (e: unknown) {
+      setError(String(e));
     }
   }
 
