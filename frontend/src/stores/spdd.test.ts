@@ -1,4 +1,5 @@
 // UI-014a — Smoke tests for the SPDD editor store selectors.
+// UI-014b — Tests for store mutations.
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -64,5 +65,65 @@ describe('useSpddEditorStore', () => {
     expect(useSpddEditorStore.getState().viewMode).toBe('wysiwyg');
     useSpddEditorStore.getState().setViewMode('markdown');
     expect(useSpddEditorStore.getState().viewMode).toBe('markdown');
+  });
+});
+
+describe('useSpddEditorStore — mutations (UI-014b)', () => {
+  beforeEach(() => {
+    useSpddEditorStore.getState().resetDraft(DEMO_STORY);
+  });
+
+  it('setFmField updates a scalar field', () => {
+    useSpddEditorStore.getState().setFmField('title', 'Nouveau titre');
+    expect(useSpddEditorStore.getState().draft.title).toBe('Nouveau titre');
+  });
+
+  it('setFmField updates modules array', () => {
+    useSpddEditorStore.getState().setFmField('modules', ['frontend', 'cli']);
+    expect(useSpddEditorStore.getState().draft.modules).toEqual(['frontend', 'cli']);
+  });
+
+  it('setSection updates a prose section', () => {
+    useSpddEditorStore.getState().setSection('bg', 'Nouveau contexte.');
+    expect(useSpddEditorStore.getState().draft.sections.bg).toBe('Nouveau contexte.');
+  });
+
+  it('addAc appends a new empty AC', () => {
+    const before = useSpddEditorStore.getState().draft.ac.length;
+    useSpddEditorStore.getState().addAc();
+    const after = useSpddEditorStore.getState().draft.ac;
+    expect(after.length).toBe(before + 1);
+    const last = after[after.length - 1];
+    expect(last.title).toBe('');
+    expect(last.given).toBe('');
+  });
+
+  it('removeAc removes the AC and renumbers the rest', () => {
+    useSpddEditorStore.getState().removeAc('AC1');
+    const acs = useSpddEditorStore.getState().draft.ac;
+    // First AC is now what was AC2
+    expect(acs[0].id).toBe('AC1');
+    // AC with original id AC1 is gone
+    expect(acs.find((a) => a.id === 'AC3')).toBeUndefined();
+  });
+
+  it('updateAc changes a single field without affecting others', () => {
+    const before = useSpddEditorStore.getState().draft.ac[0];
+    useSpddEditorStore.getState().updateAc('AC1', 'then', 'Updated then');
+    const after = useSpddEditorStore.getState().draft.ac[0];
+    expect(after.then).toBe('Updated then');
+    expect(after.given).toBe(before.given);
+    expect(after.when).toBe(before.when);
+  });
+
+  it('duplicateAc appends a copy with a new id', () => {
+    const src = useSpddEditorStore.getState().draft.ac[0];
+    const before = useSpddEditorStore.getState().draft.ac.length;
+    useSpddEditorStore.getState().duplicateAc('AC1');
+    const acs = useSpddEditorStore.getState().draft.ac;
+    expect(acs.length).toBe(before + 1);
+    const copy = acs[acs.length - 1];
+    expect(copy.id).not.toBe('AC1');
+    expect(copy.given).toBe(src.given);
   });
 });
