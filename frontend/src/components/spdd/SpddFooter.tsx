@@ -1,6 +1,5 @@
-// UI-014a — Footer status bar (28px). Reflects required-completion state
-// and lists the keyboard shortcuts so the user does not have to discover
-// them.
+// UI-014a — Footer status bar (28px).
+// UI-014e — Pastille has tooltip showing missing sections.
 
 import { useMemo } from 'react';
 import {
@@ -28,7 +27,10 @@ export function SpddFooter(): JSX.Element {
       aria-label="Status bar"
       className="flex h-7 shrink-0 items-center gap-4 border-t border-yk-line bg-yk-bg-1 px-4 font-jbmono text-[11px] text-yk-text-muted"
     >
-      <span className="flex items-center gap-1.5">
+      <span
+        className="flex items-center gap-1.5"
+        title={!allDone && missing.length > 0 ? `Manque : ${missing.join(', ')}` : undefined}
+      >
         <span
           aria-hidden
           className={cn(

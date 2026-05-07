@@ -1,11 +1,14 @@
-// UI-014a — Story header. Sits between TabBar and the 3-column grid.
+// UI-014e — Story header with export logic: ExportChecklist popover + Blob export + toast.
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Code2, Download, Edit3 } from 'lucide-react';
 import { useSpddEditorStore, selectRequiredCompleted } from '@/stores/spdd';
+import { useToast } from '@/hooks/use-toast';
+import { draftToMarkdown } from './serializer';
+import { ExportChecklist } from './ExportChecklist';
 import { REQUIRED_COUNT } from './sections';
 import { cn } from '@/lib/utils';
-import type { ViewMode } from './types';
+import type { SectionKey, ViewMode } from './types';
 
 const STATUS_PILL_CLASSES: Record<string, string> = {
   draft: 'bg-[color:var(--yk-warning-soft)] text-yk-warning',
@@ -27,10 +30,67 @@ export function SpddHeader(): JSX.Element {
   const draft = useSpddEditorStore((s) => s.draft);
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const setViewMode = useSpddEditorStore((s) => s.setViewMode);
+  const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
   const state = useSpddEditorStore();
   const completed = useMemo(() => selectRequiredCompleted(state), [state]);
   const allDone = completed === REQUIRED_COUNT;
   const savedLabel = formatSavedAt(draft.savedAt);
+  const { toast } = useToast();
+
+  const [checklistOpen, setChecklistOpen] = useState(false);
+  const exportBtnRef = useRef<HTMLDivElement>(null);
+
+  // --- Mock export: Blob download + toast
+  const handleExport = useCallback(() => {
+    const md = draftToMarkdown(draft);
+    const filename = `${draft.id}-${draft.slug}.md`;
+
+    // Log for __DEV__ / mock mode (real write is CORE-009)
+    console.info(`[Export] ${filename}\n`, md);
+
+    // Trigger Blob download
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Story exportée ✓',
+      description: `${filename} — front-matter valide ⌘S`,
+      duration: 4000,
+    });
+  }, [draft, toast]);
+
+  const handleExportClick = useCallback(() => {
+    if (allDone) {
+      handleExport();
+    } else {
+      setChecklistOpen((v) => !v);
+    }
+  }, [allDone, handleExport]);
+
+  const handleGoToSection = useCallback(
+    (key: SectionKey) => {
+      setActiveSection(key);
+      const el = document.getElementById(`spdd-section-${key}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Flash focus ring on first input/textarea in that section
+      window.setTimeout(() => {
+        const focusable = el?.querySelector<HTMLElement>('input, textarea, select');
+        if (focusable) {
+          focusable.focus();
+          focusable.classList.add('ring-2', 'ring-[color:var(--yk-primary-ring)]');
+          window.setTimeout(() => {
+            focusable.classList.remove('ring-2', 'ring-[color:var(--yk-primary-ring)]');
+          }, 1000);
+        }
+      }, 400);
+    },
+    [setActiveSection],
+  );
 
   return (
     <header
@@ -59,30 +119,32 @@ export function SpddHeader(): JSX.Element {
 
       <SegmentedViewMode value={viewMode} onChange={setViewMode} />
 
-      <button
-        type="button"
-        onClick={() => {
-          if (!allDone) {
-            console.warn(
-              '[SpddEditor] export disabled — required sections incomplete',
-            );
-            return;
-          }
-          // UI-014e wires this to the export checklist + toast.
-        }}
-        className={cn(
-          'flex items-center gap-1.5 rounded-yk-sm px-3 py-1 font-inter text-[12px] transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
-          allDone
-            ? 'bg-yk-primary text-white hover:brightness-110'
-            : 'border border-yk-primary text-yk-primary opacity-80 hover:opacity-100',
+      {/* Export button + checklist popover container */}
+      <div ref={exportBtnRef} className="relative">
+        <button
+          type="button"
+          onClick={handleExportClick}
+          className={cn(
+            'flex items-center gap-1.5 rounded-yk-sm px-3 py-1 font-inter text-[12px] transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
+            allDone
+              ? 'bg-yk-primary text-white hover:brightness-110'
+              : 'border border-yk-primary text-yk-primary hover:bg-[color:var(--yk-primary-soft)]',
+          )}
+          title={allDone ? 'Exporter la story (.md)' : 'Voir les exigences avant export'}
+        >
+          <Download className="h-3.5 w-3.5" />
+          Exporter
+        </button>
+
+        {checklistOpen && (
+          <ExportChecklist
+            onClose={() => setChecklistOpen(false)}
+            onExport={handleExport}
+            onGoToSection={handleGoToSection}
+          />
         )}
-        aria-disabled={!allDone}
-        title={allDone ? 'Exporter la story' : 'Complète les sections obligatoires'}
-      >
-        <Download className="h-3.5 w-3.5" />
-        Exporter
-      </button>
+      </div>
     </header>
   );
 }
