@@ -139,3 +139,49 @@ export function templateNameForType(type: ArtifactType): string | null {
     default: return null;
   }
 }
+
+/**
+ * Detects the artifact type from the directory segment of an absolute path.
+ * Prefer over detectArtifactType(id) when the path is available.
+ *
+ * Examples:
+ *   "C:/w/.yukki/stories/UI-016.md"  → 'story'
+ *   "C:/w/.yukki/analysis/UI-016.md" → 'analysis'
+ *   "C:/w/.yukki/prompts/UI-016.md"  → 'canvas'
+ *   "C:/w/.yukki/inbox/INBOX-001.md" → 'inbox'
+ *   "C:/w/.yukki/epics/EPIC-001.md"  → 'epic'
+ */
+export function detectArtifactTypeFromPath(absolutePath: string): ArtifactType {
+  const normalized = absolutePath.replace(/\\/g, '/');
+  if (normalized.includes('/.yukki/stories/')) return 'story';
+  if (normalized.includes('/.yukki/analysis/')) return 'analysis';
+  if (normalized.includes('/.yukki/prompts/')) return 'canvas';
+  if (normalized.includes('/.yukki/inbox/')) return 'inbox';
+  if (normalized.includes('/.yukki/epics/')) return 'epic';
+  // Fallback: try prefix-based detection on the filename
+  const filename = normalized.split('/').pop() ?? '';
+  const id = filename.replace(/\.md$/, '').split('-').slice(0, 2).join('-');
+  return detectArtifactType(id.split('-')[0] ?? '');
+}
+
+/**
+ * Derives the absolute template path from an artifact's absolute path and type.
+ * Extracts the ".yukki/" root, then appends "templates/<name>.md".
+ *
+ * Returns null if the type has no template or the path does not contain "/.yukki/".
+ *
+ * Example:
+ *   templatePathFor("C:/w/.yukki/stories/UI-016.md", "story")
+ *   → "C:/w/.yukki/templates/story.md"
+ */
+export function templatePathFor(absolutePath: string, type: ArtifactType): string | null {
+  const templateName = templateNameForType(type);
+  if (!templateName) return null;
+  const normalized = absolutePath.replace(/\\/g, '/');
+  const yukkiIdx = normalized.lastIndexOf('/.yukki/');
+  if (yukkiIdx === -1) return null;
+  // Preserve original separators for the Windows path prefix
+  const sep = absolutePath.includes('\\') ? '\\' : '/';
+  const base = absolutePath.slice(0, yukkiIdx);
+  return `${base}${sep}.yukki${sep}templates${sep}${templateName}.md`;
+}

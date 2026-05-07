@@ -15,13 +15,20 @@ import {
 import { SpddFmForm } from './SpddFmForm';
 import { SpddAcEditor } from './SpddAcEditor';
 import type { ProseSectionKey, SectionKey, SpddSection } from './types';
+import type { EditState, SectionState } from '@/lib/genericSerializer';
 
 export interface SpddDocumentProps {
   onActiveSectionFromScroll: (key: SectionKey) => void;
+  /** UI-016: quand non-null, pilote le rendu depuis le template. */
+  editState?: EditState | null;
+  /** UI-016: callback de mise à jour d'une section générique. */
+  onEditStateChange?: (updated: EditState) => void;
 }
 
 export function SpddDocument({
   onActiveSectionFromScroll,
+  editState,
+  onEditStateChange,
 }: SpddDocumentProps): JSX.Element {
   const containerRef = useRef<HTMLElement | null>(null);
 
@@ -71,9 +78,23 @@ export function SpddDocument({
         className="relative h-full overflow-y-auto bg-yk-bg-page"
       >
         <div className="mx-auto max-w-[720px] px-14 pb-20 pt-7">
-          {SECTIONS.map((section) => (
-            <SectionBlock key={section.key} section={section} />
-          ))}
+          {editState && onEditStateChange ? (
+            /* UI-016: rendu piloté par template */
+            editState.sections.map((section, idx) => (
+              <GenericSectionBlock
+                key={idx}
+                section={section}
+                index={idx}
+                editState={editState}
+                onEditStateChange={onEditStateChange}
+              />
+            ))
+          ) : (
+            /* Fallback: sections statiques story */
+            SECTIONS.map((section) => (
+              <SectionBlock key={section.key} section={section} />
+            ))
+          )}
         </div>
       </main>
     </TooltipProvider>
@@ -139,8 +160,104 @@ function SectionBlock({ section }: { section: SpddSection }): JSX.Element {
   );
 }
 
-const PROSE_PLACEHOLDERS: Record<ProseSectionKey, string> = {
-  bg: "Pose le décor : pourquoi cette story existe et quel contexte motive sa rédaction.",
+// ─── Generic section block (UI-016) ──────────────────────────────────────
+
+interface GenericSectionBlockProps {
+  section: SectionState;
+  index: number;
+  editState: EditState;
+  onEditStateChange: (updated: EditState) => void;
+}
+
+function GenericSectionBlock({
+  section,
+  index,
+  editState,
+  onEditStateChange,
+}: GenericSectionBlockProps): JSX.Element {
+  const id = `spdd-section-generic-${index}`;
+
+  const handleContentChange = useCallback(
+    (value: string) => {
+      const newSections = editState.sections.map((s, i) =>
+        i === index ? { ...s, content: value } : s,
+      );
+      onEditStateChange({ ...editState, sections: newSections });
+    },
+    [editState, index, onEditStateChange],
+  );
+
+  return (
+    <section
+      id={id}
+      data-section-key={id}
+      className="scroll-mt-20 pb-10"
+      aria-labelledby={`${id}-title`}
+    >
+      <header className="mb-3 flex items-center gap-2 border-b border-yk-line-subtle pb-2">
+        <h2
+          id={`${id}-title`}
+          className="text-[17px] font-semibold leading-tight tracking-[-0.01em] text-yk-text-primary"
+        >
+          {section.heading}
+        </h2>
+      </header>
+
+      {section.widget === 'ac-cards' ? (
+        /* AC editor réutilisé pour les sections de type carte */
+        <SpddAcEditor />
+      ) : (
+        <GenericProseTextarea
+          value={section.content}
+          onChange={handleContentChange}
+        />
+      )}
+    </section>
+  );
+}
+
+// ─── Generic prose textarea (UI-016) ─────────────────────────────────────
+
+function GenericProseTextarea({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}): JSX.Element {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      rows={4}
+      value={value}
+      onChange={(e) => {
+        onChange(e.target.value);
+        const el = e.target;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      }}
+      className={cn(
+        'w-full resize-none overflow-hidden rounded-yk bg-transparent',
+        'text-[14px] leading-[1.62] text-yk-text-primary',
+        'placeholder:text-yk-text-faint',
+        'focus:outline-none',
+      )}
+    />
+  );
+}
+
+// ─── Static sections ──────────────────────────────────────────────────────
+
+const PROSE_PLACEHOLDERS: Record<ProseSectionKey, string> = {  bg: "Pose le décor : pourquoi cette story existe et quel contexte motive sa rédaction.",
   bv: "Décris la valeur métier : à qui ça sert et quel gain mesurable.",
   si: "Liste précise de ce qui est dans le périmètre. Une puce = un comportement.",
   so: "Précise ce qui est explicitement exclu, et pourquoi.",

@@ -2,7 +2,7 @@
 // inspector during generating/diff phases).
 // UI-014f — O6: Instancie useSpddSuggest, passe en props AiDiffPanel/AiPopover.
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { SpddHeader } from './SpddHeader';
 import { SpddFooter } from './SpddFooter';
@@ -17,10 +17,15 @@ import { useArtifactsStore } from '@/stores/artifacts';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useSpddSuggest } from '@/hooks/useSpddSuggest';
 import { markdownToDraft } from './parser';
-import { ReadArtifact } from '../../../wailsjs/go/main/App';
+import { ReadArtifact, WriteArtifact } from '../../../wailsjs/go/main/App';
+import { parseTemplate, detectArtifactTypeFromPath, templatePathFor } from '@/lib/templateParser';
+import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
 import type { SuggestionRequest } from '@/hooks/useSpddSuggest';
+import type { EditState } from '@/lib/genericSerializer';
+import type { ParsedTemplate } from '@/lib/templateParser';
 
 // ─── Warnings banner ──────────────────────────────────────────────────────
 
@@ -79,23 +84,82 @@ export function SpddEditor(): JSX.Element {
 
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
 
+  // UI-016: state local pour le rendu piloté par template
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
+  const { toast } = useToast();
+
   // Charger l'artefact sélectionné depuis le hub
   useEffect(() => {
     if (!selectedPath) return;
+    let aborted = false;
     const currentDraft = useSpddEditorStore.getState().draft;
+
     ReadArtifact(selectedPath)
-      .then((raw) => {
+      .then(async (raw) => {
+        if (aborted) return;
+
+        // Charger story dans le store story-draft (pour AI assist)
         const { draft: loaded, warnings } = markdownToDraft(raw, currentDraft);
         resetDraft(loaded);
         useSpddEditorStore.setState({ markdownWarnings: warnings });
+
+        // UI-016: charger le template pour piloter le rendu
+        const type = detectArtifactTypeFromPath(selectedPath);
+        const tmplPath = templatePathFor(selectedPath, type);
+        if (tmplPath) {
+          try {
+            const tmplRaw = await ReadArtifact(tmplPath);
+            if (aborted) return;
+            const tmpl = parseTemplate(tmplRaw);
+            const es = parseArtifactContent(raw, tmpl);
+            setParsedTemplate(tmpl);
+            setEditState(es);
+          } catch {
+            // Template absent ou type non couvert → fallback sections statiques
+            if (!aborted) {
+              setParsedTemplate(null);
+              setEditState(null);
+            }
+          }
+        } else {
+          setParsedTemplate(null);
+          setEditState(null);
+        }
       })
       .catch(() => {
         // En cas d'erreur on garde le draft courant
       });
+
+    return () => { aborted = true; };
   }, [selectedPath, resetDraft]);
 
+  // UI-016: sauvegarde via WriteArtifact + serializeArtifact (Ctrl+S)
+  useEffect(() => {
+    if (!editState || !parsedTemplate) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const path = selectedPath;
+        if (!path) return;
+        const content = serializeArtifact(editState, parsedTemplate);
+        WriteArtifact(path, content)
+          .then(() => toast({ title: 'Sauvegardé ✓', duration: 3000 }))
+          .catch((err: unknown) => toast({
+            title: "Erreur d'enregistrement",
+            description: String(err),
+            duration: 5000,
+            variant: 'destructive',
+          }));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editState, parsedTemplate, selectedPath, toast]);
+
   // CORE-007: auto-save to backend every 2s of inactivity.
-  useAutoSave(draft, true);
+  // Désactivé quand editState est non-null (évite conflit DraftSave vs WriteArtifact).
+  useAutoSave(draft, editState === null);
 
   // UI-014f: real streaming suggestion hook.
   const suggestResult = useSpddSuggest();
@@ -159,22 +223,22 @@ export function SpddEditor(): JSX.Element {
   }, []);
 
   const isMarkdown = viewMode === 'markdown';
-  const showDiffPanel = !isMarkdown && (aiPhase === 'generating' || aiPhase === 'diff');
+  // O7: masquer l'inspecteur quand editState non-null (sections génériques)
+  const hasEditState = editState !== null;
+  const showDiffPanel = !isMarkdown && !hasEditState && (aiPhase === 'generating' || aiPhase === 'diff');
+  const showInspector = !isMarkdown && !hasEditState && !showDiffPanel;
+  // Grille : 2 colonnes quand markdown ou editState, 3 sinon
+  const gridCols = isMarkdown || hasEditState ? 'grid-cols-[240px_1fr]' : 'grid-cols-[240px_1fr_360px]';
 
   return (
     <div
       className="yk grid h-full w-full min-h-0 grid-rows-[40px_1fr_28px] bg-yk-bg-page font-inter text-yk-text-primary"
       data-testid="spdd-editor"
     >
-      <SpddHeader />
+      <SpddHeader editState={editState} />
 
       <div
-        className={cn(
-          'grid min-h-0 overflow-hidden',
-          isMarkdown
-            ? 'grid-cols-[240px_1fr]'
-            : 'grid-cols-[240px_1fr_360px]',
-        )}
+        className={cn('grid min-h-0 overflow-hidden', gridCols)}
       >
         {/* Warnings banner spans all columns */}
         {markdownWarnings.length > 0 && (
@@ -187,7 +251,7 @@ export function SpddEditor(): JSX.Element {
           className="overflow-y-auto border-r border-yk-line bg-yk-bg-1"
           style={{ gridRow: markdownWarnings.length > 0 ? '2' : '1' }}
         >
-          <SpddTOC onSectionClick={handleTocClick} />
+          <SpddTOC onSectionClick={handleTocClick} editState={editState} />
         </aside>
 
         {/* Center: Markdown or WYSIWYG */}
@@ -200,11 +264,15 @@ export function SpddEditor(): JSX.Element {
             onScrollHandled={clearScrollToSection}
           />
         ) : (
-          <SpddDocument onActiveSectionFromScroll={handleScrollSection} />
+          <SpddDocument
+            onActiveSectionFromScroll={handleScrollSection}
+            editState={editState}
+            onEditStateChange={setEditState}
+          />
         )}
 
-        {/* Inspector — only in WYSIWYG mode; swapped for DiffPanel when AI is active */}
-        {!isMarkdown && (
+        {/* Inspector — only in WYSIWYG mode without editState; swapped for DiffPanel when AI is active */}
+        {showInspector && (
           <aside
             aria-label={showDiffPanel ? 'Panneau de diff IA' : 'Inspector'}
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"

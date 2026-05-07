@@ -11,9 +11,12 @@ import {
 } from '@/stores/spdd';
 import { cn } from '@/lib/utils';
 import type { SectionKey, SectionStatus } from './types';
+import type { EditState } from '@/lib/genericSerializer';
 
 export interface SpddTOCProps {
   onSectionClick: (key: SectionKey) => void;
+  /** UI-016: quand non-null, pilote le TOC depuis les sections génériques. */
+  editState?: EditState | null;
 }
 
 interface PastilleProps {
@@ -69,7 +72,7 @@ function Pastille({ status }: PastilleProps): JSX.Element {
   }
 }
 
-export function SpddTOC({ onSectionClick }: SpddTOCProps): JSX.Element {
+export function SpddTOC({ onSectionClick, editState }: SpddTOCProps): JSX.Element {
   const state = useSpddEditorStore();
   const completed = selectRequiredCompleted(state);
   const missing = selectMissingRequiredLabels(state);
@@ -77,6 +80,47 @@ export function SpddTOC({ onSectionClick }: SpddTOCProps): JSX.Element {
 
   const progressPct = Math.round((completed / REQUIRED_COUNT) * 100);
   const allDone = completed === REQUIRED_COUNT;
+
+  // UI-016: rendu piloté par template
+  if (editState) {
+    return (
+      <nav
+        aria-label="Sommaire SPDD"
+        className="flex h-full flex-col bg-yk-bg-1 font-inter"
+      >
+        <div className="border-b border-yk-line-subtle px-4 pb-2 pt-3">
+          <span className="font-jbmono text-[10px] uppercase tracking-wider text-yk-text-muted">
+            Sections
+          </span>
+        </div>
+        <ul role="tablist" className="flex-1 overflow-y-auto px-2 py-2">
+          {editState.sections.map((section, idx) => (
+            <li key={idx}>
+              <button
+                type="button"
+                role="tab"
+                onClick={() => {
+                  const el = document.getElementById(`spdd-section-generic-${idx}`);
+                  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                title={section.heading}
+                className={cn(
+                  'group flex w-full items-center gap-2 rounded-yk-sm px-2 py-1.5 text-left transition-colors',
+                  'hover:bg-yk-bg-2 focus-visible:outline-none focus-visible:ring-2',
+                  'focus-visible:ring-[color:var(--yk-primary-ring)]',
+                )}
+              >
+                <Pastille status="optional" />
+                <span className="flex-1 truncate text-[13px] leading-5 text-yk-text-secondary">
+                  {section.heading}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    );
+  }
 
   return (
     <nav
@@ -151,7 +195,7 @@ export function SpddTOC({ onSectionClick }: SpddTOCProps): JSX.Element {
         })}
       </ul>
 
-      <div className="border-t border-yk-line-subtle px-4 py-3">
+      <div className="border-t border-yk-line-subtle px-4 py-3"> {/* static footer */}
         <div className="mb-1.5 flex items-baseline justify-between font-jbmono text-[11px] text-yk-text-muted">
           <span>Progression</span>
           <span className={allDone ? 'text-yk-success' : 'text-yk-warning'}>

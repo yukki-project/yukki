@@ -13,6 +13,7 @@ import { REQUIRED_COUNT } from './sections';
 import { cn } from '@/lib/utils';
 import type { SectionKey, ViewMode } from './types';
 import type { ExportConflictInfo } from './ExportConflictDialog';
+import type { EditState } from '@/lib/genericSerializer';
 
 const STATUS_PILL_CLASSES: Record<string, string> = {
   draft: 'bg-[color:var(--yk-warning-soft)] text-yk-warning',
@@ -30,7 +31,7 @@ function formatSavedAt(savedAt: string | null): string {
   return `sauvé ${hh}:${mm}`;
 }
 
-export function SpddHeader(): JSX.Element {
+export function SpddHeader({ editState }: { editState?: EditState | null }): JSX.Element {
   const draft = useSpddEditorStore((s) => s.draft);
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const setViewMode = useSpddEditorStore((s) => s.setViewMode);
@@ -145,59 +146,65 @@ export function SpddHeader(): JSX.Element {
       </button>
 
       <span className="font-jbmono text-[12px] text-yk-text-secondary">
-        {draft.id}
+        {editState ? (String(editState.fmValues['id'] ?? '')) : draft.id}
       </span>
       <span className="font-inter text-[14px] font-medium text-yk-text-primary">
-        {draft.title}
+        {editState ? (String(editState.fmValues['title'] ?? '')) : draft.title}
       </span>
       <span
         className={cn(
           'rounded-yk-sm px-2 py-0.5 font-jbmono text-[9.5px] uppercase tracking-wider',
-          STATUS_PILL_CLASSES[draft.status] ?? STATUS_PILL_CLASSES.draft,
+          STATUS_PILL_CLASSES[editState ? String(editState.fmValues['status'] ?? '') : draft.status] ?? STATUS_PILL_CLASSES.draft,
         )}
       >
-        {draft.status}
+        {editState ? (String(editState.fmValues['status'] ?? '')) : draft.status}
       </span>
-      <span className="flex items-center gap-1.5 text-[11px] text-yk-text-muted">
-        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-yk-success" />
-        <span className="font-jbmono">{savedLabel}</span>
-      </span>
+      {!editState && (
+        <span className="flex items-center gap-1.5 text-[11px] text-yk-text-muted">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-yk-success" />
+          <span className="font-jbmono">{savedLabel}</span>
+        </span>
+      )}
       <div className="flex-1" />
 
-      <SegmentedViewMode value={viewMode} onChange={setViewMode} />
+      {!editState && <SegmentedViewMode value={viewMode} onChange={setViewMode} />}
 
       {/* Export button + checklist popover container */}
-      <div ref={exportBtnRef} className="relative">
-        <button
-          type="button"
-          onClick={handleExportClick}
-          className={cn(
-            'flex items-center gap-1.5 rounded-yk-sm px-3 py-1 font-inter text-[12px] transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
-            allDone
-              ? 'bg-yk-primary text-white hover:brightness-110'
-              : 'border border-yk-primary text-yk-primary hover:bg-[color:var(--yk-primary-soft)]',
+      {!editState && (
+        <div ref={exportBtnRef} className="relative">
+          <button
+            type="button"
+            onClick={handleExportClick}
+            className={cn(
+              'flex items-center gap-1.5 rounded-yk-sm px-3 py-1 font-inter text-[12px] transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
+              allDone
+                ? 'bg-yk-primary text-white hover:brightness-110'
+                : 'border border-yk-primary text-yk-primary hover:bg-[color:var(--yk-primary-soft)]',
+            )}
+            title={allDone ? 'Exporter la story (.md)' : 'Voir les exigences avant export'}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exporter
+          </button>
+
+          {checklistOpen && (
+            <ExportChecklist
+              onClose={() => setChecklistOpen(false)}
+              onExport={() => void handleExport()}
+              onGoToSection={handleGoToSection}
+            />
           )}
-          title={allDone ? 'Exporter la story (.md)' : 'Voir les exigences avant export'}
-        >
-          <Download className="h-3.5 w-3.5" />
-          Exporter
-        </button>
+        </div>
+      )}
 
-        {checklistOpen && (
-          <ExportChecklist
-            onClose={() => setChecklistOpen(false)}
-            onExport={() => void handleExport()}
-            onGoToSection={handleGoToSection}
-          />
-        )}
-      </div>
-
-      <ExportConflictDialog
-        conflict={conflictInfo}
-        onOverwrite={handleOverwrite}
-        onCancel={() => setConflictInfo(null)}
-      />
+      {!editState && (
+        <ExportConflictDialog
+          conflict={conflictInfo}
+          onOverwrite={handleOverwrite}
+          onCancel={() => setConflictInfo(null)}
+        />
+      )}
     </header>
   );
 }
