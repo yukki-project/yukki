@@ -104,7 +104,7 @@ export function useSpddSuggest(): SpddSuggestResult {
   const start = useCallback(async (req: SuggestionRequest) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const go = (window as any).go;
-    if (!go?.main?.App?.SpddSuggestStart) {
+    if (!go?.uiapp?.App?.SpddSuggestStart) {
       setError('Wails non disponible');
       setState('error');
       return;
@@ -119,7 +119,7 @@ export function useSpddSuggest(): SpddSuggestResult {
     setState('streaming');
 
     try {
-      const id: string = await go.main.App.SpddSuggestStart({
+      const id: string = await go.uiapp.App.SpddSuggestStart({
         section: req.section,
         action: req.action,
         selectedText: req.selectedText,
@@ -136,10 +136,10 @@ export function useSpddSuggest(): SpddSuggestResult {
   const cancel = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const go = (window as any).go;
-    if (!go?.main?.App?.SpddSuggestCancel || !sessionId) return;
+    if (!go?.uiapp?.App?.SpddSuggestCancel || !sessionId) return;
 
     try {
-      await go.main.App.SpddSuggestCancel(sessionId);
+      await go.uiapp.App.SpddSuggestCancel(sessionId);
     } catch {
       // "session not found" on double-cancel is expected — ignore silently.
     }
@@ -148,12 +148,12 @@ export function useSpddSuggest(): SpddSuggestResult {
   const preview = useCallback(async (req: SuggestionRequest): Promise<string> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const go = (window as any).go;
-    if (!go?.main?.App?.SpddSuggestPreview) {
+    if (!go?.uiapp?.App?.SpddSuggestPreview) {
       return '(Wails non disponible — preview indisponible)';
     }
 
     try {
-      return await go.main.App.SpddSuggestPreview({
+      return await go.uiapp.App.SpddSuggestPreview({
         section: req.section,
         action: req.action,
         selectedText: req.selectedText,

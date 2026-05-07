@@ -33,8 +33,8 @@ export function useAutoSave(draft: StoryDraft, enabled: boolean): void {
         // under wailsjs/go/main/App.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const go = (window as any).go;
-        if (go?.main?.App?.DraftSave) {
-          await go.main.App.DraftSave({
+        if (go?.uiapp?.App?.DraftSave) {
+          await go.uiapp.App.DraftSave({
             id: draft.id,
             slug: draft.slug,
             title: draft.title,

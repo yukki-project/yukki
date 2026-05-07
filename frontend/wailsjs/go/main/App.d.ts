@@ -35,6 +35,54 @@ export function InitializeYukki(dir: string): Promise<void>;
 // UI-010
 export function WriteArtifact(path: string, content: string): Promise<void>;
 
+// CORE-007 — draft persistence
+export function DraftSave(draft: Record<string, unknown>): Promise<void>;
+export function DraftLoad(id: string): Promise<Record<string, unknown>>;
+export function DraftList(): Promise<DraftSummary[]>;
+export function DraftDelete(id: string): Promise<void>;
+export function StoryValidate(draft: Record<string, unknown>): Promise<ValidationReport>;
+
+// CORE-009 — story export
+export function StoryExport(draft: Record<string, unknown>, options: ExportOptions): Promise<ExportResult>;
+
+// CORE-008 — LLM suggestion streaming
+export function SpddSuggestStart(req: SuggestionRequest): Promise<string>;
+export function SpddSuggestCancel(sessionID: string): Promise<void>;
+export function SpddSuggestPreview(req: SuggestionRequest): Promise<string>;
+
+export interface DraftSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+export interface FieldError {
+  field: string;
+  severity: string;
+  message: string;
+}
+
+export interface ValidationReport {
+  errors: FieldError[];
+}
+
+export interface ExportOptions {
+  Overwrite: boolean;
+}
+
+export interface ExportResult {
+  path: string;
+  bytes: number;
+  writtenAt: string;
+}
+
+export interface SuggestionRequest {
+  section: string;
+  action: string;
+  selectedText: string;
+  previousSuggestion: string;
+}
+
 export interface ProjectMeta {
   Path: string;
   Name: string;

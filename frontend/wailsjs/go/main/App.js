@@ -94,3 +94,42 @@ export function InitializeYukki(dir) {
 export function WriteArtifact(path, content) {
   return window['go']['uiapp']['App']['WriteArtifact'](path, content);
 }
+
+// CORE-007 — draft persistence
+export function DraftSave(draft) {
+  return window['go']['uiapp']['App']['DraftSave'](draft);
+}
+
+export function DraftLoad(id) {
+  return window['go']['uiapp']['App']['DraftLoad'](id);
+}
+
+export function DraftList() {
+  return window['go']['uiapp']['App']['DraftList']();
+}
+
+export function DraftDelete(id) {
+  return window['go']['uiapp']['App']['DraftDelete'](id);
+}
+
+export function StoryValidate(draft) {
+  return window['go']['uiapp']['App']['StoryValidate'](draft);
+}
+
+// CORE-009 — story export
+export function StoryExport(draft, options) {
+  return window['go']['uiapp']['App']['StoryExport'](draft, options);
+}
+
+// CORE-008 — LLM suggestion streaming
+export function SpddSuggestStart(req) {
+  return window['go']['uiapp']['App']['SpddSuggestStart'](req);
+}
+
+export function SpddSuggestCancel(sessionID) {
+  return window['go']['uiapp']['App']['SpddSuggestCancel'](sessionID);
+}
+
+export function SpddSuggestPreview(req) {
+  return window['go']['uiapp']['App']['SpddSuggestPreview'](req);
+}

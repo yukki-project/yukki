@@ -50,7 +50,7 @@ export function SpddHeader(): JSX.Element {
   const handleExport = useCallback(async (overwrite = false) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const go = (window as any).go;
-    if (!go?.main?.App?.StoryExport) {
+    if (!go?.uiapp?.App?.StoryExport) {
       // Fallback: Blob download (browser dev mode without Wails)
       const { draftToMarkdown } = await import('./serializer');
       const md = draftToMarkdown(draft);
@@ -67,7 +67,7 @@ export function SpddHeader(): JSX.Element {
     }
 
     try {
-      const result = await go.main.App.StoryExport(
+      const result = await go.uiapp.App.StoryExport(
         draftToGoPayload(draft),
         { Overwrite: overwrite },
       );

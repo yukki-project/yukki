@@ -34,10 +34,10 @@ export function useValidation(draft: StoryDraft): ValidationReport {
     const timer = setTimeout(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const go = (window as any).go;
-      if (!go?.main?.App?.StoryValidate) return;
+      if (!go?.uiapp?.App?.StoryValidate) return;
 
       try {
-        const result = await go.main.App.StoryValidate(draftToGoPayload(draft));
+        const result = await go.uiapp.App.StoryValidate(draftToGoPayload(draft));
         if (result && Array.isArray(result.errors)) {
           setReport(result as ValidationReport);
         } else {

@@ -161,9 +161,9 @@ export function RestoreDialogController({ onRestore }: ControllerProps): JSX.Ele
     setSummaries(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const go = (window as any).go;
-    if (go?.main?.App?.DraftLoad) {
+    if (go?.uiapp?.App?.DraftLoad) {
       try {
-        const loaded = await go.main.App.DraftLoad(id);
+        const loaded = await go.uiapp.App.DraftLoad(id);
         useSpddEditorStore.getState().resetDraft(mapGoToDraft(loaded));
         return;
       } catch {
