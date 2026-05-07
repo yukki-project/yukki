@@ -261,15 +261,27 @@ export function StoryViewer({ className }: StoryViewerProps) {
 
     if (templateName) {
       setTemplateLoading(true);
-      ReadArtifact(`.yukki/templates/${templateName}.md`)
+      // Derive absolute template path from the artifact's absolute path.
+      // artifactPath e.g. "C:\workspace\yukki\.yukki\stories\UI-015.md"
+      // → template  e.g. "C:\workspace\yukki\.yukki\templates\story.md"
+      const artifactPath = pathRef.current ?? '';
+      const normalized = artifactPath.replace(/\\/g, '/');
+      const yukkiIdx = normalized.lastIndexOf('/.yukki/');
+      const sep = artifactPath.includes('\\') ? '\\' : '/';
+      const templatePath = yukkiIdx !== -1
+        ? `${artifactPath.slice(0, yukkiIdx)}${sep}.yukki${sep}templates${sep}${templateName}.md`
+        : `.yukki/templates/${templateName}.md`; // fallback if path format unexpected
+
+      ReadArtifact(templatePath)
         .then((templateRaw) => {
           const tmpl = parseTemplate(templateRaw);
           const es = parseArtifactContent(currentContent, tmpl);
           setParsedTemplate(tmpl);
           setEditState(es);
         })
-        .catch(() => {
+        .catch((err) => {
           // Template not found — fallback to raw textarea (state stays null)
+          console.warn('[UI-015] template load failed:', templatePath, err);
         })
         .finally(() => setTemplateLoading(false));
     }

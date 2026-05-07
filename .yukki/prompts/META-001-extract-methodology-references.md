@@ -3,9 +3,9 @@ id: META-001
 slug: extract-methodology-references
 story: .yukki/stories/META-001-extract-methodology-references.md
 analysis: .yukki/analysis/META-001-extract-methodology-references.md
-status: implemented
+status: synced
 created: 2026-04-30
-updated: 2026-04-30
+updated: 2026-05-06
 ---
 
 # Canvas REASONS — Extraire les références méthodologiques des skills vers .yukki/methodology/
