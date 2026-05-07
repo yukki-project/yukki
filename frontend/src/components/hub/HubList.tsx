@@ -1,12 +1,9 @@
-import { useState } from 'react';
-import { AlertCircle, Archive, Plus } from 'lucide-react';
+import { AlertCircle, Archive } from 'lucide-react';
 import { type Meta } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
-import { useProjectStore } from '@/stores/project';
 import { useShellStore } from '@/stores/shell';
-import { NewStoryModal } from './NewStoryModal';
 
 const ARCHIVED_STATUSES = new Set(['synced']);
 
@@ -29,9 +26,7 @@ export function HubList({ className }: HubListProps) {
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
   const setSelectedPath = useArtifactsStore((s) => s.setSelectedPath);
   const kind = useArtifactsStore((s) => s.kind);
-  const projectDir = useProjectStore((s) => s.projectDir);
 
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const showArchived = useShellStore((s) => s.showArchived);
   const setShowArchived = useShellStore((s) => s.setShowArchived);
 
@@ -54,15 +49,6 @@ export function HubList({ className }: HubListProps) {
           >
             <Archive className="h-3.5 w-3.5" />
           </Button>
-          {kind === 'stories' && (
-            <Button
-              size="sm"
-              onClick={() => setModalOpen(true)}
-              disabled={!projectDir}
-            >
-              <Plus className="mr-2 h-3 w-3" /> New Story
-            </Button>
-          )}
         </div>
       </header>
       {error && (
@@ -118,7 +104,6 @@ export function HubList({ className }: HubListProps) {
           })}
         </ul>
       )}
-      <NewStoryModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
   );
 }

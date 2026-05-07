@@ -3,12 +3,11 @@ import { ActivityBar } from '@/components/hub/ActivityBar';
 import { ClaudeBanner } from '@/components/hub/ClaudeBanner';
 import { ProjectPicker } from '@/components/hub/ProjectPicker';
 import { SidebarPanel } from '@/components/hub/SidebarPanel';
-import { StoryViewer } from '@/components/hub/StoryViewer';
 import { TabBar } from '@/components/hub/TabBar';
 import { TitleBar } from '@/components/hub/TitleBar';
 import { Toaster } from '@/components/ui/toaster';
 import { WorkflowPipeline } from '@/components/workflow/WorkflowPipeline';
-import { SpddEditor } from '@/components/spdd/SpddEditor';
+import { ArtifactEditor } from '@/components/spdd/ArtifactEditor';
 import { CloseProject, LoadRegistry, OpenProject, SwitchProject } from '../wailsjs/go/main/App';
 import { EventsOn } from '@/lib/wails-events';
 import { useClaudeStore } from '@/stores/claude';
@@ -155,14 +154,12 @@ export default function App() {
           <ClaudeBanner />
           <div className="flex flex-1 overflow-hidden">
             <ActivityBar />
-            {activeMode !== 'editor' && <SidebarPanel />}
+            <SidebarPanel />
             <section className="flex flex-1 overflow-hidden">
               {activeMode === 'workflow' ? (
                 <WorkflowPipeline />
-              ) : activeMode === 'editor' ? (
-                <SpddEditor />
               ) : (
-                <StoryViewer className="flex-1" />
+                <ArtifactEditor />
               )}
             </section>
           </div>

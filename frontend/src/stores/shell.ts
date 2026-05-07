@@ -11,8 +11,8 @@ export type ShellMode =
   | 'epics'   // META-005
   | 'roadmap' // META-005
   | 'settings'
-  | 'workflow'
-  | 'editor'; // UI-014a — SPDD guided editor
+  | 'workflow';
+  // UI-016: 'editor' supprimé — ArtifactEditor remplace SpddEditor+StoryViewer
 
 // 'workflow' et 'editor' volontairement non inclus : ils ne pilotent pas
 // useArtifactsStore.setKind (Invariant I3 UI-006 + I2 UI-008).
