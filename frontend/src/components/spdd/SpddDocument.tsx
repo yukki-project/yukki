@@ -23,12 +23,15 @@ export interface SpddDocumentProps {
   editState?: EditState | null;
   /** UI-016: callback de mise à jour d'une section générique. */
   onEditStateChange?: (updated: EditState) => void;
+  /** UI-016: mode lecture seule — désactive l'édition du contenu. */
+  readOnly?: boolean;
 }
 
 export function SpddDocument({
   onActiveSectionFromScroll,
   editState,
   onEditStateChange,
+  readOnly,
 }: SpddDocumentProps): JSX.Element {
   const containerRef = useRef<HTMLElement | null>(null);
 
@@ -87,6 +90,7 @@ export function SpddDocument({
                 index={idx}
                 editState={editState}
                 onEditStateChange={onEditStateChange}
+                readOnly={readOnly ?? true}
               />
             ))
           ) : (
@@ -167,6 +171,7 @@ interface GenericSectionBlockProps {
   index: number;
   editState: EditState;
   onEditStateChange: (updated: EditState) => void;
+  readOnly: boolean;
 }
 
 function GenericSectionBlock({
@@ -174,6 +179,7 @@ function GenericSectionBlock({
   index,
   editState,
   onEditStateChange,
+  readOnly,
 }: GenericSectionBlockProps): JSX.Element {
   const id = `spdd-section-generic-${index}`;
 
@@ -204,12 +210,17 @@ function GenericSectionBlock({
       </header>
 
       {section.widget === 'ac-cards' ? (
-        /* AC editor réutilisé pour les sections de type carte */
-        <SpddAcEditor />
+        /* AC editor — désactivé en lecture seule */
+        readOnly ? (
+          <GenericProseTextarea value={section.content} onChange={() => {}} readOnly />
+        ) : (
+          <SpddAcEditor />
+        )
       ) : (
         <GenericProseTextarea
           value={section.content}
           onChange={handleContentChange}
+          readOnly={readOnly}
         />
       )}
     </section>
@@ -221,9 +232,11 @@ function GenericSectionBlock({
 function GenericProseTextarea({
   value,
   onChange,
+  readOnly,
 }: {
   value: string;
   onChange: (v: string) => void;
+  readOnly?: boolean;
 }): JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -239,7 +252,8 @@ function GenericProseTextarea({
       ref={textareaRef}
       rows={4}
       value={value}
-      onChange={(e) => {
+      readOnly={readOnly}
+      onChange={readOnly ? undefined : (e) => {
         onChange(e.target.value);
         const el = e.target;
         el.style.height = 'auto';
@@ -250,6 +264,7 @@ function GenericProseTextarea({
         'text-[14px] leading-[1.62] text-yk-text-primary',
         'placeholder:text-yk-text-faint',
         'focus:outline-none',
+        readOnly && 'cursor-default select-text',
       )}
     />
   );

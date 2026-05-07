@@ -63,16 +63,20 @@ describe('templatePathFor', () => {
     expect(result).toBe('C:/workspace/.yukki/templates/epic.md');
   });
 
-  it('retourne null pour analysis (pas de template)', () => {
-    expect(
-      templatePathFor('C:/workspace/.yukki/analysis/UI-016.md', 'analysis'),
-    ).toBeNull();
+  it('retourne le chemin template pour analysis', () => {
+    const result = templatePathFor(
+      'C:/workspace/.yukki/analysis/UI-016.md',
+      'analysis',
+    );
+    expect(result).toBe('C:/workspace/.yukki/templates/analysis.md');
   });
 
-  it('retourne null pour canvas (pas de template)', () => {
-    expect(
-      templatePathFor('C:/workspace/.yukki/prompts/UI-016.md', 'canvas'),
-    ).toBeNull();
+  it('retourne le chemin template pour canvas (canvas-reasons)', () => {
+    const result = templatePathFor(
+      'C:/workspace/.yukki/prompts/UI-016.md',
+      'canvas',
+    );
+    expect(result).toBe('C:/workspace/.yukki/templates/canvas-reasons.md');
   });
 
   it('retourne null quand le chemin ne contient pas .yukki/', () => {

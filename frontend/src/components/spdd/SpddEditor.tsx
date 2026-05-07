@@ -87,6 +87,7 @@ export function SpddEditor(): JSX.Element {
   // UI-016: state local pour le rendu piloté par template
   const [editState, setEditState] = useState<EditState | null>(null);
   const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const { toast } = useToast();
 
   // Charger l'artefact sélectionné depuis le hub
@@ -115,16 +116,19 @@ export function SpddEditor(): JSX.Element {
             const es = parseArtifactContent(raw, tmpl);
             setParsedTemplate(tmpl);
             setEditState(es);
+            setIsEditMode(false); // retour en lecture seule pour chaque nouveau fichier
           } catch {
             // Template absent ou type non couvert → fallback sections statiques
             if (!aborted) {
               setParsedTemplate(null);
               setEditState(null);
+              setIsEditMode(false);
             }
           }
         } else {
           setParsedTemplate(null);
           setEditState(null);
+          setIsEditMode(false);
         }
       })
       .catch(() => {
@@ -223,19 +227,26 @@ export function SpddEditor(): JSX.Element {
   }, []);
 
   const isMarkdown = viewMode === 'markdown';
-  // O7: masquer l'inspecteur quand editState non-null (sections génériques)
+  // O7: layout piloté par editState + isEditMode
   const hasEditState = editState !== null;
+  // Inspecteur visible : mode story (pas de editState) OU mode édition avec editState
   const showDiffPanel = !isMarkdown && !hasEditState && (aiPhase === 'generating' || aiPhase === 'diff');
-  const showInspector = !isMarkdown && !hasEditState && !showDiffPanel;
-  // Grille : 2 colonnes quand markdown ou editState, 3 sinon
-  const gridCols = isMarkdown || hasEditState ? 'grid-cols-[240px_1fr]' : 'grid-cols-[240px_1fr_360px]';
+  const showInspector = !isMarkdown && (!hasEditState || isEditMode) && !showDiffPanel;
+  // Grille : 2 colonnes en lecture seule (editState non-null et pas en édition), 3 sinon
+  const gridCols = isMarkdown || (hasEditState && !isEditMode)
+    ? 'grid-cols-[240px_1fr]'
+    : 'grid-cols-[240px_1fr_360px]';
 
   return (
     <div
       className="yk grid h-full w-full min-h-0 grid-rows-[40px_1fr_28px] bg-yk-bg-page font-inter text-yk-text-primary"
       data-testid="spdd-editor"
     >
-      <SpddHeader editState={editState} />
+      <SpddHeader
+        editState={editState}
+        isEditMode={isEditMode}
+        onToggleEditMode={() => setIsEditMode((v) => !v)}
+      />
 
       <div
         className={cn('grid min-h-0 overflow-hidden', gridCols)}
@@ -268,6 +279,7 @@ export function SpddEditor(): JSX.Element {
             onActiveSectionFromScroll={handleScrollSection}
             editState={editState}
             onEditStateChange={setEditState}
+            readOnly={hasEditState && !isEditMode}
           />
         )}
 

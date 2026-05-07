@@ -136,6 +136,8 @@ export function templateNameForType(type: ArtifactType): string | null {
     case 'story': return 'story';
     case 'inbox': return 'inbox';
     case 'epic': return 'epic';
+    case 'analysis': return 'analysis';
+    case 'canvas': return 'canvas-reasons';
     default: return null;
   }
 }

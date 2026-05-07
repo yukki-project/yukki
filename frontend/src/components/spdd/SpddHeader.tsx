@@ -2,7 +2,7 @@
 // UI-014f — O5: Real StoryExport via Wails; ExportConflictDialog on conflict.
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Code2, Download, Edit3 } from 'lucide-react';
+import { ArrowLeft, Code2, Download, Edit3, Pencil, Check } from 'lucide-react';
 import { useSpddEditorStore, selectRequiredCompleted } from '@/stores/spdd';
 import { useShellStore } from '@/stores/shell';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +31,15 @@ function formatSavedAt(savedAt: string | null): string {
   return `sauvé ${hh}:${mm}`;
 }
 
-export function SpddHeader({ editState }: { editState?: EditState | null }): JSX.Element {
+export function SpddHeader({
+  editState,
+  isEditMode,
+  onToggleEditMode,
+}: {
+  editState?: EditState | null;
+  isEditMode?: boolean;
+  onToggleEditMode?: () => void;
+}): JSX.Element {
   const draft = useSpddEditorStore((s) => s.draft);
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const setViewMode = useSpddEditorStore((s) => s.setViewMode);
@@ -166,6 +174,28 @@ export function SpddHeader({ editState }: { editState?: EditState | null }): JSX
         </span>
       )}
       <div className="flex-1" />
+
+      {/* Bouton Edit / Done pour les artefacts pilotés par template */}
+      {editState && onToggleEditMode && (
+        <button
+          type="button"
+          onClick={onToggleEditMode}
+          className={cn(
+            'flex items-center gap-1.5 rounded-yk-sm px-3 py-1 font-inter text-[12px] transition-colors',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
+            isEditMode
+              ? 'bg-yk-primary text-white hover:brightness-110'
+              : 'border border-yk-line text-yk-text-secondary hover:bg-yk-bg-2',
+          )}
+          title={isEditMode ? 'Terminer l\'édition (Ctrl+S pour sauvegarder)' : 'Passer en mode édition'}
+        >
+          {isEditMode ? (
+            <><Check className="h-3.5 w-3.5" />Terminer</>
+          ) : (
+            <><Pencil className="h-3.5 w-3.5" />Modifier</>
+          )}
+        </button>
+      )}
 
       {!editState && <SegmentedViewMode value={viewMode} onChange={setViewMode} />}
 
