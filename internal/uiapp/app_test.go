@@ -820,3 +820,37 @@ func TestApp_SuggestedPrefixes_Sorted_Distinct(t *testing.T) {
 		t.Fatal("SuggestedPrefixes mutated artifacts.AllowedPrefixes")
 	}
 }
+
+func TestApp_RunStory_ClearsOnChunkAfter(t *testing.T) {
+	cp := provider.NewClaude(newTestLogger())
+	cp.Binary = "echo" // not used; Generate is short-circuited by CheckVersion failure
+	// We use MockProvider with ClaudeProvider cast test via a separate subtest below.
+	// Here: simply verify that after RunStory with a real *ClaudeProvider that errors,
+	// OnChunk is reset to nil.
+	withTempRegistry(t)
+	dir := t.TempDir()
+	app := NewApp(cp, newTestLogger())
+	app.OnStartup(context.Background())
+	setTestProject(t, app, dir)
+	captureEmits(t)
+
+	// RunStory will fail (CheckVersion fails: echo is not the claude CLI).
+	// What matters is that OnChunk is nil after the call.
+	_, _ = app.RunStory("desc", "STORY", false)
+	if cp.OnChunk != nil {
+		t.Fatal("expected OnChunk to be nil after RunStory returns")
+	}
+}
+
+func TestApp_RunStory_MockProviderUnaffected(t *testing.T) {
+	// With MockProvider the cast to *ClaudeProvider fails → no panic,
+	// OnChunk assignment simply skipped.
+	mock := &provider.MockProvider{Response: stubStoryUIC}
+	app, _ := runStoryHappyPath(t, mock)
+	captureEmits(t)
+
+	_, err := app.RunStory("desc", "STORY", false)
+	if err != nil {
+		t.Fatalf("RunStory with MockProvider: %v", err)
+	}
+}
