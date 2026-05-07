@@ -7,7 +7,7 @@ import { TabBar } from '@/components/hub/TabBar';
 import { TitleBar } from '@/components/hub/TitleBar';
 import { Toaster } from '@/components/ui/toaster';
 import { WorkflowPipeline } from '@/components/workflow/WorkflowPipeline';
-import { ArtifactEditor } from '@/components/spdd/ArtifactEditor';
+import { SpddEditor } from '@/components/spdd/SpddEditor';
 import { CloseProject, LoadRegistry, OpenProject, SwitchProject } from '../wailsjs/go/main/App';
 import { EventsOn } from '@/lib/wails-events';
 import { useClaudeStore } from '@/stores/claude';
@@ -159,7 +159,7 @@ export default function App() {
               {activeMode === 'workflow' ? (
                 <WorkflowPipeline />
               ) : (
-                <ArtifactEditor />
+                <SpddEditor />
               )}
             </section>
           </div>

@@ -13,8 +13,11 @@ import { SpddMarkdownView } from './SpddMarkdownView';
 import { AiPopover } from './AiPopover';
 import { AiDiffPanel } from './AiDiffPanel';
 import { useSpddEditorStore } from '@/stores/spdd';
+import { useArtifactsStore } from '@/stores/artifacts';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useSpddSuggest } from '@/hooks/useSpddSuggest';
+import { markdownToDraft } from './parser';
+import { ReadArtifact } from '../../../wailsjs/go/main/App';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
 import type { SuggestionRequest } from '@/hooks/useSpddSuggest';
@@ -70,8 +73,26 @@ export function SpddEditor(): JSX.Element {
   const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
   const setMarkdownSource = useSpddEditorStore((s) => s.setMarkdownSource);
   const clearScrollToSection = useSpddEditorStore((s) => s.clearScrollToSection);
+  const resetDraft = useSpddEditorStore((s) => s.resetDraft);
   const aiPhase = useSpddEditorStore((s) => s.aiPhase);
   const aiSelection = useSpddEditorStore((s) => s.aiSelection);
+
+  const selectedPath = useArtifactsStore((s) => s.selectedPath);
+
+  // Charger l'artefact sélectionné depuis le hub
+  useEffect(() => {
+    if (!selectedPath) return;
+    const currentDraft = useSpddEditorStore.getState().draft;
+    ReadArtifact(selectedPath)
+      .then((raw) => {
+        const { draft: loaded, warnings } = markdownToDraft(raw, currentDraft);
+        resetDraft(loaded);
+        useSpddEditorStore.setState({ markdownWarnings: warnings });
+      })
+      .catch(() => {
+        // En cas d'erreur on garde le draft courant
+      });
+  }, [selectedPath, resetDraft]);
 
   // CORE-007: auto-save to backend every 2s of inactivity.
   useAutoSave(draft, true);
