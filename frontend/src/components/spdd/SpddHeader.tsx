@@ -103,7 +103,7 @@ export function SpddHeader(): JSX.Element {
       <button
         type="button"
         aria-label="Retour au hub"
-        onClick={() => setMode('hub')}
+        onClick={() => setMode('stories')}
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-yk-sm text-yk-text-muted transition-colors hover:bg-yk-bg-3 hover:text-yk-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]"
         title="Retour au hub"
       >

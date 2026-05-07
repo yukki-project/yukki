@@ -12,6 +12,7 @@ import { SpddMarkdownView } from './SpddMarkdownView';
 import { AiPopover } from './AiPopover';
 import { AiDiffPanel } from './AiDiffPanel';
 import { useSpddEditorStore } from '@/stores/spdd';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
 
@@ -57,6 +58,7 @@ function WarningsBanner({
 // ─── Root ─────────────────────────────────────────────────────────────────
 
 export function SpddEditor(): JSX.Element {
+  const draft = useSpddEditorStore((s) => s.draft);
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const markdownSource = useSpddEditorStore((s) => s.markdownSource);
   const markdownWarnings = useSpddEditorStore((s) => s.markdownWarnings);
@@ -66,6 +68,9 @@ export function SpddEditor(): JSX.Element {
   const setMarkdownSource = useSpddEditorStore((s) => s.setMarkdownSource);
   const clearScrollToSection = useSpddEditorStore((s) => s.clearScrollToSection);
   const aiPhase = useSpddEditorStore((s) => s.aiPhase);
+
+  // CORE-007: auto-save to backend every 2s of inactivity.
+  useAutoSave(draft, true);
 
   const dismissWarnings = useCallback(() => {
     useSpddEditorStore.setState({ markdownWarnings: [] });

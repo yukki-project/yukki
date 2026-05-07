@@ -34,6 +34,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/yukki-project/yukki/internal/artifacts"
+	"github.com/yukki-project/yukki/internal/draft"
 	"github.com/yukki-project/yukki/internal/provider"
 	"github.com/yukki-project/yukki/internal/skills"
 	"github.com/yukki-project/yukki/internal/templates"
@@ -110,6 +111,10 @@ type App struct {
 	// sub-context derived from a.ctx. AbortRunning calls this. Reset
 	// to nil on RunStory return. Read/write only under cancelMu.
 	runStoryCancel context.CancelFunc
+
+	// draftStore persists in-progress SPDD drafts to the platform config dir.
+	// Initialised by OnStartup; nil-safe (methods guard against nil store).
+	draftStore *draft.DraftStore
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.
@@ -131,6 +136,20 @@ func (a *App) OnStartup(ctx context.Context) {
 		a.logger.Info("ui startup", "provider", a.provider.Name())
 	}
 	a.restoreRegistry()
+
+	// Initialise the draft store with the platform config directory.
+	store, err := draft.NewDraftStore("")
+	if err != nil {
+		if a.logger != nil {
+			a.logger.Warn("draft store init failed", "err", err)
+		}
+	} else {
+		a.draftStore = store
+		// Emit restore-available event if there are pending drafts.
+		if summaries, listErr := store.List(); listErr == nil && len(summaries) > 0 {
+			emitEvent(a.ctx, "draft:restore-available", summaries)
+		}
+	}
 }
 
 // OnShutdown is invoked by Wails when the user closes the window. Cancels

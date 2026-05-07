@@ -10,6 +10,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"github.com/yukki-project/yukki/internal/artifacts"
+	"github.com/yukki-project/yukki/internal/draft"
 	"github.com/yukki-project/yukki/internal/provider"
 	"github.com/yukki-project/yukki/internal/templates"
 )
@@ -467,5 +468,67 @@ func TestApp_SelectProject_DelegatesToOpenProject(t *testing.T) {
 	app.mu.RUnlock()
 	if n != 1 {
 		t.Fatalf("expected 1 opened project via SelectProject, got %d", n)
+	}
+}
+
+// ─── CORE-007 — Draft binding tests ─────────────────────────────────────────
+
+// newAppWithDraftStore creates an App with a DraftStore backed by a temp directory.
+func newAppWithDraftStore(t *testing.T) (*App, string) {
+	t.Helper()
+	storeDir := t.TempDir()
+	store, err := draft.NewDraftStore(storeDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.draftStore = store
+	return app, storeDir
+}
+
+func TestApp_DraftSave_RoundtripViaDraftLoad(t *testing.T) {
+	app, _ := newAppWithDraftStore(t)
+	d := draft.Draft{
+		ID:     "UI-099",
+		Slug:   "my-story",
+		Title:  "My Story",
+		Status: "draft",
+	}
+	if err := app.DraftSave(d); err != nil {
+		t.Fatalf("DraftSave: %v", err)
+	}
+	got, err := app.DraftLoad("UI-099")
+	if err != nil {
+		t.Fatalf("DraftLoad: %v", err)
+	}
+	if got.Title != d.Title {
+		t.Errorf("Title: got %q want %q", got.Title, d.Title)
+	}
+	if got.Status != d.Status {
+		t.Errorf("Status: got %q want %q", got.Status, d.Status)
+	}
+}
+
+func TestApp_StoryValidate_ReturnsFielErrorForBadID(t *testing.T) {
+	app, _ := newAppWithDraftStore(t)
+	d := draft.Draft{ID: "bad", Slug: "some-slug", Status: "draft"}
+	report := app.StoryValidate(d)
+	for _, e := range report.Errors {
+		if e.Field == "id" && e.Severity == "error" {
+			return
+		}
+	}
+	t.Errorf("expected FieldError{Field:'id', Severity:'error'} in %v", report.Errors)
+}
+
+func TestApp_DraftSave_PathTraversal_ReturnsError(t *testing.T) {
+	app, _ := newAppWithDraftStore(t)
+	d := draft.Draft{ID: "../evil"}
+	err := app.DraftSave(d)
+	if err == nil {
+		t.Fatal("expected ErrPathTraversal error from DraftSave, got nil")
+	}
+	if !errors.Is(err, draft.ErrPathTraversal) {
+		t.Errorf("expected ErrPathTraversal, got %v", err)
 	}
 }
