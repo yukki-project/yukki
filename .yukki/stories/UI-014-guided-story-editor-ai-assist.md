@@ -13,6 +13,28 @@ modules:
 
 # Éditeur guidé de stories SPDD avec assistance générative
 
+> **Story umbrella — décomposée le 2026-05-07.** Trop large pour une seule
+> itération, cette story sert désormais de **vision et critères de succès
+> globaux**. Le travail est éclaté en 9 sous-stories, organisées en 3 phases :
+>
+> **Phase 1 — UI mock (vérifier l'UX sans backend)**
+> - [UI-014a](UI-014a-spdd-editor-shell-mock.md) — Coquille (3 colonnes, sommaire, document, inspector, tokens design)
+> - [UI-014b](UI-014b-spdd-editor-frontmatter-ac-mock.md) — Front-matter form + AC blocks + validation visuelle
+> - [UI-014c](UI-014c-spdd-editor-wysiwyg-markdown-toggle-mock.md) — Bascule WYSIWYG ↔ Markdown sans perte
+> - [UI-014d](UI-014d-spdd-editor-ai-assist-mock.md) — Popover IA + diff panel (LLM mocké)
+> - [UI-014e](UI-014e-spdd-editor-export-checklist-mock.md) — Bouton Exporter + checklist + toast (export mocké)
+>
+> **Phase 2 — Backend Go**
+> - [CORE-007](CORE-007-story-draft-persistence-validation.md) — Persistance des brouillons + validation FM côté Go
+> - [CORE-008](CORE-008-llm-suggestion-streaming.md) — Suggestion IA streamée via `ClaudeProvider`
+> - [CORE-009](CORE-009-export-story-md-to-yukki-stories.md) — Export `.md` byte-conforme dans `.yukki/stories/`
+>
+> **Phase 3 — Câblage**
+> - [UI-014f](UI-014f-spdd-editor-wire-to-backend.md) — Remplace les mocks par les bindings Wails réels
+>
+> Les sections ci-dessous restent valides comme **vision globale** ; les AC
+> détaillés vivent désormais dans les sous-stories.
+
 ## Background
 
 Yukki impose un format SPDD structuré (front-matter YAML + sections fixes :
