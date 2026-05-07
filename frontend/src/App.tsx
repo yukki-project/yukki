@@ -8,6 +8,7 @@ import { TabBar } from '@/components/hub/TabBar';
 import { TitleBar } from '@/components/hub/TitleBar';
 import { Toaster } from '@/components/ui/toaster';
 import { WorkflowPipeline } from '@/components/workflow/WorkflowPipeline';
+import { SpddEditor } from '@/components/spdd/SpddEditor';
 import { CloseProject, LoadRegistry, OpenProject, SwitchProject } from '../wailsjs/go/main/App';
 import { EventsOn } from '@/lib/wails-events';
 import { useClaudeStore } from '@/stores/claude';
@@ -154,10 +155,12 @@ export default function App() {
           <ClaudeBanner />
           <div className="flex flex-1 overflow-hidden">
             <ActivityBar />
-            <SidebarPanel />
+            {activeMode !== 'editor' && <SidebarPanel />}
             <section className="flex flex-1 overflow-hidden">
               {activeMode === 'workflow' ? (
                 <WorkflowPipeline />
+              ) : activeMode === 'editor' ? (
+                <SpddEditor />
               ) : (
                 <StoryViewer className="flex-1" />
               )}

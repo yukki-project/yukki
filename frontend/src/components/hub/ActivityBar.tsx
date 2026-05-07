@@ -7,6 +7,7 @@ import {
   Layers,
   Lightbulb,
   Map,
+  Pencil,
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
@@ -34,6 +35,7 @@ const PRIMARY_ITEMS: ActivityItem[] = [
   { mode: 'tests', label: 'Tests', Icon: CheckSquare },
   { mode: 'roadmap', label: 'Roadmap', Icon: Map },         // META-005
   { mode: 'workflow', label: 'Workflow', Icon: Workflow },
+  { mode: 'editor', label: 'SPDD Editor', Icon: Pencil },   // UI-014a
 ];
 
 const SETTINGS_ITEM: ActivityItem = {

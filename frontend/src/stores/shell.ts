@@ -11,9 +11,10 @@ export type ShellMode =
   | 'epics'   // META-005
   | 'roadmap' // META-005
   | 'settings'
-  | 'workflow';
+  | 'workflow'
+  | 'editor'; // UI-014a — SPDD guided editor
 
-// 'workflow' volontairement non inclus : le mode workflow ne touche pas
+// 'workflow' et 'editor' volontairement non inclus : ils ne pilotent pas
 // useArtifactsStore.setKind (Invariant I3 UI-006 + I2 UI-008).
 const SPDD_KINDS: ShellMode[] = [
   'stories',
