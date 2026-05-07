@@ -1,161 +1,153 @@
 ---
 id: UI-016
 slug: universal-template-driven-editor
-title: SpddEditor universel piloté par template avec mode lecture intégré
-status: draft
+title: "SpddEditor pilote son rendu depuis le template de l'artefact"
+status: reviewed
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend
 ---
 
-# SpddEditor universel piloté par template avec mode lecture intégré
+# SpddEditor pilote son rendu depuis le template de l'artefact
 
 ## Background
 
-L'éditeur SPDD actuel (`SpddEditor`, UI-014) utilise des sections et un
-modèle de données hard-codés (`StoryDraft`, `SECTIONS`, `markdownToDraft`/
-`draftToMarkdown`) qui ne couvrent que les stories. Le projet dispose d'une
-couche `ParsedTemplate` + `EditState` (UI-015) qui extrait la structure
-dynamiquement depuis `.yukki/templates/*.md`.
+`SpddEditor` (UI-014) est maintenant branché sur `selectedPath` : quand
+l'utilisateur sélectionne un artefact dans le hub, le contenu est chargé
+via `ReadArtifact` → `markdownToDraft` (commit af2da04). Mais `markdownToDraft`
+est hard-codé pour les stories — il ne connaît que les 8 sections `StoryDraft`.
 
-Par ailleurs, `StoryViewer` affiche les artefacts en lecture sous forme de
-prose Markdown — une vue sans contexte structurel qui ne tire aucun parti
-de la sémantique des sections.
+Le projet dispose déjà d'une couche template-driven (UI-015) : `parseTemplate`
+extrait la structure depuis `.yukki/templates/<type>.md`, `parseArtifactContent`
+produit un `EditState` générique. Ces fonctions couvrent les 6 types de
+templates existants (story, inbox, epic, analysis, canvas-reasons, roadmap).
 
-Cette story migre `SpddEditor` vers un modèle entièrement piloté par
-template (en réutilisant `EditState`) et y ajoute un **mode lecture**
-(view-only) qui remplace la vue Markdown de `StoryViewer`. L'objectif est
-un éditeur unique, adaptable à tous les types d'artefacts, dont l'interface
-se reconfigure à la volée selon le template du type courant.
+L'objectif de cette story est de faire lire à `SpddEditor` le template
+correspondant au type de l'artefact chargé, et de piloter le rendu de
+ses sections via `EditState` — en lieu et place du `StoryDraft` hard-codé.
 
 ## Business Value
 
-- **Zéro code front à écrire** pour supporter un nouveau type d'artefact :
-  ajouter un template suffit.
-- **Expérience cohérente** : même interface riche (TOC, cartes AC, toggle
-  Markdown/WYSIWYG) quel que soit le type d'artefact édité.
-- **Suppression de dette** : `StoryDraft`, `SECTIONS`, `markdownToDraft`,
-  `draftToMarkdown` et la vue Markdown prose (`ReactMarkdown`) remplacés
-  par la couche générique déjà existante.
+Un seul éditeur qui s'adapte à tous les types d'artefacts SPDD : ajouter
+un nouveau type revient à ajouter un template, sans écrire de code front.
+La dette `StoryDraft` / sections hard-codées commence à se résorber.
 
 ## Scope In
 
-- Remplacement de `StoryDraft` + `SECTIONS` hard-codés dans le store `spdd.ts`
-  par `ParsedTemplate` + `EditState` (déjà produits par UI-015)
-- `SpddEditor` chargé dynamiquement depuis `selectedPath` (store artifacts) :
-  lecture du fichier + chargement du template correspondant au type détecté
-- **Mode lecture (view-only)** du `SpddEditor` : sections non éditables,
-  sans boutons de mutation ; remplace la vue Markdown `StoryViewer` pour
-  tous les types d'artefacts couverts par un template
-- Save via `WriteArtifact` sur `selectedPath` avec `serializeArtifact`
-- Support des types : **story**, **inbox**, **epic** (templates déjà présents)
-  ; analysis et canvas en best-effort (template présent mais sections complexes)
-- Bouton retour dans le header (← depuis le mode édition vers le mode lecture ;
-  depuis le mode lecture vers la liste)
-- Suppression de `NewStoryModal` et du bouton "+ Nouvelle story" (la
-  création passe désormais par le workflow CLI `/yukki-story`, pas par l'UI)
-- Suppression de la vue `ReactMarkdown` prose dans `StoryViewer` pour les
-  types couverts par un template
-- L'ActivityBar perd le bouton "SPDD Editor" (déjà fait dans `dcbcbf7`) ;
-  navigation : cliquer un item de la liste → mode lecture ; cliquer "Éditer"
-  → mode édition
+- Quand `selectedPath` change, `SpddEditor` détecte le type via
+  `detectArtifactType(id)`, dérive le chemin template, lit les deux fichiers
+  (`ReadArtifact` pour l'artefact + le template), et construit `EditState`
+  via `parseTemplate` + `parseArtifactContent`
+- `SpddEditor` stocke `editState: EditState | null` et `parsedTemplate:
+  ParsedTemplate | null` dans son state local (ou dans le store `spdd.ts`)
+- **SpddTOC** se génère depuis `editState.sections` (liste de headings) à
+  la place des `SECTIONS` hard-codés
+- **SpddDocument** rend les sections depuis `editState.sections` : widget
+  `textarea` → `<textarea>` éditable, widget `ac-cards` → cartes
+  `GenericAc` (Given/When/Then) ; remplace `SpddFmForm` + `SpddAcEditor`
+  pour les types non-story
+- **SpddHeader** affiche `fmValues.id`, `fmValues.title`, `fmValues.status`
+  depuis `EditState` (à la place de `draft.id`, `draft.title`, `draft.status`)
+- Sauvegarde via `serializeArtifact(editState, parsedTemplate)` →
+  `WriteArtifact(selectedPath, content)` (bouton Sauvegarder ou `Ctrl+S`)
+- Fallback brut si le template est absent ou le type non reconnu : textarea
+  sur le contenu brut, bandeau d'avertissement
 
 ## Scope Out
 
-- Drag-and-drop de sections
-- Validation backend en temps réel dans l'éditeur (CORE-007 couvre les stories)
-- Éditeur de templates depuis l'UI
-- AI Assist (UI-014d) dans l'éditeur universel — conservé uniquement pour les
-  stories tant que le refactor n'est pas terminé
-- SpddTOC navigation scroll (simplifiée : liste statique de sections cliquables)
-- Support du type **roadmap** (layout kanban incompatible)
-- Undo/Redo
+- Migration / suppression de `StoryDraft` dans `spdd.ts` — les stores
+  `StoryDraft`-based restent en place ; seul le rendu visuel change
+- AI Assist (UI-014d) : conservé uniquement pour les stories (passe en no-op
+  pour les autres types si `editState` est non-null)
+- Toggle Markdown/WYSIWYG : conservé, mais en mode `EditState` le toggle
+  "markdown" montre le brut sérialisé (read-only)
+- SpddInspector : inchangé (continue d'utiliser le contexte story)
+- Support du type **roadmap** (layout kanban incompatible avec SpddDocument)
+- Drag-and-drop de sections, Undo/Redo
 
 ## Acceptance Criteria
 
-### AC1 — Cliquer un item de la liste affiche la vue lecture template
+### AC1 — SpddEditor charge le template au changement de selectedPath
 
-- **Given** un projet est ouvert et la liste montre des stories
-- **When** l'utilisateur clique sur un item de la liste
-- **Then** le panneau principal affiche le contenu de l'artefact en mode
-  lecture structuré (sections du template avec leur contenu, frontmatter
-  en résumé en-tête) sans aucun contrôle d'édition
+- **Given** un projet est ouvert et `selectedPath` change vers un artefact
+  de type `story`, `inbox`, `epic` ou `analysis`
+- **When** `SpddEditor` reçoit le nouveau `selectedPath`
+- **Then** il lit en parallèle l'artefact et le template correspondant,
+  construit `EditState`, et affiche les sections issues de ce `EditState`
+  (TOC + Document reconfigurés)
 
-### AC2 — Le bouton "Éditer" bascule en mode édition template
+### AC2 — SpddTOC reflète les sections du template
 
-- **Given** un artefact est affiché en mode lecture
-- **When** l'utilisateur clique le bouton "Éditer" (ou appuie sur `E`)
-- **Then** chaque section devient éditable selon son widget (textarea ou
-  cartes AC), le frontmatter est éditable via des inputs typés, et le bouton
-  "Enregistrer" est visible
+- **Given** un artefact de type `inbox` est chargé (template avec sections
+  Background, Idée brute, Liens)
+- **When** le rendu s'affiche
+- **Then** le TOC liste exactement les sections du template `inbox.md`, pas
+  les sections story hard-codées (Background, Business Value, Scope In, etc.)
 
-### AC3 — Enregistrer écrit le fichier et revient en lecture
+### AC3 — Section textarea éditable, section ac-cards en cartes
 
-- **Given** l'utilisateur est en mode édition et a modifié au moins un champ
-- **When** il clique "Enregistrer" (ou `Ctrl+S`)
-- **Then** le fichier sur disque est mis à jour via `WriteArtifact`, la vue
-  bascule en mode lecture avec le contenu rafraîchi, et un toast confirme
-  la sauvegarde
+- **Given** un artefact de type `story` est affiché
+- **When** l'utilisateur fait défiler le document
+- **Then** les sections `textarea` s'affichent comme zones de texte
+  éditables et la section `Acceptance Criteria` s'affiche en cartes
+  `GenericAc` (Given = bleu, When = ambre, Then = vert)
 
-### AC4 — Les sections AC affichent les cartes Given/When/Then
+### AC4 — Sauvegarde écrit le fichier via WriteArtifact
 
-- **Given** une story dont le template marque la section "Acceptance Criteria"
-  avec widget `ac-cards`
-- **When** l'artefact est affiché en mode lecture ou édition
-- **Then** chaque critère `### ACn — …` est rendu sous forme de carte colorée
-  (Given = bleu, When = ambre, Then = vert) identique à `SpddAcEditor`
+- **Given** l'utilisateur a modifié le contenu d'une section en mode édition
+- **When** il appuie sur `Ctrl+S` ou clique "Sauvegarder"
+- **Then** `serializeArtifact(editState, parsedTemplate)` est appelé,
+  `WriteArtifact(selectedPath, result)` écrit le fichier, et un toast
+  "Sauvegardé ✓" apparaît
 
-### AC5 — Fallback textarea si aucun template ne correspond
+### AC5 — Fallback brut si template absent
 
-- **Given** un artefact dont le type ne correspond à aucun template connu
+- **Given** un artefact dont le type ne correspond à aucun template
   (ex. canvas-reasons)
-- **When** l'utilisateur clique "Éditer"
-- **Then** l'éditeur affiche un textarea brut avec un bandeau "Template non
-  disponible — édition en mode brut" et une sauvegarde reste possible
+- **When** `SpddEditor` tente de charger le template
+- **Then** un bandeau "Template non disponible — édition brute" s'affiche,
+  le contenu brut est éditable dans un textarea, la sauvegarde reste
+  possible via `WriteArtifact`
 
 ## Open Questions
 
-- [ ] Faut-il conserver l'AI Assist (UI-014d) dans le nouvel éditeur universel
-  pour les stories, ou le désactiver jusqu'à UI-017 ?
-- [ ] Le toggle Markdown/WYSIWYG doit-il rester pour les stories, ou est-il
-  simplifié en "mode brut" = fallback ?
+- [ ] Le store `spdd.ts` (`StoryDraft`) reste-t-il pour les stories ou
+  `EditState` le remplace-t-il totalement dans cette story ?
+  → Proposé : `EditState` pilote uniquement le rendu ; `StoryDraft` reste
+  pour l'AI Assist et l'auto-save CORE-007 (migration dans une story dédiée)
+- [ ] `SpddHeader` affiche-t-il le titre / status depuis `EditState.fmValues`
+  ou reste-t-il sur `draft.*` pour les stories ?
+  → Proposé : header lu depuis `EditState.fmValues` pour tous les types ;
+  fallback `draft.*` si `editState` est null
 
 ## Notes
 
-### Décision SPIDR
+### Ce qui a déjà été livré (hors scope de cette story)
 
-Évaluation des 5 axes pour décider si cette story doit être scindée :
-
-| Axe | Verdict |
-|---|---|
-| **Paths** | Un seul chemin : voir → éditer → sauvegarder. Pas de split. |
-| **Interfaces** | Une seule UI (SpddEditor universel). Pas de split. |
-| **Data** | Deux modèles (StoryDraft → EditState) à migrer ensemble — split fragmenterait l'état. |
-| **Rules** | Règles homogènes (template → widget). Pas de split. |
-| **Spike** | Pas de technologie nouvelle — `ParsedTemplate`/`EditState` déjà validés. |
-
-**Conclusion** : story fondatrice justifiée. Le refactor des données et
-l'UI lecture/édition doivent être livrés ensemble pour éviter un état
-intermédiaire incohérent. Taille estimée : 2 j.
+- `selectedPath` → `ReadArtifact` → `markdownToDraft` → `resetDraft`
+  (commit af2da04)
+- Couche `parseTemplate` / `parseArtifactContent` / `serializeArtifact`
+  (UI-015, commit 66eb895)
+- `detectArtifactType` / `templateNameForType` dans `templateParser.ts`
 
 ### Modules impactés
 
-- `frontend/src/stores/spdd.ts` — remplacer par store générique ou supprimer
-- `frontend/src/stores/artifacts.ts` — `selectedPath` devient la source de
-  vérité pour le chargement
-- `frontend/src/components/spdd/SpddEditor.tsx` — refactor majeur
-- `frontend/src/components/spdd/SpddDocument.tsx` — sections dynamiques
-- `frontend/src/components/spdd/SpddInspector.tsx` — widget-aware
-- `frontend/src/components/hub/StoryViewer.tsx` — remplacé pour types couverts
-- `frontend/src/components/hub/NewStoryModal.tsx` — supprimé
-- `frontend/src/components/hub/HubList.tsx` — supprimer bouton "+" création
-- `frontend/src/components/hub/SidebarPanel.tsx` — supprimer bouton "+"
+- `frontend/src/components/spdd/SpddEditor.tsx` — ajouter chargement
+  template + construction `EditState`
+- `frontend/src/components/spdd/SpddDocument.tsx` — rendre sections depuis
+  `EditState.sections` (sections dynamiques)
+- `frontend/src/components/spdd/SpddTOC.tsx` — TOC depuis
+  `EditState.sections`
+- `frontend/src/components/spdd/SpddHeader.tsx` — titre/status depuis
+  `EditState.fmValues`
+- `frontend/src/stores/spdd.ts` — ajouter `editState` + `parsedTemplate`
+  (ou store local dans SpddEditor)
 
 ### Références croisées
 
 - [UI-015](.yukki/stories/UI-015-template-driven-artifact-editor.md) —
-  couche `ParsedTemplate` + `EditState` + `TemplatedEditor` (socle)
+  socle `ParsedTemplate` + `EditState` (déjà livré)
 - [UI-014f](.yukki/stories/UI-014f-spdd-editor-wire-to-backend.md) —
-  état actuel du SpddEditor (source pour le refactor)
+  SpddEditor actuel (source du refactor)
