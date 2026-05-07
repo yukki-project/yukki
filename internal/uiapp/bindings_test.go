@@ -12,6 +12,7 @@ import (
 	"github.com/yukki-project/yukki/internal/artifacts"
 	"github.com/yukki-project/yukki/internal/draft"
 	"github.com/yukki-project/yukki/internal/provider"
+	"github.com/yukki-project/yukki/internal/storyspec"
 	"github.com/yukki-project/yukki/internal/templates"
 )
 
@@ -530,5 +531,67 @@ func TestApp_DraftSave_PathTraversal_ReturnsError(t *testing.T) {
 	}
 	if !errors.Is(err, draft.ErrPathTraversal) {
 		t.Errorf("expected ErrPathTraversal, got %v", err)
+	}
+}
+
+// --- StoryExport ------------------------------------------------------------
+
+func newAppWithProject(t *testing.T) (*App, string) {
+	t.Helper()
+	storeDir := t.TempDir()
+	store, err := draft.NewDraftStore(storeDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app := NewApp(&provider.MockProvider{}, newTestLogger())
+	app.draftStore = store
+	app.OnStartup(context.Background())
+	projDir := t.TempDir()
+	setTestProject(t, app, projDir)
+	return app, projDir
+}
+
+func storyExportDraft() draft.Draft {
+	return draft.Draft{
+		ID:     "CORE-009",
+		Slug:   "export-story-md-to-yukki-stories",
+		Title:  "Export test",
+		Status: "draft",
+	}
+}
+
+func TestApp_StoryExport_NewStory_WritesFile(t *testing.T) {
+	app, projDir := newAppWithProject(t)
+	captureEmits(t)
+	d := storyExportDraft()
+	result, err := app.StoryExport(d, storyspec.ExportOptions{})
+	if err != nil {
+		t.Fatalf("StoryExport: %v", err)
+	}
+	expected := filepath.Join(projDir, ".yukki", "stories", "CORE-009-export-story-md-to-yukki-stories.md")
+	if result.Path != expected {
+		t.Errorf("Path = %q, want %q", result.Path, expected)
+	}
+	if _, err := os.Stat(result.Path); err != nil {
+		t.Errorf("file not found: %v", err)
+	}
+}
+
+func TestApp_StoryExport_Conflict_ReturnsConflictError(t *testing.T) {
+	app, _ := newAppWithProject(t)
+	captureEmits(t)
+	d := storyExportDraft()
+	// First export.
+	if _, err := app.StoryExport(d, storyspec.ExportOptions{Overwrite: true}); err != nil {
+		t.Fatalf("first export: %v", err)
+	}
+	// Second export without overwrite.
+	_, err := app.StoryExport(d, storyspec.ExportOptions{})
+	if err == nil {
+		t.Fatal("expected conflict error, got nil")
+	}
+	var conflict *storyspec.ExportConflictError
+	if !errors.As(err, &conflict) {
+		t.Errorf("expected *ExportConflictError, got %T: %v", err, err)
 	}
 }

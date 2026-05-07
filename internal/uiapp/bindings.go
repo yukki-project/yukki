@@ -389,6 +389,26 @@ func (a *App) StoryValidate(d draft.Draft) storyspec.ValidationReport {
 	return storyspec.Validate(d.ID, d.Slug, d.Status, d.Created, d.Updated, d.Modules, knownModules)
 }
 
+// StoryExport renders the draft to SPDD Markdown and writes it atomically to
+// <activeProject>/.yukki/stories/<id>-<slug>.md.
+//
+// If the story already exists and options.Overwrite is false, it returns a
+// *storyspec.ExportConflictError wrapped in a regular error (serialised as
+// JSON by the Wails runtime; use errors.As on the Go side).
+func (a *App) StoryExport(d draft.Draft, options storyspec.ExportOptions) (storyspec.ExportResult, error) {
+	dir := a.activeProjectDir()
+	if dir == "" {
+		return storyspec.ExportResult{}, errors.New("no active project")
+	}
+	storiesDir := filepath.Join(dir, ".yukki", "stories")
+	result, err := storyspec.StoryExport(d, options, storiesDir)
+	if err != nil {
+		return storyspec.ExportResult{}, err
+	}
+	emitEvent(a.ctx, "story:exported", result)
+	return result, nil
+}
+
 // activeProjectDir returns the root directory of the currently active project,
 // or "" when no project is open.
 func (a *App) activeProjectDir() string {
