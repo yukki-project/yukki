@@ -3,7 +3,7 @@ id: UI-016
 slug: universal-template-driven-editor
 story: .yukki/stories/UI-016-universal-template-driven-editor.md
 analysis: .yukki/analysis/UI-016-universal-template-driven-editor.md
-status: draft
+status: implemented
 created: 2026-05-08
 updated: 2026-05-08
 ---
