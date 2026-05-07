@@ -113,7 +113,7 @@ export function SpddEditor(): JSX.Element {
 
   return (
     <div
-      className="yk grid h-full min-h-0 grid-rows-[40px_1fr_28px] bg-yk-bg-page font-inter text-yk-text-primary"
+      className="yk grid h-full w-full min-h-0 grid-rows-[40px_1fr_28px] bg-yk-bg-page font-inter text-yk-text-primary"
       data-testid="spdd-editor"
     >
       <SpddHeader />
