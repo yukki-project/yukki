@@ -178,17 +178,23 @@ func (p *ClaudeProvider) Generate(ctx context.Context, prompt string) (string, e
 // calls p.OnChunk for every non-empty text chunk, and returns the final
 // text from the type=result event.
 func (p *ClaudeProvider) generateStreaming(ctx context.Context, prompt string, baseArgs []string, timeout time.Duration) (string, error) {
-	// Build args: prepend --output-format stream-json unless already present.
-	streamArgs := make([]string, 0, len(baseArgs)+2)
+	// Build args: prepend --verbose --output-format stream-json unless already present.
+	streamArgs := make([]string, 0, len(baseArgs)+3)
 	hasStreamFlag := false
+	hasVerbose := false
 	for i, a := range baseArgs {
 		if a == "--output-format" && i+1 < len(baseArgs) && baseArgs[i+1] == "stream-json" {
 			hasStreamFlag = true
-			break
+		}
+		if a == "--verbose" {
+			hasVerbose = true
 		}
 	}
 	if !hasStreamFlag {
 		streamArgs = append(streamArgs, "--output-format", "stream-json")
+	}
+	if !hasVerbose {
+		streamArgs = append(streamArgs, "--verbose")
 	}
 	streamArgs = append(streamArgs, baseArgs...)
 
