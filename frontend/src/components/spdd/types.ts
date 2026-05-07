@@ -70,3 +70,27 @@ export type InspectorContext =
   | { kind: 'fm' }
   | { kind: 'prose'; section: ProseSectionKey }
   | { kind: 'ac' };
+
+// ─── UI-015 — Generic template-driven editor ──────────────────────────────
+
+export type SectionWidget = 'textarea' | 'ac-cards';
+export type FrontmatterWidget = 'text' | 'date' | 'select' | 'tags';
+
+export interface SectionSpec {
+  heading: string;
+  widget: SectionWidget;
+}
+
+export interface FrontmatterSpec {
+  key: string;
+  widget: FrontmatterWidget;
+  options?: string[]; // defined when widget === 'select'
+}
+
+export interface GenericAc {
+  id: string;    // 'AC1', 'AC2', …
+  title: string;
+  given: string;
+  when: string;
+  then: string;
+}

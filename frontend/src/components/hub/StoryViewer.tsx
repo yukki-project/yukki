@@ -8,6 +8,11 @@ import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { TemplatedEditor } from './TemplatedEditor';
+import { parseTemplate, detectArtifactType, templateNameForType } from '@/lib/templateParser';
+import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
+import type { ParsedTemplate } from '@/lib/templateParser';
+import type { EditState } from '@/lib/genericSerializer';
 import {
   Dialog,
   DialogContent,
@@ -141,6 +146,15 @@ export function StoryViewer({ className }: StoryViewerProps) {
   const [dirtyContent, setDirtyContent] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
 
+  // UI-015 — Templated editor state
+  const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const parsedTemplateRef = useRef<ParsedTemplate | null>(null);
+  parsedTemplateRef.current = parsedTemplate;
+  const editStateRef = useRef<EditState | null>(null);
+  editStateRef.current = editState;
+
   // Dirty navigation guard
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [dirtyDialogOpen, setDirtyDialogOpen] = useState(false);
@@ -200,11 +214,21 @@ export function StoryViewer({ className }: StoryViewerProps) {
     if (!p) return;
     setSaving(true);
     try {
-      // Reconstruct full file: frontmatter block + edited body
-      const fullContent = buildFullContent(contentRef.current, dirtyContentRef.current);
+      let fullContent: string;
+      const tmpl = parsedTemplateRef.current;
+      const es = editStateRef.current;
+      if (tmpl !== null && es !== null) {
+        // UI-015: structured editor path
+        fullContent = serializeArtifact(es, tmpl);
+      } else {
+        // Fallback: raw textarea path
+        fullContent = buildFullContent(contentRef.current, dirtyContentRef.current);
+      }
       await WriteArtifact(p, fullContent);
       const data = await ReadArtifact(p);
       setContent(data);
+      setParsedTemplate(null);
+      setEditState(null);
       setMode('read');
     } catch (e) {
       toast({
@@ -222,16 +246,46 @@ export function StoryViewer({ className }: StoryViewerProps) {
   // -------------------------------------------------------------------------
 
   const enterEditMode = () => {
-    setOriginalContent(body);       // only the markdown body
+    setOriginalContent(body);
     setDirtyContent(body);
+    setParsedTemplate(null);
+    setEditState(null);
     setMode('edit');
+
+    // UI-015: try to load the template for this artifact type
+    const currentContent = contentRef.current;
+    const currentMeta = splitFrontmatter(currentContent).meta;
+    const artifactId = currentMeta.scalars.id ?? '';
+    const artifactType = detectArtifactType(artifactId);
+    const templateName = templateNameForType(artifactType);
+
+    if (templateName) {
+      setTemplateLoading(true);
+      ReadArtifact(`.yukki/templates/${templateName}.md`)
+        .then((templateRaw) => {
+          const tmpl = parseTemplate(templateRaw);
+          const es = parseArtifactContent(currentContent, tmpl);
+          setParsedTemplate(tmpl);
+          setEditState(es);
+        })
+        .catch(() => {
+          // Template not found — fallback to raw textarea (state stays null)
+        })
+        .finally(() => setTemplateLoading(false));
+    }
   };
 
   const handleCancel = () => {
-    if (dirtyContentRef.current !== originalContentRef.current) {
+    const isDirty = parsedTemplateRef.current !== null
+      ? JSON.stringify(editStateRef.current) !== JSON.stringify(parseArtifactContent(contentRef.current, parsedTemplateRef.current))
+      : dirtyContentRef.current !== originalContentRef.current;
+
+    if (isDirty) {
       setPendingPath(null);
       setDirtyDialogOpen(true);
     } else {
+      setParsedTemplate(null);
+      setEditState(null);
       setMode('read');
     }
   };
@@ -370,15 +424,31 @@ export function StoryViewer({ className }: StoryViewerProps) {
         </div>
       )}
 
-      {/* Edit mode — body only, frontmatter is read-only */}
+      {/* Edit mode */}
       {!loading && !error && content && mode === 'edit' && (
-        <textarea
-          className="w-full h-full min-h-[calc(100vh-4rem)] font-mono text-sm bg-background p-6 resize-none focus:outline-none"
-          value={dirtyContent}
-          onChange={(e) => setDirtyContent(e.target.value)}
-          aria-label="Éditeur d'artefact"
-          spellCheck={false}
-        />
+        templateLoading ? (
+          <p className="p-6 text-sm text-muted-foreground">Chargement du template…</p>
+        ) : parsedTemplate !== null && editState !== null ? (
+          <TemplatedEditor
+            editState={editState}
+            template={parsedTemplate}
+            onChange={setEditState}
+          />
+        ) : (
+          <>
+            {/* Fallback: raw textarea + notice */}
+            <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-6 py-2 text-[12px] text-muted-foreground">
+              Template inconnu — édition en mode brut
+            </div>
+            <textarea
+              className="w-full h-full min-h-[calc(100vh-6rem)] font-mono text-sm bg-background p-6 resize-none focus:outline-none"
+              value={dirtyContent}
+              onChange={(e) => setDirtyContent(e.target.value)}
+              aria-label="Éditeur d'artefact"
+              spellCheck={false}
+            />
+          </>
+        )
       )}
 
       {/* Read mode */}
