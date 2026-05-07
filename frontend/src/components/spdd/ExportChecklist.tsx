@@ -4,12 +4,7 @@
 
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import {
-  selectMissingRequiredLabels,
-  selectRequiredCompleted,
-  useSpddEditorStore,
-} from '@/stores/spdd';
-import { REQUIRED_COUNT } from './sections';
+import { useSpddEditorStore } from '@/stores/spdd';
 import type { SectionKey } from './types';
 
 // ─── Checklist items ──────────────────────────────────────────────────────

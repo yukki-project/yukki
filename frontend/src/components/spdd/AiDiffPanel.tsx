@@ -2,7 +2,7 @@
 // Shows AVANT / APRÈS / DIFF cards + Accept / Reject / Regenerate buttons.
 // UI-014f — O6: Branche useSpddSuggest (streaming réel) via prop suggestResult.
 
-import { RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSpddEditorStore } from '@/stores/spdd';
 import { AI_ACTIONS } from './aiActions';
@@ -96,6 +96,7 @@ export function AiDiffPanel({ suggestResult, currentRequest }: AiDiffPanelProps)
 
   const actionLabel = AI_ACTIONS.find((a) => a.type === aiAction)?.label ?? '…';
   const isGenerating = suggestResult.state === 'streaming';
+  const isError = suggestResult.state === 'error';
   const suggestion = suggestResult.streamText;
 
   const handleAccept = () => {
@@ -134,7 +135,31 @@ export function AiDiffPanel({ suggestResult, currentRequest }: AiDiffPanelProps)
       </header>
 
       <div className="flex flex-1 flex-col gap-3 px-4 py-3">
-        {isGenerating ? (
+        {isError ? (
+          <div className="flex flex-col items-start gap-3 rounded-yk border border-yk-danger bg-[color:var(--yk-danger-soft)] p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yk-danger" />
+              <p className="font-inter text-[13px] text-yk-danger">
+                {suggestResult.error ?? 'Une erreur inattendue s\'est produite.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (currentRequest) void suggestResult.start(currentRequest);
+              }}
+              disabled={!currentRequest}
+              className={cn(
+                'rounded-yk-sm border border-yk-danger px-3 py-1 font-inter text-[12px] text-yk-danger',
+                'transition-colors hover:bg-yk-danger hover:text-white',
+                'disabled:cursor-not-allowed disabled:opacity-40',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]',
+              )}
+            >
+              Relancer
+            </button>
+          </div>
+        ) : isGenerating ? (
           <Spinner />
         ) : (
           <>

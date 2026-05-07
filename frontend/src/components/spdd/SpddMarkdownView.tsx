@@ -4,7 +4,6 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useSpddEditorStore } from '@/stores/spdd';
 import { buildSectionLineMap } from './serializer';
 import type { SectionKey } from './types';
 

@@ -90,7 +90,9 @@ export function SpddEditor(): JSX.Element {
     if (suggestResult.state === 'done') {
       useSpddEditorStore.setState({ aiPhase: 'diff' });
     } else if (suggestResult.state === 'error') {
-      useSpddEditorStore.setState({ aiPhase: 'idle' });
+      // Keep the panel open so the error message is visible — the user can
+      // retry or close by clicking Refuser.
+      useSpddEditorStore.setState({ aiPhase: 'diff' });
     }
   }, [suggestResult.state]);
 

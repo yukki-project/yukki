@@ -203,7 +203,8 @@ export function markdownToDraft(
   const allProseKeys: ProseSectionKey[] = ['bg', 'bv', 'si', 'so', 'oq', 'no'];
   for (const key of PROSE_REQUIRED) {
     if (!sections.has(key)) {
-      const label = { bg: 'Background', bv: 'Business Value', si: 'Scope In' }[key];
+      const LABELS: Partial<Record<ProseSectionKey, string>> = { bg: 'Background', bv: 'Business Value', si: 'Scope In' };
+      const label = LABELS[key];
       warnings.push(`La section ${label} est absente. Elle sera réinsérée vide.`);
     }
   }
