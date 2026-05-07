@@ -65,7 +65,12 @@ export const useShellStore = create<ShellState>()(
     {
       name: 'yukki:shell-prefs',
       onRehydrateStorage: () => (state) => {
-        if (state && SPDD_KINDS.includes(state.activeMode)) {
+        if (!state) return;
+        // UI-015: 'editor' mode retired from ActivityBar — redirect to stories
+        if ((state.activeMode as string) === 'editor') {
+          state.activeMode = 'stories';
+        }
+        if (SPDD_KINDS.includes(state.activeMode)) {
           useArtifactsStore.getState().setKind(state.activeMode);
         }
       },
