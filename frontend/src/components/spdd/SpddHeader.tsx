@@ -1,8 +1,9 @@
 // UI-014e — Story header with export logic: ExportChecklist popover + Blob export + toast.
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Code2, Download, Edit3 } from 'lucide-react';
+import { ArrowLeft, Code2, Download, Edit3 } from 'lucide-react';
 import { useSpddEditorStore, selectRequiredCompleted } from '@/stores/spdd';
+import { useShellStore } from '@/stores/shell';
 import { useToast } from '@/hooks/use-toast';
 import { draftToMarkdown } from './serializer';
 import { ExportChecklist } from './ExportChecklist';
@@ -31,6 +32,7 @@ export function SpddHeader(): JSX.Element {
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const setViewMode = useSpddEditorStore((s) => s.setViewMode);
   const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
+  const setMode = useShellStore((s) => s.setActiveMode);
   const state = useSpddEditorStore();
   const completed = useMemo(() => selectRequiredCompleted(state), [state]);
   const allDone = completed === REQUIRED_COUNT;
@@ -97,6 +99,17 @@ export function SpddHeader(): JSX.Element {
       aria-label="Story header"
       className="flex h-10 shrink-0 items-center gap-3 border-b border-yk-line bg-yk-bg-1 px-4"
     >
+      {/* Back to hub */}
+      <button
+        type="button"
+        aria-label="Retour au hub"
+        onClick={() => setMode('hub')}
+        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-yk-sm text-yk-text-muted transition-colors hover:bg-yk-bg-3 hover:text-yk-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--yk-primary-ring)]"
+        title="Retour au hub"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+      </button>
+
       <span className="font-jbmono text-[12px] text-yk-text-secondary">
         {draft.id}
       </span>

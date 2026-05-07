@@ -154,7 +154,7 @@ export default function App() {
         <>
           <ClaudeBanner />
           <div className="flex flex-1 overflow-hidden">
-            <ActivityBar />
+            {activeMode !== 'editor' && <ActivityBar />}
             {activeMode !== 'editor' && <SidebarPanel />}
             <section className="flex flex-1 overflow-hidden">
               {activeMode === 'workflow' ? (
