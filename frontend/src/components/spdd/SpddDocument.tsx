@@ -1,8 +1,7 @@
-// UI-014b — Center document column. FM + prose sections are now editable.
-// FM is rendered via SpddFmForm; AC via SpddAcEditor; prose sections via
-// auto-resize ProseTextarea.
+// UI-014c — Center document column. FM + prose sections are now editable.
+// UI-014d — ProseTextarea detects selection ≥ 3 words and opens AiPopover.
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { SECTIONS, SECTION_HINTS } from './sections';
 import { useSpddEditorStore } from '@/stores/spdd';
@@ -149,10 +148,21 @@ const PROSE_PLACEHOLDERS: Record<ProseSectionKey, string> = {
   no: "Liens vers tickets, threads, captures. Tout ce qui éclaire le contexte.",
 };
 
+function countWords(s: string): number {
+  return s.trim() === '' ? 0 : s.trim().split(/\s+/).length;
+}
+
 function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Element {
   const value = useSpddEditorStore((s) => s.draft.sections[sectionKey]);
   const setSection = useSpddEditorStore((s) => s.setSection);
+  const openAiPopover = useSpddEditorStore((s) => s.openAiPopover);
+  const aiPhase = useSpddEditorStore((s) => s.aiPhase);
+  const aiSelection = useSpddEditorStore((s) => s.aiSelection);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Whether THIS textarea's section is being reviewed in the diff panel
+  const isMuted = (aiPhase === 'generating' || aiPhase === 'diff') &&
+    aiSelection?.sectionKey === sectionKey;
 
   // Auto-resize on value change
   useEffect(() => {
@@ -161,6 +171,24 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
   }, [value]);
+
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLTextAreaElement>) => {
+      if (aiPhase !== 'idle' && aiPhase !== 'popover') return;
+      const el = textareaRef.current;
+      if (!el) return;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      if (start === end) return; // no selection
+      const selected = value.slice(start, end);
+      if (countWords(selected) < 3) return; // too short
+      openAiPopover(
+        { sectionKey, text: selected, start, end },
+        { x: e.clientX, y: e.clientY },
+      );
+    },
+    [aiPhase, openAiPopover, sectionKey, value],
+  );
 
   return (
     <textarea
@@ -174,12 +202,14 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
         el.style.height = 'auto';
         el.style.height = `${el.scrollHeight}px`;
       }}
+      onMouseUp={handleMouseUp}
       className={cn(
         'w-full resize-none overflow-hidden rounded-yk bg-transparent',
         'text-[14px] leading-[1.62] text-yk-text-primary',
         'placeholder:text-yk-text-faint',
         'focus:outline-none',
-        'transition-colors',
+        'transition-all duration-200',
+        isMuted && 'opacity-40 grayscale',
       )}
     />
   );

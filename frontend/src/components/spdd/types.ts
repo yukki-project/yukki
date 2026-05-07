@@ -48,6 +48,24 @@ export interface StoryDraft {
 
 export type ViewMode = 'wysiwyg' | 'markdown';
 
+// ─── AI assist (UI-014d) ──────────────────────────────────────────────────
+
+export interface AiSelection {
+  sectionKey: ProseSectionKey;
+  text: string;
+  /** Start char index within the section content */
+  start: number;
+  /** End char index (exclusive) within the section content */
+  end: number;
+}
+
+export interface PopoverPosition {
+  x: number;
+  y: number;
+}
+
+export type AiPhase = 'idle' | 'popover' | 'generating' | 'diff';
+
 export type InspectorContext =
   | { kind: 'fm' }
   | { kind: 'prose'; section: ProseSectionKey }

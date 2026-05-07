@@ -1,7 +1,5 @@
-// UI-014c — Root SPDD editor. Adds the Markdown view mode.
-// When viewMode === 'markdown': SpddMarkdownView takes the center column
-// in full-width mode; TOC remains visible for scroll navigation.
-// Warnings banner shown on switch back to WYSIWYG if format issues detected.
+// UI-014d — Adds AiPopover (global floating) and AiDiffPanel (replaces
+// inspector during generating/diff phases).
 
 import { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
@@ -11,6 +9,8 @@ import { SpddTOC } from './SpddTOC';
 import { SpddDocument } from './SpddDocument';
 import { SpddInspector } from './SpddInspector';
 import { SpddMarkdownView } from './SpddMarkdownView';
+import { AiPopover } from './AiPopover';
+import { AiDiffPanel } from './AiDiffPanel';
 import { useSpddEditorStore } from '@/stores/spdd';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
@@ -65,6 +65,7 @@ export function SpddEditor(): JSX.Element {
   const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
   const setMarkdownSource = useSpddEditorStore((s) => s.setMarkdownSource);
   const clearScrollToSection = useSpddEditorStore((s) => s.clearScrollToSection);
+  const aiPhase = useSpddEditorStore((s) => s.aiPhase);
 
   const dismissWarnings = useCallback(() => {
     useSpddEditorStore.setState({ markdownWarnings: [] });
@@ -108,6 +109,7 @@ export function SpddEditor(): JSX.Element {
   }, []);
 
   const isMarkdown = viewMode === 'markdown';
+  const showDiffPanel = !isMarkdown && (aiPhase === 'generating' || aiPhase === 'diff');
 
   return (
     <div
@@ -151,18 +153,21 @@ export function SpddEditor(): JSX.Element {
           <SpddDocument onActiveSectionFromScroll={handleScrollSection} />
         )}
 
-        {/* Inspector — only in WYSIWYG mode */}
+        {/* Inspector — only in WYSIWYG mode; swapped for DiffPanel when AI is active */}
         {!isMarkdown && (
           <aside
-            aria-label="Inspector"
+            aria-label={showDiffPanel ? 'Panneau de diff IA' : 'Inspector'}
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
           >
-            <SpddInspector />
+            {showDiffPanel ? <AiDiffPanel /> : <SpddInspector />}
           </aside>
         )}
       </div>
 
       <SpddFooter />
+
+      {/* Global floating AI popover */}
+      <AiPopover />
     </div>
   );
 }

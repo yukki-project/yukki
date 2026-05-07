@@ -1,29 +1,27 @@
 // UI-014a — SPDD editor store.
 //
-// Holds the (mocked) draft, the active section and the WYSIWYG/Markdown
-// view mode. Selectors are pure functions exported alongside the hook so
-// they are unit-testable without a React tree.
-//
-// UI-014b adds mutations: setFmField, setSection, addAc, removeAc,
-// updateAc, duplicateAc.
-//
-// UI-014c adds: markdownSource (live .md text in MD mode), markdownWarnings,
-// switchToMarkdown (serialize draft → MD source), switchToWysiwyg (parse
-// MD source → draft), setMarkdownSource (edit in MD mode).
+// UI-014b adds mutations: setFmField, setSection, addAc, removeAc, updateAc, duplicateAc.
+// UI-014c adds: markdownSource, markdownWarnings, switchToMarkdown/Wysiwyg.
+// UI-014d adds: AI assist state — aiPhase, aiSelection, aiSuggestion, popover pos.
 
 import { create } from 'zustand';
 import { DEMO_STORY } from '@/components/spdd/mockStory';
 import { SECTIONS } from '@/components/spdd/sections';
 import { draftToMarkdown } from '@/components/spdd/serializer';
 import { markdownToDraft } from '@/components/spdd/parser';
+import { mockLlm, mockDelay } from '@/components/spdd/mockLlm';
 import type {
+  AiPhase,
+  AiSelection,
   MockAcceptanceCriterion,
+  PopoverPosition,
   ProseSectionKey,
   SectionKey,
   SectionStatus,
   StoryDraft,
   ViewMode,
 } from '@/components/spdd/types';
+import type { AiActionType } from '@/components/spdd/mockLlm';
 
 export interface SpddEditorState {
   draft: StoryDraft;
@@ -33,6 +31,13 @@ export interface SpddEditorState {
   markdownSource: string;
   markdownWarnings: string[];
   scrollToSection: SectionKey | null;
+  // UI-014d
+  aiPhase: AiPhase;
+  aiSelection: AiSelection | null;
+  aiAction: AiActionType | null;
+  aiSuggestion: string | null;
+  popoverPosition: PopoverPosition | null;
+
   setActiveSection: (key: SectionKey) => void;
   setViewMode: (mode: ViewMode) => void;
   resetDraft: (draft: StoryDraft) => void;
@@ -50,6 +55,13 @@ export interface SpddEditorState {
   removeAc: (id: string) => void;
   updateAc: (id: string, field: keyof MockAcceptanceCriterion, value: string) => void;
   duplicateAc: (id: string) => void;
+  // UI-014d AI actions
+  openAiPopover: (selection: AiSelection, pos: PopoverPosition) => void;
+  closeAiPopover: () => void;
+  triggerAiAction: (action: AiActionType) => void;
+  acceptSuggestion: () => void;
+  rejectSuggestion: () => void;
+  regenerateAi: () => void;
 }
 
 function nextAcId(acs: readonly MockAcceptanceCriterion[]): string {
@@ -67,6 +79,12 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
   markdownSource: '',
   markdownWarnings: [],
   scrollToSection: null,
+  // AI
+  aiPhase: 'idle',
+  aiSelection: null,
+  aiAction: null,
+  aiSuggestion: null,
+  popoverPosition: null,
 
   setActiveSection: (key) =>
     set((s) => ({
@@ -150,6 +168,58 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
       const copy: MockAcceptanceCriterion = { ...src, id: nextAcId(s.draft.ac) };
       return { draft: { ...s.draft, ac: [...s.draft.ac, copy] } };
     }),
+
+  // ─── AI actions (UI-014d) ──────────────────────────────────────────────
+
+  openAiPopover: (selection, pos) =>
+    set({ aiPhase: 'popover', aiSelection: selection, popoverPosition: pos, aiSuggestion: null, aiAction: null }),
+
+  closeAiPopover: () =>
+    set({ aiPhase: 'idle', aiSelection: null, aiAction: null, aiSuggestion: null, popoverPosition: null }),
+
+  triggerAiAction: (action) => {
+    set({ aiPhase: 'generating', aiAction: action });
+    const sel = get().aiSelection;
+    if (!sel) return;
+    mockDelay().then(() => {
+      const suggestion = mockLlm(action, sel.text);
+      set({ aiPhase: 'diff', aiSuggestion: suggestion });
+    });
+  },
+
+  acceptSuggestion: () =>
+    set((s) => {
+      if (!s.aiSelection || !s.aiSuggestion) return { aiPhase: 'idle' as const };
+      const { sectionKey, start, end } = s.aiSelection;
+      const current = s.draft.sections[sectionKey];
+      const updated = current.slice(0, start) + s.aiSuggestion + current.slice(end);
+      return {
+        aiPhase: 'idle' as const,
+        aiSelection: null,
+        aiAction: null,
+        aiSuggestion: null,
+        popoverPosition: null,
+        draft: {
+          ...s.draft,
+          sections: { ...s.draft.sections, [sectionKey]: updated },
+        },
+      };
+    }),
+
+  rejectSuggestion: () =>
+    set({ aiPhase: 'idle', aiSelection: null, aiAction: null, aiSuggestion: null, popoverPosition: null }),
+
+  regenerateAi: () => {
+    const action = get().aiAction;
+    if (!action) return;
+    set({ aiPhase: 'generating' });
+    const sel = get().aiSelection;
+    if (!sel) return;
+    mockDelay().then(() => {
+      const suggestion = mockLlm(action, sel.text);
+      set({ aiPhase: 'diff', aiSuggestion: suggestion });
+    });
+  },
 }));
 
 // --- Selectors --------------------------------------------------------------
