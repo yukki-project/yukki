@@ -1,224 +1,210 @@
----
+﻿---
 id: UI-016
 slug: universal-template-driven-editor
-title: SpddEditor universel piloté par template avec mode lecture intégré
-status: draft
-created: 2026-05-07
-updated: 2026-05-07
-owner: Thibaut
-modules:
-  - frontend
 story: .yukki/stories/UI-016-universal-template-driven-editor.md
+status: draft
+created: 2026-05-08
+updated: 2026-05-08
 ---
 
-# Analyse — UI-016 SpddEditor universel piloté par template avec mode lecture intégré
+# Analyse — SpddEditor pilote son rendu depuis le template de l artefact
 
-> Analyse SPDD de la story `UI-016-universal-template-driven-editor`.
-> Migrer `SpddEditor` + son store vers un modèle entièrement piloté par
-> template (en réutilisant la couche `ParsedTemplate` + `EditState` produite
-> en UI-015) et y ajouter un mode lecture (view-only) qui remplace la vue
-> Markdown prose de `StoryViewer` pour tous les artefacts.
+> Contexte strategique pour la story `UI-016-universal-template-driven-editor`.
+> Produit par `/yukki-analysis` a partir d un scan cible du codebase.
+> Ne pas dupliquer ni la story ni le canvas REASONS.
 
----
+## Mots-cles metier extraits
+
+`EditState`, `ParsedTemplate`, `parseArtifactContent`, `parseTemplate`,
+`serializeArtifact`, `detectArtifactType`, `templateNameForType`,
+`SpddDocument`, `SpddTOC`, `SpddHeader`, `SECTIONS`, `StoryDraft`,
+`selectedPath`, `WriteArtifact`, `ReadArtifact`
 
 ## Concepts de domaine
 
-### Concepts existants
+### Existants (deja dans le code)
 
-- **`SpddEditor` / `useSpddEditorStore`** — ensemble hard-codé pour stories
-  (`frontend/src/components/spdd/SpddEditor.tsx`, `stores/spdd.ts`). Affiche
-  9 sections (fm, bg, bv, si, so, ac, oq, no) alimentées par `SECTIONS`
-  statique, parser/serializer dédiés (`parser.ts`, `serializer.ts`). Store
-  mutationnel avec AI assist (UI-014d).
+- **`SECTIONS` / `SectionKey`** -- `frontend/src/components/spdd/sections.ts`
+  Tableau statique de 8 `SpddSection` (fm, bg, bv, si, so, ac, oq, no).
+  Utilise comme source de verite par `SpddTOC` (liste des entrees) et
+  `SpddDocument` (iteration de rendu). Hard-code pour les stories uniquement --
+  contrainte bloquante pour UI-016.
 
-- **`SECTIONS` array** (`frontend/src/components/spdd/sections.ts`) — tableau
-  statique définissant les 8 sections story (clé + label + requis). Source de
-  vérité actuelle de l'interface éditeur.
+- **`StoryDraft` / `useSpddEditorStore`** -- `frontend/src/stores/spdd.ts`
+  Store Zustand central. Agregat draft story + mode (wysiwyg|markdown) + etat
+  AI + warnings parser. `SpddHeader`, `SpddDocument`, `SpddInspector`,
+  `useAutoSave` lisent tous ce store directement. Le couplage est fort et
+  pervasif -- une migration complete vers `EditState` dans cette story casserait
+  l AI Assist et l auto-save `DraftSave`.
 
-- **`StoryDraft` type** (`frontend/src/components/spdd/types.ts`) — structure
-  figée pour une story brouillon : frontmatter story-specific (`id`, `slug`,
-  `title`, `status`, `created`, `updated`, `owner`, `modules`), sections
-  prose, et `ac[]` (Acceptance Criteria).
+- **`ParsedTemplate` + `EditState`** -- `frontend/src/lib/templateParser.ts`
+  + `frontend/src/lib/genericSerializer.ts`
+  Couche generique deja livree (UI-015, 24 tests verts). `parseTemplate(raw)`
+  produit `ParsedTemplate { fmSpecs, sections }`. `parseArtifactContent(raw,
+  template)` produit `EditState { fmValues, sections }`. `serializeArtifact`
+  pour le round-trip. Gere les sections orphelines. Sans dependance de store
+  -- pure functions.
 
-- **`parser.ts` / `serializer.ts`** — paires story-spécifiques pour round-trip
-  Markdown ↔ `StoryDraft`. Non généralisables car elles connaissent les 8
-  sections story par cœur.
+- **`detectArtifactType(id)` + `templateNameForType(type)`** --
+  `frontend/src/lib/templateParser.ts`
+  Detecte le type par prefixe d ID (`INBOX` -> `inbox`, `EPIC` -> `epic`,
+  tout le reste -> `story`). Limite critique : les artefacts d analyse et de
+  canvas partagent le meme prefixe que les stories (ex. `UI-016` detecte
+  `story` meme s il est dans `.yukki/analysis/`). La detection doit etre
+  completee par la lecture du chemin du fichier.
 
-- **`StoryViewer`** (`frontend/src/components/hub/StoryViewer.tsx`) — affiche
-  artefacts en lecture (markdown + ReactMarkdown), peut basculer en édition
-  textarea brut. Dispose déjà du `mode` state (read/edit) et commence à
-  utiliser `TemplatedEditor` (UI-015).
+- **`StoryViewer`** -- `frontend/src/components/hub/StoryViewer.tsx`
+  Composant existant (WorkflowDrawer) qui a deja implemente le chargement
+  template : lit `selectedPath`, derive le type, charge le template via
+  `ReadArtifact`, construit `EditState`, utilise `TemplatedEditor` en mode
+  edit. C est la reference d implementation. Continue d exister pour
+  `WorkflowDrawer` -- ne pas supprimer dans UI-016.
 
-- **UI-015 : `ParsedTemplate` + `EditState`** — couche générique complète :
-  - `ParsedTemplate` (`lib/templateParser.ts`) : `fmSpecs[]` + `sections[]`
-    dérivés d'un template `.md`
-  - `EditState` (`lib/genericSerializer.ts`) : `fmValues{}` + `sections[]`
-    représentant l'état édité
-  - `TemplatedEditor` : composant React générique (frontmatter + sections)
-  - `GenericAcEditor` : composant AC cards découplé du store
-  - `parseTemplate()`, `parseArtifactContent()`, `serializeArtifact()` —
-    fonctions pures pour round-trip
+- **`WriteArtifact(path, content)` / `ReadArtifact(path)`** --
+  Bindings Wails deja utilises par `StoryViewer`. `ReadArtifact` prend un
+  chemin absolu, retourne le contenu brut. `WriteArtifact` prend chemin +
+  contenu string. Pas de validation cote Go.
 
-- **`detectArtifactType(id)` / `templateNameForType(type)`** — utilitaires
-  déjà présents (`lib/templateParser.ts`) pour mapper type d'artefact →
-  template (`story`, `inbox`, `epic`).
+- **`useAutoSave`** -- `frontend/src/hooks/useAutoSave.ts`
+  Appelle `DraftSave` (backend, type story) toutes les 2s. Fortement couple
+  a `StoryDraft`. Doit etre desactive (enabled=false) quand `editState` est
+  non-null pour eviter d ecraser le fichier generique avec du contenu story.
 
-- **Templates `.yukki/templates/`** — story.md, inbox.md, epic.md,
-  analysis.md, canvas.md. Chacun définit la structure YAML frontmatter +
-  sections. Lus depuis le disque via `ReadArtifact` (Wails).
+### Nouveaux (a introduire)
 
-- **`useAutoSave` hook** (`frontend/src/hooks/useAutoSave.ts`) — sauvegarde
-  auto via `DraftSave` (Go backend) toutes les 2s. Appelé depuis `SpddEditor`
-  pour stories uniquement ; fortement couplé à `StoryDraft`.
+- **`editState: EditState | null` + `parsedTemplate: ParsedTemplate | null`**
+  State local dans `SpddEditor` (useState). Coexiste avec `StoryDraft` :
+  non-null des qu un template a ete charge. Source de verite pour le rendu
+  dynamique des sections. `StoryDraft` reste pour l AI Assist et
+  `useAutoSave` (migration = story ulterieure).
 
-- **`NewStoryModal`** (`frontend/src/components/hub/NewStoryModal.tsx`) —
-  dialogue pour créer une story via `/yukki-story` CLI (exécutée en Go).
-  Utilisée depuis `HubList.tsx` uniquement quand `kind === 'stories'`. Lance
-  l'exécution Go, écoute `provider:*` events, rafraîchit la liste et sélectionne
-  le nouvel artefact.
+- **Detection de type par chemin** -- fonction `detectArtifactTypeFromPath`
+  a ajouter dans `templateParser.ts`. Inspecte le segment de repertoire
+  du chemin absolu (`.yukki/stories/` -> `story`, `.yukki/analysis/` ->
+  `analysis`, `.yukki/prompts/` -> `canvas`). Complete `detectArtifactType`
+  sans le remplacer.
 
-- **Mode `editor` dans `App.tsx`** — route actuelle dédiée à `SpddEditor`,
-  affiche l'éditeur seul (pas de sidebar liste). Route contrôlée via
-  `ShellMode` / `ShellStore`.
+- **Derivation du chemin template** -- utilitaire `templatePathFor(artifactPath,
+  type)` extrait la racine `.yukki/` depuis le chemin absolu de l artefact
+  et construit `.yukki/templates/<name>.md`. Deja code de facon adhoc dans
+  `StoryViewer` (via `lastIndexOf('/.yukki/')`). A extraire dans
+  `templateParser.ts` pour partager avec `SpddEditor`.
 
-- **Artifacts store** (`frontend/src/stores/artifacts.ts`) — dispose de
-  `selectedPath` (chemin du fichier courant) déjà utilisé par `StoryViewer`
-  pour charger le contenu au clic.
+## Approche strategique
 
-### Concepts nouveaux à introduire
+Pour resoudre le rendu hard-code de `SpddEditor` (limite aux 8 sections
+stories), on choisit d **ajouter `editState: EditState | null` comme state
+local dans `SpddEditor`** et de parametrer `SpddDocument` + `SpddTOC` pour
+qu ils consomment soit les `SECTIONS` statiques (si `editState` est null),
+soit les sections de l `EditState` (si non-null) -- plutot que de migrer
+entierement le store `spdd.ts` de `StoryDraft` vers `EditState` des maintenant,
+pour livrer rapidement un rendu correct sur tous les types d artefacts sans
+casser l AI Assist ni l auto-save CORE-007, en acceptant une coexistence
+temporaire des deux modeles.
 
-- **Store générique unifié** — refactorer `useSpddEditorStore` pour
-  devenir indépendant du type d'artefact. État unifié :
-  ```typescript
-  {
-    selectedPath: string;
-    viewMode: 'read' | 'edit';
-    editState: EditState | null;
-    parsedTemplate: ParsedTemplate | null;
-    loading: boolean;
-    error: string | null;
-    loadArtifact(path: string): Promise<void>;
-    setViewMode(mode: 'read' | 'edit'): void;
-    updateEditState(state: EditState): void;
-    saveArtifact(): Promise<void>;
-  }
-  ```
+**Alternatives ecartees :**
 
-- **Mode lecture (view-only)** — rendu structuré des sections sans formulaires
-  éditables. Sections affichées comme prose organisée (heading + contenu
-  formaté), AC en cards statiques, frontmatter en tableau read-only. Bouton
-  "Éditer" bascule en mode édition ; bouton "Enregistrer" revient en lecture.
+- *Migrer `spdd.ts` entierement vers `EditState` dans cette story* -- trop
+  large : AI Assist, auto-save (`DraftSave`), `SpddInspector` sont tous
+  couples a `StoryDraft`. Casse ces features sans livrer de valeur
+  supplementaire visible.
 
-- **`SpddEditor` universel** — refactorisation du composant pour :
-  - Lire le `selectedPath` depuis `useArtifactsStore`
-  - Charger le fichier via `ReadArtifact` + détecter le type via ID
-  - Parser le template correspondant via `parseTemplate` (UI-015)
-  - Parser le contenu via `parseArtifactContent` (UI-015)
-  - Afficher soit le mode read (sections statiques), soit le mode edit
-    (`TemplatedEditor` de UI-015)
-  - Sauvegarder via `WriteArtifact` + `serializeArtifact` (UI-015)
+- *Creer un nouveau store global `useEditStateStore`* -- multiplie les
+  sources de verite globalement ; un state local dans `SpddEditor` suffit.
 
-- **Suppression de l'UI de création** :
-  - Bouton "+ New Story" de `HubList.tsx` — supprimé
-  - `NewStoryModal.tsx` — composant supprimé
-  - Mode `editor` dans `ShellStore` / `App.tsx` — supprimé
+## Modules impactes
 
----
+| Module | Impact | Nature |
+|---|---|---|
+| `frontend/src/components/spdd/SpddEditor.tsx` | fort | modification -- ajout chargement template + `editState` |
+| `frontend/src/components/spdd/SpddDocument.tsx` | fort | modification -- sections parametrables depuis `EditState` |
+| `frontend/src/components/spdd/SpddTOC.tsx` | moyen | modification -- TOC depuis `EditState.sections` |
+| `frontend/src/components/spdd/SpddHeader.tsx` | moyen | modification -- titre/status depuis `EditState.fmValues` |
+| `frontend/src/lib/templateParser.ts` | moyen | modification -- ajout `detectArtifactTypeFromPath` + `templatePathFor` |
+| `frontend/src/stores/spdd.ts` | faible | modification minimale -- pas de suppression de `StoryDraft` |
+| `frontend/src/components/hub/StoryViewer.tsx` | faible | lecture seule -- reference pour la derivation de templatePath |
 
-## Approche stratégique (Y-Statement)
+## Dependances et integrations
 
-**Pour** éliminer la dette technique du `SpddEditor` hard-codé story-only
-et unifier l'expérience UX,
+- **`ReadArtifact` / `WriteArtifact`** -- bindings Wails (Go package `uiapp`).
+  `ReadArtifact(absolutePath)` retourne `string`. `WriteArtifact(absolutePath,
+  content)` retourne `void`. Pas de gestion de conflit concurrent cote Go.
+- **`parseTemplate` / `parseArtifactContent` / `serializeArtifact`** --
+  `frontend/src/lib/templateParser.ts` + `genericSerializer.ts`. Toutes
+  deja testees, sans side-effect.
+- **Templates `.yukki/templates/*.md`** -- fichiers lus a la demande via
+  `ReadArtifact`. Pas de cache -- un appel par chargement d artefact.
+- **`useAutoSave`** -- doit etre desactive (`enabled = editState === null`)
+  pour eviter le conflit `DraftSave` vs `WriteArtifact`.
 
-**En** réutilisant intégralement la couche générique `ParsedTemplate` +
-`EditState` + `TemplatedEditor` produite en UI-015,
+## Risques et points d attention
 
-**Nous** transformons `SpddEditor` en orchestrateur universel qui adapte son
-interface et son comportement en fonction du type d'artefact détecté (via ID)
-et de son template correspondant, supprimons 3 fichiers legacy
-(`parser.ts`, `serializer.ts`, `sections.ts`), réduisons la complexité du
-store Zustand, et rendons les 4 AC du scope testables sans modification future
-du code front (nouvelle template = nouvelle UI automatiquement).
+- **Detection de type incorrecte par prefixe** (Integration -- Impact fort,
+  Probabilite certaine) -- `detectArtifactType('UI-016')` retourne `story`
+  meme si c est une analyse. Mitigation : implementer
+  `detectArtifactTypeFromPath` base sur le segment de repertoire et le
+  privilegier dans `SpddEditor`.
 
-### Alternatives écartées
+- **Conflit auto-save `DraftSave` vs `WriteArtifact`** (Data -- Impact
+  moyen, Probabilite certaine) -- `useAutoSave` tourne en arriere-plan. Si
+  l artefact ouvert est une inbox ou une analyse, le contenu serialise
+  `StoryDraft` ecrase le fichier generique. Mitigation : desactiver via
+  `enabled = editState === null`.
 
-1. **Maintenir deux systèmes parallèles** — `SpddEditor` pour stories,
-   `TemplatedEditor` pour les autres. Rejeté : coût de maintenance O(n),
-   code dupliqué, expérience UX inconsistante.
+- **`SpddInspector` hors contexte pour les types non-story** (Compatibilite
+  -- Impact faible, Probabilite certaine) -- L inspecteur affiche des tips
+  story-specifiques quel que soit le type ouvert. Mitigation dans cette
+  story : masquer l inspecteur (colonne droite) quand `editState !== null`
+  et type != story.
 
-2. **Générer le `SpddEditor` côté Go** — API Go produit une spec `UILayout`
-   que le frontend instancie. Rejeté : couple frontend-backend fortement,
-   latence Wails supplémentaire, complexité de versioning.
+- **Sections orphelines** (Data -- Impact moyen, Probabilite faible) --
+  `serializeArtifact` appende les sections orphelines a la fin.
+  Comportement acceptable et documente dans `genericSerializer.ts`.
 
-3. **Garder mode `editor` comme route séparée avec button ActivityBar** —
-   Rejeté : crée une confusion mentale (deux vues disjointes), rompt le
-   workflow contextuel, incompatible avec les AC1-AC5.
+- **`ReadArtifact` du template indisponible en mode browser** (Operationnel
+  -- Impact faible, Probabilite faible) -- Sans backend Go demarre.
+  Mitigation : fallback textarea brut (AC5).
 
----
+- **Race condition** : deux `ReadArtifact` en parallele (artefact + template)
+  et `selectedPath` change avant resolution (Integration -- Impact moyen,
+  Probabilite faible). Mitigation : flag `aborted` ou comparaison de
+  `selectedPath` dans le `.then()`.
 
-## Modules impactés
+## Cas limites identifies
 
-| Module | Impact | Nature | Détail |
-|---|---|---|---|
-| `frontend/src/stores/spdd.ts` | **fort** | refactorisation complète | Remplacer `draft: StoryDraft` par `editState: EditState \| null`. Ajouter `selectedPath`, `viewMode: 'read' \| 'edit'`, `loading`, `error`. Supprimer dépendance `SECTIONS`, `parser`, `serializer`. |
-| `frontend/src/components/spdd/SpddEditor.tsx` | **fort** | refactorisation complète | Rendre universel : charger depuis `selectedPath`, détecter type, loader template, afficher read/edit, sauvegarder via `serializeArtifact` + `WriteArtifact`. |
-| `frontend/src/components/spdd/sections.ts` | **élevé** | suppression | `SECTIONS` remplacé par `ParsedTemplate.sections` dynamique. |
-| `frontend/src/components/spdd/parser.ts` | **élevé** | suppression | Remplacé par `parseArtifactContent` générique (UI-015). |
-| `frontend/src/components/spdd/serializer.ts` | **élevé** | suppression | Remplacé par `serializeArtifact` générique (UI-015). |
-| `frontend/src/components/hub/StoryViewer.tsx` | **moyen** | simplification/suppression | Vue markdown prose disparaît ; remplacée par read-mode du `SpddEditor`. |
-| `frontend/src/components/hub/HubList.tsx` | **moyen** | modification | Supprimer bouton `<Plus>` "+ New Story". |
-| `frontend/src/components/hub/NewStoryModal.tsx` | **moyen** | suppression | Composant supprimé. |
-| `frontend/src/components/hub/SidebarPanel.tsx` | **faible** | modification | Supprimer logique liée au mode `editor`. |
-| `frontend/src/App.tsx` | **faible** | modification | Supprimer route `activeMode === 'editor'`. |
-| `frontend/src/stores/shell.ts` | **faible** | modification | Supprimer `'editor'` du type `ShellMode`. |
-| `frontend/src/hooks/useAutoSave.ts` | **moyen** | refactorisation | Généraliser : hook `useArtifactAutoSave(path, editState, template)` qui appelle `WriteArtifact` + `serializeArtifact`. |
+- **`selectedPath` pointe vers `.yukki/analysis/` ou `.yukki/prompts/`** --
+  `detectArtifactType(id)` retourne `story` -> mauvais template. Doit
+  retomber sur `detectArtifactTypeFromPath`.
 
----
+- **Template absent sur le FS** (`ReadArtifact(templatePath)` rejetee) --
+  Ex. canvas-reasons ou roadmap. Fallback `editState = null` + textarea
+  brut + bandeau d avertissement.
 
-## Dépendances et intégrations
+- **`selectedPath` vide** -- Etat initial : afficher ecran vide ou conserver
+  `DEMO_STORY`. A trancher en canvas.
 
-- **UI-015 outputs** — dépendance critique et directe :
-  - `parseTemplate(templateRaw: string): ParsedTemplate`
-  - `parseArtifactContent(raw: string, template: ParsedTemplate): EditState`
-  - `serializeArtifact(state: EditState, template: ParsedTemplate): string`
-  - Composants `TemplatedEditor`, `GenericAcEditor`
-  - Utilitaires `detectArtifactType`, `templateNameForType`
+- **Artefact sans frontmatter valide** -- `parseArtifactContent` retourne
+  `fmValues = {}`. `SpddHeader` doit tolerer `fmValues.title = undefined`.
 
-- **Wails bindings** — les deux existants suffisent :
-  - `ReadArtifact(path: string): Promise<string>`
-  - `WriteArtifact(path: string, content: string): Promise<void>`
+- **Race condition sur `selectedPath`** -- Promesses en cours retournent
+  des donnees stale si le chemin change pendant le chargement.
 
-- **Artifacts store** — `useArtifactsStore().selectedPath` source de vérité.
+## Decisions a prendre avant le canvas
 
----
+- [ ] **State local vs slice store** : `editState` + `parsedTemplate` dans
+  `useState` local de `SpddEditor` ou slice de `spdd.ts` ?
+  Propose : state local (`useState`) pour limiter les effets de bord.
 
-## Risques
+- [ ] **`useAutoSave` desactive ou remplace** : desactive via
+  `enabled = editState === null`, ou remplace par debounce generique appelant
+  `WriteArtifact` sur l `EditState` serialise ?
+  Propose : desactiver dans cette story ; debounce generique = story separee.
 
-| Risque | Impact | Probabilité | Mitigation |
-|---|---|---|---|
-| **Régression AI assist** | élevé | certaine | `useSpddSuggest` hard-codé stories → inactif pour autres types. Décision acceptée : AI assist conservé stories uniquement en UI-016. |
-| **Auto-save fragmentation** | moyen | moyenne | `useAutoSave` appelle `DraftSave` story-specific. Généralisation nécessite tests avec inbox, epic. |
-| **Breaking change store** | moyen | certaine | Hooks et tests dépendant de `useSpddEditorStore` / `StoryDraft` vont casser. Commit BREAKING explicite. |
-| **Round-trip ambiguïté** | moyen | faible | Heuristique ac-cards : triple confirmation (`**Given**` + `**When**` + `**Then**`). Fallback textarea si doute. |
-| **Template mismatch** | moyen | faible | Artefact diverge du template (champs ajoutés). Bandeau notification + fallback textarea. |
+- [ ] **`SpddInspector` : masque ou adapte** pour les types non-story ?
+  Propose : masque (colonne droite absente) quand `editState !== null` et
+  type != `story`.
 
----
-
-## Cas limites identifiés
-
-1. **Type sans template connu** (ex. `ROADMAP-001`) → `templateNameForType('unknown') = null` → fallback textarea + bandeau (AC5).
-2. **Fichier sans frontmatter valide** → `EditState` avec `fmValues` vide + textarea body.
-3. **Section AC dans template, aucune AC dans fichier** → `GenericAcEditor` liste vide + bouton "+ Ajouter AC".
-4. **Template modifié sur disque pendant session** → `ParsedTemplate` chargé au startup, immuable pendant la session (assomption acceptable).
-5. **Sections orphelines** (dans fichier, absentes du template) → placées en fin de liste, pas perdues à la sauvegarde.
-6. **Artefact sans ID valide** → `detectArtifactType('')` = `'unknown'` → fallback textarea.
-7. **Auto-save échoue** (backend Go crash) → toast "Sauvegarde échouée", `EditState` conservé in-memory.
-
----
-
-## Décisions à prendre avant le canvas
-
-1. [ ] **Numérotation AC à la sauvegarde** : re-numéroter `AC1..n` ou préserver IDs originaux ? **Recommandation** : re-numéroter.
-2. [ ] **Fallback textarea** : afficher (a) le `.md` complet brut ou (b) inputs FM basiques + textarea body ? **Recommandation** : (b).
-3. [ ] **Mode lecture : interaction AC** : statique ou cliquable/copiable ? **Recommandation** : statique pour UI-016.
-4. [ ] **Suppression `NewStoryModal`** : confirmé définitif ? **Recommandation** : oui, création via CLI uniquement.
+- [ ] **Derivation du templatePath** : utilitaire mutualise dans
+  `templateParser.ts` ou logique inline dans `SpddEditor` ?
+  Propose : extraire dans `templateParser.ts` pour partager avec
+  `StoryViewer` (DRY).
