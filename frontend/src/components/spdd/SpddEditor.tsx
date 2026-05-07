@@ -1,53 +1,113 @@
-// UI-014a — Root SPDD editor component. Composes the header, the
-// 3-column body (TOC / document / inspector) and the footer status bar.
-// All real editing arrives in UI-014b…f; this component renders a mocked
-// FRONT-002 story to validate layout, navigation and design tokens.
+// UI-014c — Root SPDD editor. Adds the Markdown view mode.
+// When viewMode === 'markdown': SpddMarkdownView takes the center column
+// in full-width mode; TOC remains visible for scroll navigation.
+// Warnings banner shown on switch back to WYSIWYG if format issues detected.
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 import { SpddHeader } from './SpddHeader';
 import { SpddFooter } from './SpddFooter';
 import { SpddTOC } from './SpddTOC';
 import { SpddDocument } from './SpddDocument';
 import { SpddInspector } from './SpddInspector';
+import { SpddMarkdownView } from './SpddMarkdownView';
 import { useSpddEditorStore } from '@/stores/spdd';
+import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
 
+// ─── Warnings banner ──────────────────────────────────────────────────────
+
+function WarningsBanner({
+  warnings,
+  onDismiss,
+}: {
+  warnings: string[];
+  onDismiss: () => void;
+}): JSX.Element | null {
+  if (warnings.length === 0) return null;
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'col-span-3 flex items-start gap-3 border-b border-yk-warning bg-[color:var(--yk-warning-soft)]',
+        'px-4 py-2',
+      )}
+    >
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yk-warning" />
+      <div className="flex-1 text-[13px] text-yk-text-primary">
+        <p className="font-medium">
+          Le format ne correspond plus au template SPDD — passer en WYSIWYG va appliquer la structure attendue.
+        </p>
+        <ul className="mt-1 list-disc pl-4 text-[12px] text-yk-text-secondary">
+          {warnings.map((w, i) => <li key={i}>{w}</li>)}
+        </ul>
+      </div>
+      <button
+        type="button"
+        aria-label="Fermer l'avertissement"
+        onClick={onDismiss}
+        className="text-yk-text-muted hover:text-yk-text-primary"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────
+
 export function SpddEditor(): JSX.Element {
+  const viewMode = useSpddEditorStore((s) => s.viewMode);
+  const markdownSource = useSpddEditorStore((s) => s.markdownSource);
+  const markdownWarnings = useSpddEditorStore((s) => s.markdownWarnings);
+  const scrollToSection = useSpddEditorStore((s) => s.scrollToSection);
+  const activeSection = useSpddEditorStore((s) => s.activeSection);
   const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
+  const setMarkdownSource = useSpddEditorStore((s) => s.setMarkdownSource);
+  const clearScrollToSection = useSpddEditorStore((s) => s.clearScrollToSection);
+
+  const dismissWarnings = useCallback(() => {
+    useSpddEditorStore.setState({ markdownWarnings: [] });
+  }, []);
 
   // Debounce IntersectionObserver-driven activeSection updates so they don't
   // jitter while a smooth-scroll is still resolving.
   const scrollDebounceRef = useRef<number | null>(null);
   const isProgrammaticScrollRef = useRef(false);
 
-  const handleTocClick = (key: SectionKey) => {
-    isProgrammaticScrollRef.current = true;
-    setActiveSection(key);
-    const el = document.getElementById(`spdd-section-${key}`);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // Release the lock after a smooth-scroll typically settles (~500ms).
-    window.setTimeout(() => {
-      isProgrammaticScrollRef.current = false;
-    }, 600);
-  };
-
-  const handleScrollSection = (key: SectionKey) => {
-    if (isProgrammaticScrollRef.current) return;
-    if (scrollDebounceRef.current) {
-      window.clearTimeout(scrollDebounceRef.current);
-    }
-    scrollDebounceRef.current = window.setTimeout(() => {
+  const handleTocClick = useCallback(
+    (key: SectionKey) => {
+      isProgrammaticScrollRef.current = true;
       setActiveSection(key);
-    }, 80);
-  };
+      if (viewMode === 'wysiwyg') {
+        const el = document.getElementById(`spdd-section-${key}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      window.setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 600);
+    },
+    [setActiveSection, viewMode],
+  );
+
+  const handleScrollSection = useCallback(
+    (key: SectionKey) => {
+      if (isProgrammaticScrollRef.current) return;
+      if (scrollDebounceRef.current) window.clearTimeout(scrollDebounceRef.current);
+      scrollDebounceRef.current = window.setTimeout(() => {
+        setActiveSection(key);
+      }, 80);
+    },
+    [setActiveSection],
+  );
 
   useEffect(() => {
     return () => {
-      if (scrollDebounceRef.current) {
-        window.clearTimeout(scrollDebounceRef.current);
-      }
+      if (scrollDebounceRef.current) window.clearTimeout(scrollDebounceRef.current);
     };
   }, []);
+
+  const isMarkdown = viewMode === 'markdown';
 
   return (
     <div
@@ -55,21 +115,53 @@ export function SpddEditor(): JSX.Element {
       data-testid="spdd-editor"
     >
       <SpddHeader />
-      <div className="grid min-h-0 grid-cols-[240px_1fr_360px] overflow-hidden">
+
+      <div
+        className={cn(
+          'grid min-h-0 overflow-hidden',
+          isMarkdown
+            ? 'grid-cols-[240px_1fr]'
+            : 'grid-cols-[240px_1fr_360px]',
+        )}
+      >
+        {/* Warnings banner spans all columns */}
+        {markdownWarnings.length > 0 && (
+          <WarningsBanner warnings={markdownWarnings} onDismiss={dismissWarnings} />
+        )}
+
+        {/* TOC — always visible */}
         <aside
           aria-label="Sommaire"
           className="overflow-y-auto border-r border-yk-line bg-yk-bg-1"
+          style={{ gridRow: markdownWarnings.length > 0 ? '2' : '1' }}
         >
           <SpddTOC onSectionClick={handleTocClick} />
         </aside>
-        <SpddDocument onActiveSectionFromScroll={handleScrollSection} />
-        <aside
-          aria-label="Inspector"
-          className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
-        >
-          <SpddInspector />
-        </aside>
+
+        {/* Center: Markdown or WYSIWYG */}
+        {isMarkdown ? (
+          <SpddMarkdownView
+            source={markdownSource}
+            onChange={setMarkdownSource}
+            activeSection={activeSection}
+            scrollToSection={scrollToSection}
+            onScrollHandled={clearScrollToSection}
+          />
+        ) : (
+          <SpddDocument onActiveSectionFromScroll={handleScrollSection} />
+        )}
+
+        {/* Inspector — only in WYSIWYG mode */}
+        {!isMarkdown && (
+          <aside
+            aria-label="Inspector"
+            className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
+          >
+            <SpddInspector />
+          </aside>
+        )}
       </div>
+
       <SpddFooter />
     </div>
   );

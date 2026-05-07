@@ -6,10 +6,16 @@
 //
 // UI-014b adds mutations: setFmField, setSection, addAc, removeAc,
 // updateAc, duplicateAc.
+//
+// UI-014c adds: markdownSource (live .md text in MD mode), markdownWarnings,
+// switchToMarkdown (serialize draft → MD source), switchToWysiwyg (parse
+// MD source → draft), setMarkdownSource (edit in MD mode).
 
 import { create } from 'zustand';
 import { DEMO_STORY } from '@/components/spdd/mockStory';
 import { SECTIONS } from '@/components/spdd/sections';
+import { draftToMarkdown } from '@/components/spdd/serializer';
+import { markdownToDraft } from '@/components/spdd/parser';
 import type {
   MockAcceptanceCriterion,
   ProseSectionKey,
@@ -23,9 +29,17 @@ export interface SpddEditorState {
   draft: StoryDraft;
   activeSection: SectionKey;
   viewMode: ViewMode;
+  // UI-014c
+  markdownSource: string;
+  markdownWarnings: string[];
+  scrollToSection: SectionKey | null;
   setActiveSection: (key: SectionKey) => void;
   setViewMode: (mode: ViewMode) => void;
   resetDraft: (draft: StoryDraft) => void;
+  switchToMarkdown: () => void;
+  switchToWysiwyg: () => void;
+  setMarkdownSource: (src: string) => void;
+  clearScrollToSection: () => void;
   // UI-014b mutations
   setFmField: (
     field: keyof Omit<StoryDraft, 'sections' | 'ac' | 'savedAt'>,
@@ -46,13 +60,49 @@ function renumberAcs(acs: readonly MockAcceptanceCriterion[]): MockAcceptanceCri
   return acs.map((ac, i) => ({ ...ac, id: `AC${i + 1}` }));
 }
 
-export const useSpddEditorStore = create<SpddEditorState>()((set) => ({
+export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
   draft: DEMO_STORY,
   activeSection: 'bg',
   viewMode: 'wysiwyg',
-  setActiveSection: (key) => set({ activeSection: key }),
-  setViewMode: (mode) => set({ viewMode: mode }),
-  resetDraft: (draft) => set({ draft, activeSection: 'bg' }),
+  markdownSource: '',
+  markdownWarnings: [],
+  scrollToSection: null,
+
+  setActiveSection: (key) =>
+    set((s) => ({
+      activeSection: key,
+      // In MD mode, signal a scroll-to-section
+      scrollToSection: s.viewMode === 'markdown' ? key : null,
+    })),
+
+  setViewMode: (mode) => {
+    if (mode === 'markdown') get().switchToMarkdown();
+    else get().switchToWysiwyg();
+  },
+
+  resetDraft: (draft) => set({ draft, activeSection: 'bg', markdownSource: '', markdownWarnings: [] }),
+
+  switchToMarkdown: () =>
+    set((s) => ({
+      viewMode: 'markdown',
+      markdownSource: draftToMarkdown(s.draft),
+      markdownWarnings: [],
+    })),
+
+  switchToWysiwyg: () =>
+    set((s) => {
+      const { draft: parsed, warnings } = markdownToDraft(s.markdownSource || draftToMarkdown(s.draft), s.draft);
+      return {
+        viewMode: 'wysiwyg',
+        draft: parsed,
+        markdownWarnings: warnings,
+        markdownSource: '',
+      };
+    }),
+
+  setMarkdownSource: (src) => set({ markdownSource: src }),
+
+  clearScrollToSection: () => set({ scrollToSection: null }),
 
   setFmField: (field, value) =>
     set((s) => ({
