@@ -1,15 +1,18 @@
 // UI-014e — Story header with export logic: ExportChecklist popover + Blob export + toast.
+// UI-014f — O5: Real StoryExport via Wails; ExportConflictDialog on conflict.
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Code2, Download, Edit3 } from 'lucide-react';
 import { useSpddEditorStore, selectRequiredCompleted } from '@/stores/spdd';
 import { useShellStore } from '@/stores/shell';
 import { useToast } from '@/hooks/use-toast';
-import { draftToMarkdown } from './serializer';
+import { draftToGoPayload } from '@/lib/draftMapper';
 import { ExportChecklist } from './ExportChecklist';
+import { ExportConflictDialog } from './ExportConflictDialog';
 import { REQUIRED_COUNT } from './sections';
 import { cn } from '@/lib/utils';
 import type { SectionKey, ViewMode } from './types';
+import type { ExportConflictInfo } from './ExportConflictDialog';
 
 const STATUS_PILL_CLASSES: Record<string, string> = {
   draft: 'bg-[color:var(--yk-warning-soft)] text-yk-warning',
@@ -40,35 +43,66 @@ export function SpddHeader(): JSX.Element {
   const { toast } = useToast();
 
   const [checklistOpen, setChecklistOpen] = useState(false);
+  const [conflictInfo, setConflictInfo] = useState<ExportConflictInfo | null>(null);
   const exportBtnRef = useRef<HTMLDivElement>(null);
 
-  // --- Mock export: Blob download + toast
-  const handleExport = useCallback(() => {
-    const md = draftToMarkdown(draft);
-    const filename = `${draft.id}-${draft.slug}.md`;
+  // --- Real export via StoryExport (CORE-009); fallback Blob when Wails unavailable.
+  const handleExport = useCallback(async (overwrite = false) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const go = (window as any).go;
+    if (!go?.main?.App?.StoryExport) {
+      // Fallback: Blob download (browser dev mode without Wails)
+      const { draftToMarkdown } = await import('./serializer');
+      const md = draftToMarkdown(draft);
+      const filename = `${draft.id}-${draft.slug}.md`;
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: 'Story exportée ✓ (mode hors-ligne)', description: filename, duration: 4000 });
+      return;
+    }
 
-    // Log for __DEV__ / mock mode (real write is CORE-009)
-    console.info(`[Export] ${filename}\n`, md);
-
-    // Trigger Blob download
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: 'Story exportée ✓',
-      description: `${filename} — front-matter valide ⌘S`,
-      duration: 4000,
-    });
+    try {
+      const result = await go.main.App.StoryExport(
+        draftToGoPayload(draft),
+        { Overwrite: overwrite },
+      );
+      toast({
+        title: 'Story sauvée ✓',
+        description: result?.path ?? `${draft.id}-${draft.slug}.md`,
+        duration: 4000,
+      });
+    } catch (err: unknown) {
+      // ExportConflictError carries existingPath and existingUpdatedAt.
+      const e = err as Record<string, unknown>;
+      if (e?.existingPath) {
+        setConflictInfo({
+          existingPath: e.existingPath as string,
+          existingUpdatedAt: (e.existingUpdatedAt as string) ?? new Date().toISOString(),
+        });
+        return;
+      }
+      toast({
+        title: "Erreur d'export",
+        description: err instanceof Error ? err.message : String(err),
+        duration: 5000,
+        variant: 'destructive',
+      });
+    }
   }, [draft, toast]);
+
+  const handleOverwrite = useCallback(async () => {
+    setConflictInfo(null);
+    await handleExport(true);
+  }, [handleExport]);
 
   const handleExportClick = useCallback(() => {
     if (allDone) {
-      handleExport();
+      void handleExport();
     } else {
       setChecklistOpen((v) => !v);
     }
@@ -153,11 +187,17 @@ export function SpddHeader(): JSX.Element {
         {checklistOpen && (
           <ExportChecklist
             onClose={() => setChecklistOpen(false)}
-            onExport={handleExport}
+            onExport={() => void handleExport()}
             onGoToSection={handleGoToSection}
           />
         )}
       </div>
+
+      <ExportConflictDialog
+        conflict={conflictInfo}
+        onOverwrite={handleOverwrite}
+        onCancel={() => setConflictInfo(null)}
+      />
     </header>
   );
 }

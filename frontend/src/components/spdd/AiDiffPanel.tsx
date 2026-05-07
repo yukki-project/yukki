@@ -1,11 +1,12 @@
 // UI-014d — AI Diff Panel (replaces the 360px inspector during AI review).
 // Shows AVANT / APRÈS / DIFF cards + Accept / Reject / Regenerate buttons.
-// During generation: spinner + "Yuki rédige…" placeholder.
+// UI-014f — O6: Branche useSpddSuggest (streaming réel) via prop suggestResult.
 
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSpddEditorStore } from '@/stores/spdd';
-import { AI_ACTIONS } from './mockLlm';
+import { AI_ACTIONS } from './aiActions';
+import type { SpddSuggestResult, SuggestionRequest } from '@/hooks/useSpddSuggest';
 
 // ─── Word-level diff ──────────────────────────────────────────────────────
 
@@ -82,17 +83,40 @@ function DiffCard({ label, colorClass, children }: DiffCardProps): JSX.Element {
 
 // ─── Root ─────────────────────────────────────────────────────────────────
 
-export function AiDiffPanel(): JSX.Element {
-  const aiPhase = useSpddEditorStore((s) => s.aiPhase);
+interface AiDiffPanelProps {
+  suggestResult: SpddSuggestResult;
+  currentRequest: SuggestionRequest | null;
+}
+
+export function AiDiffPanel({ suggestResult, currentRequest }: AiDiffPanelProps): JSX.Element {
   const aiAction = useSpddEditorStore((s) => s.aiAction);
   const aiSelection = useSpddEditorStore((s) => s.aiSelection);
-  const aiSuggestion = useSpddEditorStore((s) => s.aiSuggestion);
   const acceptSuggestion = useSpddEditorStore((s) => s.acceptSuggestion);
   const rejectSuggestion = useSpddEditorStore((s) => s.rejectSuggestion);
-  const regenerateAi = useSpddEditorStore((s) => s.regenerateAi);
 
   const actionLabel = AI_ACTIONS.find((a) => a.type === aiAction)?.label ?? '…';
-  const isGenerating = aiPhase === 'generating';
+  const isGenerating = suggestResult.state === 'streaming';
+  const suggestion = suggestResult.streamText;
+
+  const handleAccept = () => {
+    // Sync the streamed text into the store before calling acceptSuggestion.
+    useSpddEditorStore.setState({ aiSuggestion: suggestion });
+    acceptSuggestion();
+    suggestResult.reset();
+  };
+
+  const handleReject = () => {
+    rejectSuggestion();
+    suggestResult.reset();
+  };
+
+  const handleRegenerate = () => {
+    if (!currentRequest) return;
+    void suggestResult.start({
+      ...currentRequest,
+      previousSuggestion: suggestion,
+    });
+  };
 
   return (
     <aside
@@ -121,13 +145,13 @@ export function AiDiffPanel(): JSX.Element {
 
             {/* APRÈS */}
             <DiffCard label="après" colorClass="bg-[color:var(--yk-success-soft)]">
-              <p className="text-yk-text-primary">{aiSuggestion}</p>
+              <p className="text-yk-text-primary">{suggestion}</p>
             </DiffCard>
 
             {/* DIFF */}
             <DiffCard label="diff" colorClass="">
               <p className="flex flex-wrap leading-[1.8]">
-                {wordDiff(aiSelection?.text ?? '', aiSuggestion ?? '').map((token, i) => {
+                {wordDiff(aiSelection?.text ?? '', suggestion).map((token, i) => {
                   if (token.kind === 'del')
                     return (
                       <span
@@ -158,7 +182,7 @@ export function AiDiffPanel(): JSX.Element {
       <footer className="flex items-center gap-2 border-t border-yk-line px-4 py-3">
         <button
           type="button"
-          onClick={rejectSuggestion}
+          onClick={handleReject}
           className={cn(
             'flex-1 rounded-yk-sm border border-yk-line py-1.5 font-inter text-[13px] text-yk-text-secondary',
             'transition-colors hover:bg-yk-bg-2 hover:text-yk-text-primary',
@@ -169,8 +193,8 @@ export function AiDiffPanel(): JSX.Element {
         </button>
         <button
           type="button"
-          onClick={acceptSuggestion}
-          disabled={isGenerating || !aiSuggestion}
+          onClick={handleAccept}
+          disabled={isGenerating || !suggestion}
           className={cn(
             'flex-1 rounded-yk-sm bg-yk-primary py-1.5 font-inter text-[13px] font-medium text-white',
             'transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40',
@@ -182,7 +206,7 @@ export function AiDiffPanel(): JSX.Element {
         <button
           type="button"
           aria-label="Régénérer"
-          onClick={regenerateAi}
+          onClick={handleRegenerate}
           disabled={isGenerating}
           className={cn(
             'flex h-8 w-8 items-center justify-center rounded-yk-sm border border-yk-line',

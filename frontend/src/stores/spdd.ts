@@ -3,13 +3,14 @@
 // UI-014b adds mutations: setFmField, setSection, addAc, removeAc, updateAc, duplicateAc.
 // UI-014c adds: markdownSource, markdownWarnings, switchToMarkdown/Wysiwyg.
 // UI-014d adds: AI assist state — aiPhase, aiSelection, aiSuggestion, popover pos.
+// UI-014f: triggerAiAction/regenerateAi no longer call mockLlm — actual LLM call
+//   is delegated to useSpddSuggest in the component layer.
 
 import { create } from 'zustand';
 import { DEMO_STORY } from '@/components/spdd/mockStory';
 import { SECTIONS } from '@/components/spdd/sections';
 import { draftToMarkdown } from '@/components/spdd/serializer';
 import { markdownToDraft } from '@/components/spdd/parser';
-import { mockLlm, mockDelay } from '@/components/spdd/mockLlm';
 import type {
   AiPhase,
   AiSelection,
@@ -21,7 +22,7 @@ import type {
   StoryDraft,
   ViewMode,
 } from '@/components/spdd/types';
-import type { AiActionType } from '@/components/spdd/mockLlm';
+import type { AiActionType } from '@/components/spdd/aiActions';
 
 export interface SpddEditorState {
   draft: StoryDraft;
@@ -178,13 +179,9 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
     set({ aiPhase: 'idle', aiSelection: null, aiAction: null, aiSuggestion: null, popoverPosition: null }),
 
   triggerAiAction: (action) => {
+    // Sets the phase to 'generating' — actual LLM streaming is done
+    // by useSpddSuggest in the component layer (SpddEditor/AiPopover).
     set({ aiPhase: 'generating', aiAction: action });
-    const sel = get().aiSelection;
-    if (!sel) return;
-    mockDelay().then(() => {
-      const suggestion = mockLlm(action, sel.text);
-      set({ aiPhase: 'diff', aiSuggestion: suggestion });
-    });
   },
 
   acceptSuggestion: () =>
@@ -210,15 +207,9 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
     set({ aiPhase: 'idle', aiSelection: null, aiAction: null, aiSuggestion: null, popoverPosition: null }),
 
   regenerateAi: () => {
-    const action = get().aiAction;
-    if (!action) return;
+    // Sets the phase to 'generating' — actual re-streaming is delegated to
+    // useSpddSuggest.start() called from AiDiffPanel with previousSuggestion.
     set({ aiPhase: 'generating' });
-    const sel = get().aiSelection;
-    if (!sel) return;
-    mockDelay().then(() => {
-      const suggestion = mockLlm(action, sel.text);
-      set({ aiPhase: 'diff', aiSuggestion: suggestion });
-    });
   },
 }));
 

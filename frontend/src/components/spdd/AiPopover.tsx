@@ -1,13 +1,15 @@
 // UI-014d — AI assist popover.
 // Shown when a prose selection ≥ 3 words is detected. Anchored via
 // `position: fixed` at the mouse-up coordinates. Contains 4 action rows
-// plus a footer with the "Voir le prompt" link (mock dialog).
+// plus a footer with the "Voir le prompt" link.
+// UI-014f — O6: Real prompt preview via SpddSuggestPreview; real action via suggestResult.start.
 
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useSpddEditorStore } from '@/stores/spdd';
-import { AI_ACTIONS } from './mockLlm';
-import type { AiActionType } from './mockLlm';
+import { AI_ACTIONS } from './aiActions';
+import type { AiActionType } from './aiActions';
+import type { SpddSuggestResult } from '@/hooks/useSpddSuggest';
 import type { ProseSectionKey } from './types';
 import {
   Dialog,
@@ -27,36 +29,6 @@ const SECTION_LABELS: Record<ProseSectionKey, string> = {
   no: 'Notes',
 };
 
-// ─── Mock prompt preview ──────────────────────────────────────────────────
-
-function buildMockPrompt(section: ProseSectionKey, text: string, action: AiActionType): string {
-  const sectionLabel = SECTION_LABELS[section];
-  const actionLabel = AI_ACTIONS.find((a) => a.type === action)?.label ?? action;
-  return `Tu es un rédacteur SPDD expert.
-
-La section courante est **${sectionLabel}**.
-
-Définition SPDD — ${sectionLabel} : ${SECTION_DEFS[section]}
-
-Texte sélectionné : *${text}*
-
-Action demandée : *${actionLabel}*
-
-Contraintes :
-- Conserve le ton factuel et concis des stories SPDD.
-- Réponds uniquement avec le texte transformé, sans explication.
-- Ne dépasse pas 2 phrases supplémentaires si tu enrichis.`;
-}
-
-const SECTION_DEFS: Record<ProseSectionKey, string> = {
-  bg: "Contexte qui motive la story. Décrit l'état actuel et la friction sans proposer de solution.",
-  bv: "Valeur métier. Suit la structure « En tant que X, je veux Y afin de Z ».",
-  si: "Périmètre inclus. Liste de comportements observables, une puce par comportement.",
-  so: "Périmètre exclu. Ce qui est explicitement hors-scope et pourquoi.",
-  oq: "Questions ouvertes à trancher avant l'analyse ou le canvas.",
-  no: "Notes, liens, références. Dépôt contextuel.",
-};
-
 // ─── Keyboard shortcut pill ───────────────────────────────────────────────
 
 function KbdPill({ label }: { label: string }): JSX.Element {
@@ -69,7 +41,11 @@ function KbdPill({ label }: { label: string }): JSX.Element {
 
 // ─── Root ─────────────────────────────────────────────────────────────────
 
-export function AiPopover(): JSX.Element | null {
+interface AiPopoverProps {
+  suggestResult: SpddSuggestResult;
+}
+
+export function AiPopover({ suggestResult }: AiPopoverProps): JSX.Element | null {
   const aiPhase = useSpddEditorStore((s) => s.aiPhase);
   const aiSelection = useSpddEditorStore((s) => s.aiSelection);
   const popoverPosition = useSpddEditorStore((s) => s.popoverPosition);
@@ -78,6 +54,7 @@ export function AiPopover(): JSX.Element | null {
 
   const [hotIndex, setHotIndex] = useState(0);
   const [promptDialogOpen, setPromptDialogOpen] = useState(false);
+  const [promptText, setPromptText] = useState<string>('');
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on click outside
@@ -95,18 +72,24 @@ export function AiPopover(): JSX.Element | null {
   // Keyboard: Enter = hot action, Escape = close, ⌘1-4 = actions
   useEffect(() => {
     if (aiPhase !== 'popover') return;
+    const fireAction = (type: AiActionType) => {
+      triggerAiAction(type);
+      if (aiSelection) {
+        void suggestResult.start({ section: aiSelection.sectionKey, action: type, selectedText: aiSelection.text });
+      }
+    };
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { closeAiPopover(); return; }
-      if (e.key === 'Enter') { triggerAiAction(AI_ACTIONS[hotIndex].type); return; }
+      if (e.key === 'Enter') { fireAction(AI_ACTIONS[hotIndex].type); return; }
       if ((e.metaKey || e.ctrlKey) && e.key >= '1' && e.key <= '4') {
         e.preventDefault();
         const idx = parseInt(e.key, 10) - 1;
-        if (idx < AI_ACTIONS.length) triggerAiAction(AI_ACTIONS[idx].type);
+        if (idx < AI_ACTIONS.length) fireAction(AI_ACTIONS[idx].type);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [aiPhase, hotIndex, triggerAiAction, closeAiPopover]);
+  }, [aiPhase, hotIndex, triggerAiAction, closeAiPopover, aiSelection, suggestResult]);
 
   if (aiPhase !== 'popover' || !popoverPosition || !aiSelection) return null;
 
@@ -134,7 +117,16 @@ export function AiPopover(): JSX.Element | null {
               <button
                 type="button"
                 onMouseEnter={() => setHotIndex(i)}
-                onClick={() => triggerAiAction(action.type)}
+                onClick={() => {
+                triggerAiAction(action.type);
+                if (aiSelection) {
+                  void suggestResult.start({
+                    section: aiSelection.sectionKey,
+                    action: action.type,
+                    selectedText: aiSelection.text,
+                  });
+                }
+              }}
                 className={cn(
                   'flex w-full items-center gap-2 px-3 py-1.5',
                   'font-inter text-[13px] text-yk-text-primary transition-colors',
@@ -160,7 +152,17 @@ export function AiPopover(): JSX.Element | null {
           </span>
           <button
             type="button"
-            onClick={() => setPromptDialogOpen(true)}
+            onClick={async () => {
+              setPromptDialogOpen(true);
+              if (aiSelection) {
+                const p = await suggestResult.preview({
+                  section: aiSelection.sectionKey,
+                  action: AI_ACTIONS[hotIndex].type,
+                  selectedText: aiSelection.text,
+                });
+                setPromptText(p);
+              }
+            }}
             className="text-yk-primary underline decoration-dotted hover:no-underline focus-visible:outline-none"
           >
             Voir le prompt
@@ -175,7 +177,7 @@ export function AiPopover(): JSX.Element | null {
             <DialogTitle className="font-inter text-[15px]">Prompt envoyé au LLM</DialogTitle>
           </DialogHeader>
           <pre className="max-h-[60vh] overflow-auto rounded-yk bg-yk-bg-2 p-4 font-jbmono text-[12px] leading-[1.6] text-yk-text-secondary whitespace-pre-wrap">
-            {buildMockPrompt(aiSelection.sectionKey, aiSelection.text, AI_ACTIONS[hotIndex].type)}
+            {promptText || '(Chargement…)'}
           </pre>
         </DialogContent>
       </Dialog>

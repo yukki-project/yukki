@@ -1,5 +1,6 @@
 // UI-014d — Adds AiPopover (global floating) and AiDiffPanel (replaces
 // inspector during generating/diff phases).
+// UI-014f — O6: Instancie useSpddSuggest, passe en props AiDiffPanel/AiPopover.
 
 import { useCallback, useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
@@ -13,8 +14,10 @@ import { AiPopover } from './AiPopover';
 import { AiDiffPanel } from './AiDiffPanel';
 import { useSpddEditorStore } from '@/stores/spdd';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useSpddSuggest } from '@/hooks/useSpddSuggest';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
+import type { SuggestionRequest } from '@/hooks/useSpddSuggest';
 
 // ─── Warnings banner ──────────────────────────────────────────────────────
 
@@ -68,9 +71,28 @@ export function SpddEditor(): JSX.Element {
   const setMarkdownSource = useSpddEditorStore((s) => s.setMarkdownSource);
   const clearScrollToSection = useSpddEditorStore((s) => s.clearScrollToSection);
   const aiPhase = useSpddEditorStore((s) => s.aiPhase);
+  const aiSelection = useSpddEditorStore((s) => s.aiSelection);
 
   // CORE-007: auto-save to backend every 2s of inactivity.
   useAutoSave(draft, true);
+
+  // UI-014f: real streaming suggestion hook.
+  const suggestResult = useSpddSuggest();
+
+  // Build the current request from the store selection when streaming starts.
+  const currentRequest: SuggestionRequest | null =
+    aiSelection
+      ? { section: aiSelection.sectionKey, action: '', selectedText: aiSelection.text }
+      : null;
+
+  // Sync suggestResult.state → store aiPhase so SpddEditor can show DiffPanel.
+  useEffect(() => {
+    if (suggestResult.state === 'done') {
+      useSpddEditorStore.setState({ aiPhase: 'diff' });
+    } else if (suggestResult.state === 'error') {
+      useSpddEditorStore.setState({ aiPhase: 'idle' });
+    }
+  }, [suggestResult.state]);
 
   const dismissWarnings = useCallback(() => {
     useSpddEditorStore.setState({ markdownWarnings: [] });
@@ -164,7 +186,7 @@ export function SpddEditor(): JSX.Element {
             aria-label={showDiffPanel ? 'Panneau de diff IA' : 'Inspector'}
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
           >
-            {showDiffPanel ? <AiDiffPanel /> : <SpddInspector />}
+            {showDiffPanel ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} /> : <SpddInspector />}
           </aside>
         )}
       </div>
@@ -172,7 +194,7 @@ export function SpddEditor(): JSX.Element {
       <SpddFooter />
 
       {/* Global floating AI popover */}
-      <AiPopover />
+      <AiPopover suggestResult={suggestResult} />
     </div>
   );
 }

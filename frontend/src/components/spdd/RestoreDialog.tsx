@@ -1,11 +1,14 @@
 // CORE-007 — O6: RestoreDialog component.
 // Shown when the Wails backend emits "draft:restore-available" on startup,
 // listing the available drafts sorted by most-recently-saved first.
+// UI-014f — O7: RestoreDialogController calls DraftLoad + resetDraft on restore.
 
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Clock, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSpddEditorStore } from '@/stores/spdd';
+import { mapGoToDraft } from '@/lib/draftMapper';
 
 /** A lightweight summary of a saved draft (matches Go DraftSummary). */
 export interface DraftSummary {
@@ -154,13 +157,26 @@ export function RestoreDialogController({ onRestore }: ControllerProps): JSX.Ele
 
   if (!summaries) return null;
 
+  const handleRestore = async (id: string) => {
+    setSummaries(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const go = (window as any).go;
+    if (go?.main?.App?.DraftLoad) {
+      try {
+        const loaded = await go.main.App.DraftLoad(id);
+        useSpddEditorStore.getState().resetDraft(mapGoToDraft(loaded));
+        return;
+      } catch {
+        // Fall through to the prop-based onRestore.
+      }
+    }
+    onRestore(id);
+  };
+
   return (
     <RestoreDialog
       summaries={summaries}
-      onRestore={(id) => {
-        setSummaries(null);
-        onRestore(id);
-      }}
+      onRestore={handleRestore}
       onDismiss={() => setSummaries(null)}
     />
   );
