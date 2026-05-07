@@ -19,6 +19,7 @@ var emitEvent = runtime.EventsEmit
 const (
 	eventProviderStart = "provider:start"
 	eventProviderEnd   = "provider:end"
+	eventProviderText  = "provider:text"
 )
 
 // ProviderStartPayload is the JSON payload of the "provider:start" event.
@@ -36,6 +37,11 @@ type ProviderEndPayload struct {
 	Path       string `json:"path"`
 	Error      string `json:"error"`
 	DurationMs int64  `json:"durationMs"`
+}
+
+// ProviderTextPayload is the JSON payload of the "provider:text" event.
+type ProviderTextPayload struct {
+	Chunk string `json:"chunk"`
 }
 
 // uiProgress implements workflow.Progress by emitting Wails events.
@@ -85,4 +91,13 @@ func (p *uiProgress) End(path string, err error) {
 	if p.logger != nil {
 		p.logger.Debug("progress end", "success", payload.Success, "duration_ms", durationMs)
 	}
+}
+
+// Chunk emits the "provider:text" event with a partial text chunk.
+// Empty chunks are silently dropped (Safeguard: never emit empty chunk).
+func (p *uiProgress) Chunk(text string) {
+	if text == "" {
+		return
+	}
+	emitEvent(p.ctx, eventProviderText, ProviderTextPayload{Chunk: text})
 }

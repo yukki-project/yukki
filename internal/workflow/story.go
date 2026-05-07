@@ -30,6 +30,10 @@ type Progress interface {
 	// End signals completion. path is the absolute path of the produced
 	// artifact on success, "" on failure. err is nil on success.
 	End(path string, err error)
+	// Chunk delivers a partial text chunk from the provider stream.
+	// Called from the provider goroutine; implementations must be safe
+	// to call concurrently with Start and End.
+	Chunk(text string)
 }
 
 // noopProgress is the zero-value fallback used when StoryOptions.Progress
@@ -38,6 +42,7 @@ type noopProgress struct{}
 
 func (noopProgress) Start(label string)         {}
 func (noopProgress) End(path string, err error) {}
+func (noopProgress) Chunk(text string)          {}
 
 // StoryOptions bundles the dependencies and parameters for RunStory.
 type StoryOptions struct {

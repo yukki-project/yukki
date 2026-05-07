@@ -18,6 +18,7 @@ import {
   EventsOn,
   type ProviderEndPayload,
   type ProviderStartPayload,
+  type ProviderTextPayload,
 } from '@/lib/wails-events';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useClaudeStore } from '@/stores/claude';
@@ -37,6 +38,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
   const [customPrefix, setCustomPrefix] = useState<string>('');
   const [strictPrefix, setStrictPrefix] = useState<boolean>(false);
   const [prefixes, setPrefixes] = useState<string[]>(['STORY']);
+  const [liveText, setLiveText] = useState<string>('');
 
   const phase = useGenerationStore((s) => s.phase);
   const currentLabel = useGenerationStore((s) => s.currentLabel);
@@ -82,9 +84,13 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
         failGen(p.error);
       }
     });
+    const offText = EventsOn<ProviderTextPayload>('provider:text', (p) => {
+      setLiveText((prev) => prev + p.chunk);
+    });
     return () => {
       offStart();
       offEnd();
+      offText();
     };
   }, [startGen, succeedGen, failGen, refreshArtifacts, setSelectedPath, onOpenChange]);
 
@@ -92,6 +98,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
   useEffect(() => {
     if (open && phase !== 'running') {
       resetGen();
+      setLiveText('');
     }
   }, [open, phase, resetGen]);
 
@@ -163,8 +170,11 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               {currentLabel || 'Working…'}
-            </p>
-            <Button variant="outline" size="sm" onClick={handleAbort}>
+            </p>            {liveText && (
+              <pre className="w-full max-h-60 overflow-y-auto rounded-md border border-input bg-muted p-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap break-words">
+                {liveText}
+              </pre>
+            )}            <Button variant="outline" size="sm" onClick={handleAbort}>
               <X className="mr-2 h-3 w-3" /> Abort
             </Button>
           </div>

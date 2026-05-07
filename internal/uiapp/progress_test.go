@@ -84,3 +84,40 @@ func TestUiProgress_EmitsEnd_WithError_OnFailure(t *testing.T) {
 		t.Fatalf("end payload mismatch: %+v", endPayload)
 	}
 }
+
+func TestUiProgress_Chunk_EmitsProviderTextEvent(t *testing.T) {
+	captured := withEmitStub(t)
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	p := newUiProgress(context.Background(), logger)
+
+	p.Chunk("hello world")
+
+	if len(*captured) != 1 {
+		t.Fatalf("expected 1 emit, got %d", len(*captured))
+	}
+	ev := (*captured)[0]
+	if ev.name != "provider:text" {
+		t.Fatalf("event name = %q, want provider:text", ev.name)
+	}
+	payload, ok := ev.payload.(ProviderTextPayload)
+	if !ok {
+		t.Fatalf("payload type = %T", ev.payload)
+	}
+	if payload.Chunk != "hello world" {
+		t.Fatalf("payload.Chunk = %q, want %q", payload.Chunk, "hello world")
+	}
+}
+
+func TestUiProgress_Chunk_EmptySkipped(t *testing.T) {
+	captured := withEmitStub(t)
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	p := newUiProgress(context.Background(), logger)
+
+	p.Chunk("")
+
+	if len(*captured) != 0 {
+		t.Fatalf("expected 0 emits for empty chunk, got %d", len(*captured))
+	}
+}

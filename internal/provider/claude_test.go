@@ -22,6 +22,7 @@ var stubBinary string
 const stubMainSource = `package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -53,6 +54,39 @@ func main() {
 	case "--print":
 		_, _ = io.Copy(io.Discard, os.Stdin)
 		fmt.Print(cannedStory)
+	case "--output-format":
+		if len(os.Args) > 2 && os.Args[2] == "stream-json" {
+			_, _ = io.Copy(io.Discard, os.Stdin)
+			// Emit well-formed stream-json events.
+			chunks := []string{"# Stub Story\n\n", "Body produced by the stub", " binary used in tests.\n"}
+			for _, c := range chunks {
+				b, _ := json.Marshal(map[string]any{
+					"type": "assistant",
+					"message": map[string]any{
+						"content": []map[string]any{{"type": "text", "text": c}},
+					},
+				})
+				fmt.Println(string(b))
+			}
+			// Emit empty-text chunk — must NOT be forwarded by ClaudeProvider.
+			b, _ := json.Marshal(map[string]any{
+				"type": "assistant",
+				"message": map[string]any{
+					"content": []map[string]any{{"type": "text", "text": ""}},
+				},
+			})
+			fmt.Println(string(b))
+			// Emit result event with the canonical final text.
+			rb, _ := json.Marshal(map[string]any{
+				"type":    "result",
+				"subtype": "success",
+				"result":  cannedStory,
+			})
+			fmt.Println(string(rb))
+		} else {
+			fmt.Fprintln(os.Stderr, "unknown --output-format value: "+strings.Join(os.Args[2:], " "))
+			os.Exit(2)
+		}
 	case "--fail":
 		fmt.Fprintln(os.Stderr, "stub failure on purpose")
 		os.Exit(1)
@@ -228,5 +262,83 @@ func TestClaudeProvider_Generate_TimeoutKillsHungProcess(t *testing.T) {
 	}
 	if elapsed > 2*time.Second {
 		t.Fatalf("expected timeout to kill the process quickly, took %s", elapsed)
+	}
+}
+
+func TestClaudeProvider_Generate_Streaming_HappyPath(t *testing.T) {
+	if stubBinary == "" {
+		t.Skip("stub binary not built")
+	}
+	var chunks []string
+	p := &ClaudeProvider{
+		logger:  slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		Binary:  stubBinary,
+		Args:    []string{"--print"},
+		Timeout: 30 * time.Second,
+		OnChunk: func(text string) { chunks = append(chunks, text) },
+	}
+	out, err := p.Generate(context.Background(), "any prompt")
+	if err != nil {
+		t.Fatalf("Generate streaming: %v", err)
+	}
+	// Final text must come from the result event, not chunk concatenation.
+	if !strings.Contains(out, "Stub Story") {
+		t.Fatalf("expected canned story in result, got %q", out)
+	}
+	// Exactly 3 non-empty chunks (the empty-text chunk must have been dropped).
+	if len(chunks) != 3 {
+		t.Fatalf("expected 3 chunks, got %d: %v", len(chunks), chunks)
+	}
+	for _, c := range chunks {
+		if c == "" {
+			t.Fatal("OnChunk was called with an empty string")
+		}
+	}
+}
+
+func TestClaudeProvider_Generate_Streaming_EmptyChunkDropped(t *testing.T) {
+	if stubBinary == "" {
+		t.Skip("stub binary not built")
+	}
+	var callCount int
+	p := &ClaudeProvider{
+		logger:  slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		Binary:  stubBinary,
+		Args:    []string{"--print"},
+		Timeout: 30 * time.Second,
+		OnChunk: func(text string) {
+			if text == "" {
+				t.Error("OnChunk called with empty string")
+			}
+			callCount++
+		},
+	}
+	_, err := p.Generate(context.Background(), "any prompt")
+	if err != nil {
+		t.Fatalf("Generate streaming: %v", err)
+	}
+	// Stub emits 3 non-empty + 1 empty chunk; only 3 must reach OnChunk.
+	if callCount != 3 {
+		t.Fatalf("expected 3 OnChunk calls, got %d", callCount)
+	}
+}
+
+func TestClaudeProvider_Generate_NoStreaming_Unchanged(t *testing.T) {
+	if stubBinary == "" {
+		t.Skip("stub binary not built")
+	}
+	p := &ClaudeProvider{
+		logger:  slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		Binary:  stubBinary,
+		Args:    []string{"--print"},
+		Timeout: 30 * time.Second,
+		// OnChunk deliberately nil — non-streaming path.
+	}
+	out, err := p.Generate(context.Background(), "any prompt")
+	if err != nil {
+		t.Fatalf("Generate non-streaming: %v", err)
+	}
+	if !strings.Contains(out, "Stub Story") {
+		t.Fatalf("expected canned story, got %q", out)
 	}
 }

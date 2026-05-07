@@ -389,6 +389,13 @@ func (a *App) RunStory(description, prefix string, strictPrefix bool) (string, e
 	}()
 
 	prog := newUiProgress(runStoryCtx, a.logger)
+
+	// Wire streaming chunk callback if the active provider supports it.
+	if cp, ok := a.provider.(*provider.ClaudeProvider); ok {
+		cp.OnChunk = prog.Chunk
+		defer func() { cp.OnChunk = nil }()
+	}
+
 	opts := workflow.StoryOptions{
 		Description:    description,
 		Prefix:         prefix,

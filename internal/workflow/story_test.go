@@ -80,6 +80,14 @@ func (f *fakeProgress) End(path string, err error) {
 		err  error
 	}{path, err})
 }
+func (f *fakeProgress) Chunk(text string) {}
+
+func TestNoopProgress_Chunk_NoOp(t *testing.T) {
+	// Verify that calling Chunk on noopProgress never panics.
+	var np noopProgress
+	np.Chunk("hello")
+	np.Chunk("")
+}
 
 func TestRunStory_NoopProgressFallback(t *testing.T) {
 	// With Progress=nil, RunStory must behave exactly like the existing

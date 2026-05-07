@@ -13,6 +13,11 @@ export interface ProviderEndPayload {
   durationMs: number;
 }
 
+// CORE-006 — streaming live text chunks from the claude CLI
+export interface ProviderTextPayload {
+  chunk: string;
+}
+
 // UI-009 — project lifecycle events
 export interface ProjectOpenedPayload {
   path: string;
