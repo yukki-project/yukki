@@ -1,23 +1,12 @@
-import { useState } from 'react';
-import { AlertCircle, Archive, Plus } from 'lucide-react';
+import { AlertCircle, Archive } from 'lucide-react';
 import { type Meta } from '../../../wailsjs/go/main/App';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
-import { useProjectStore } from '@/stores/project';
 import { useShellStore } from '@/stores/shell';
-import { NewStoryModal } from './NewStoryModal';
+import { STATUS_BADGE } from '@/lib/statusBadge';
 
 const ARCHIVED_STATUSES = new Set(['synced']);
-
-export const STATUS_BADGE: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  reviewed: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  accepted: 'bg-purple-500/15 text-purple-700 dark:text-purple-300',
-  implemented: 'bg-green-500/15 text-green-700 dark:text-green-300',
-  synced: 'bg-teal-500/15 text-teal-700 dark:text-teal-300',
-  done: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-};
 
 interface HubListProps {
   className?: string;
@@ -29,9 +18,7 @@ export function HubList({ className }: HubListProps) {
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
   const setSelectedPath = useArtifactsStore((s) => s.setSelectedPath);
   const kind = useArtifactsStore((s) => s.kind);
-  const projectDir = useProjectStore((s) => s.projectDir);
 
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const showArchived = useShellStore((s) => s.showArchived);
   const setShowArchived = useShellStore((s) => s.setShowArchived);
 
@@ -54,15 +41,6 @@ export function HubList({ className }: HubListProps) {
           >
             <Archive className="h-3.5 w-3.5" />
           </Button>
-          {kind === 'stories' && (
-            <Button
-              size="sm"
-              onClick={() => setModalOpen(true)}
-              disabled={!projectDir}
-            >
-              <Plus className="mr-2 h-3 w-3" /> New Story
-            </Button>
-          )}
         </div>
       </header>
       {error && (
@@ -118,7 +96,6 @@ export function HubList({ className }: HubListProps) {
           })}
         </ul>
       )}
-      <NewStoryModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
   );
 }

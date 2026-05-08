@@ -1,0 +1,7 @@
+bg: "Background : contexte métier ou technique, 3-6 lignes. Répond à 'Pourquoi cette story existe ?'"
+bv: "Business Value : gain mesurable, à qui ça sert. Ex. 'permettre aux équipes Run d'exporter les vulnérabilités Trivy au format CSV'."
+si: "Scope In : liste de points, chacun commençant par '-', décrivant ce qui est dans le périmètre."
+so: "Scope Out : liste de points explicitement exclus et justifiés."
+ac: "Acceptance Criteria : format Given/When/Then. Chaque critère doit être testable indépendamment."
+oq: "Open Questions : liste de questions ouvertes pour le PO ou l'archi, format '- [ ] question'."
+notes: "Notes : liens, références externes, screenshots, captures Bruno, threads Slack."

@@ -1,0 +1,57 @@
+/* UI-014a — SPDD Editor design tokens.
+ *
+ * Variables CSS scoped under .yk to avoid bleeding into the existing hub.
+ * Mirror values from sketch/yukki/project/spdd-editor.css (the design
+ * prototype). Any change to these values must be motivated by a canvas
+ * update, not by ad-hoc tweaks at the component layer.
+ */
+
+.yk {
+  /* Surfaces */
+  --yk-bg-page: #0c0d12;
+  --yk-bg-1: #131419;
+  --yk-bg-2: #181a21;
+  --yk-bg-3: #1f2129;
+  --yk-bg-elev: #232631;
+  --yk-bg-input: #16171d;
+
+  /* Lines */
+  --yk-line: #23252e;
+  --yk-line-subtle: #1c1e25;
+  --yk-line-strong: #2e3140;
+
+  /* Text */
+  --yk-text-primary: #e6e7ee;
+  --yk-text-secondary: #9ea1b3;
+  --yk-text-muted: #6b6e80;
+  --yk-text-faint: #4b4d5a;
+
+  /* Accent */
+  --yk-primary: #8b6cff;
+  --yk-primary-soft: rgba(139, 108, 255, 0.14);
+  --yk-primary-ring: rgba(139, 108, 255, 0.32);
+
+  /* Semantics */
+  --yk-success: #4ec38a;
+  --yk-success-soft: rgba(78, 195, 138, 0.13);
+  --yk-warning: #e8a657;
+  --yk-warning-soft: rgba(232, 166, 87, 0.13);
+  --yk-danger: #e76d6d;
+  --yk-danger-soft: rgba(231, 109, 109, 0.13);
+
+  /* Code-ish text colors used by the markdown view (UI-014c will use these) */
+  --yk-code-key: #c8b6ff;
+  --yk-code-string: #9be3a8;
+  --yk-code-heading: #ffd089;
+  --yk-code-subheading: #ffb3c1;
+
+  /* Radii */
+  --yk-radius-sm: 4px;
+  --yk-radius: 6px;
+  --yk-radius-md: 8px;
+  --yk-radius-lg: 10px;
+
+  /* Fonts */
+  --yk-font-ui: 'Inter', system-ui, sans-serif;
+  --yk-font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}

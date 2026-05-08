@@ -9,15 +9,33 @@ import (
 )
 
 // withTempRegistry redirects os.UserConfigDir() to a temp directory for
-// the duration of the test.  On Linux/macOS XDG_CONFIG_HOME is set; on
-// Windows APPDATA is set.  Both are set so the helper works on all
-// platforms in CI.
+// the duration of the test.  Doit couvrir les 3 plateformes :
+//   - Linux  : XDG_CONFIG_HOME (sinon $HOME/.config)
+//   - Windows: APPDATA
+//   - macOS  : $HOME/Library/Application Support — il faut donc rediriger
+//     HOME aussi (sinon le draft store réel est utilisé en CI macOS et
+//     OnStartup peut emit "draft:restore-available" via la vraie Wails
+//     runtime → log "cannot call EventsEmit" + race detector trip).
+//
+// Returns the EFFECTIVE os.UserConfigDir() after redirection (résout les
+// différences de chemin entre plateformes : sur macOS c'est
+// "<dir>/Library/Application Support", sur Linux/Windows c'est <dir>).
+// Les tests qui créent des fichiers de config doivent utiliser cette
+// valeur de retour comme racine.
 func withTempRegistry(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 	t.Setenv("APPDATA", dir)
-	return dir
+	t.Setenv("HOME", dir)
+	cfgDir, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("withTempRegistry: os.UserConfigDir failed after env redirect: %v", err)
+	}
+	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
+		t.Fatalf("withTempRegistry: mkdir %s: %v", cfgDir, err)
+	}
+	return cfgDir
 }
 
 func TestRegistry_LoadMissing_ReturnsEmpty(t *testing.T) {

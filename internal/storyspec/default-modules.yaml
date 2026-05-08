@@ -1,0 +1,13 @@
+modules:
+  - frontend
+  - internal/uiapp
+  - internal/provider
+  - internal/artifacts
+  - internal/draft
+  - internal/storyspec
+  - internal/workflow
+  - internal/templates
+  - internal/skills
+  - internal/clilog
+  - cmd/yukki
+  - docs

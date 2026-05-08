@@ -3,7 +3,7 @@ id: <ID>                       # même id que la story et l'analyse
 slug: <kebab-case-slug>
 story: .yukki/stories/<ID>-<slug>.md
 analysis: .yukki/analysis/<ID>-<slug>.md
-status: draft                  # draft | reviewed | implemented | synced
+status: draft                  # draft | reviewed | accepted | implemented | synced
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
 ---
@@ -16,6 +16,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## R — Requirements
+<!-- spdd: required help="Le problème (1-3 phrases) + Definition of Done sous forme de critères testables. C'est ce qui dit quand la feature est finie." -->
 
 > Quel problème on résout, et **comment on saura que c'est fini**.
 
@@ -31,6 +32,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## E — Entities
+<!-- spdd: required help="Entités métier et relations — pas du code, du domaine. Cf. .yukki/methodology/domain-modeling.md (Entity / Value Object / Invariant)." -->
 
 > Entités métier et relations. Pas du code, du domaine.
 
@@ -48,6 +50,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## A — Approach
+<!-- spdd: required help="Stratégie pour satisfaire les Requirements (5-15 lignes). Décisions d'architecture clés + alternatives écartées (Y-Statement — cf. .yukki/methodology/decisions.md)." -->
 
 > Stratégie pour satisfaire les Requirements. Décisions d'architecture clés
 > et alternatives écartées (avec pourquoi).
@@ -61,6 +64,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## S — Structure
+<!-- spdd: required help="Où s'intègre le changement : modules touchés, fichiers principaux, nature du changement (create/modify/delete)." -->
 
 > Où s'intègre le changement. Composants, dépendances, frontières.
 
@@ -84,6 +88,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## O — Operations
+<!-- spdd: required help="Décomposition exécutable consommée par /yukki-generate. Une opération = une unité testable (signature, comportement, tests)." -->
 
 > Décomposition exécutable. Ordre, signatures, types. C'est ce que `/yukki-generate`
 > consomme. Une opération = une unité testable.
@@ -110,6 +115,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## N — Norms
+<!-- spdd: required help="Standards transversaux à respecter (logging, sécurité, tests, nommage, observabilité, i18n, docs)." -->
 
 > Standards transversaux du projet à respecter dans cette feature.
 
@@ -130,6 +136,7 @@ updated: <YYYY-MM-DD>
 ---
 
 ## S — Safeguards
+<!-- spdd: required help="Limites non-négociables : ce que la génération NE DOIT PAS faire (sécurité, compatibilité, performance, périmètre métier)." -->
 
 > Limites non-négociables. Ce que la génération **ne doit pas** faire.
 

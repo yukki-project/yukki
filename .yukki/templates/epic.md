@@ -11,11 +11,13 @@ child-stories: []              # [STORY-NNN, STORY-NNN, ...]
 # <titre>
 
 ## Vision
+<!-- spdd: required help="But business/produit, public visé, gain attendu. 1-3 phrases — pas de design ni d'implémentation, c'est l'intention au niveau epic." -->
 
 <1-3 phrases — but business / produit, public visé, gain attendu.
 Pas de design ni d'implémentation — c'est l'intention au niveau epic.>
 
 ## Acceptance Criteria (haut niveau)
+<!-- spdd: required help="Critères mesurables au niveau epic. Granularité = épopée terminée — pas du Given/When/Then story-level." -->
 
 > Critères mesurables au niveau epic. Granularité = "épopée terminée"
 > (pas du Given/When/Then story-level — ce niveau-là vit dans les
@@ -26,6 +28,7 @@ Pas de design ni d'implémentation — c'est l'intention au niveau epic.>
 - <...>
 
 ## Stories enfants
+<!-- spdd: required help="Stories qui décomposent cet Epic. Mise à jour au fur et à mesure de la décomposition INVEST." -->
 
 > Liste des stories qui décomposent cet Epic. Mise à jour au fur et
 > à mesure de la décomposition INVEST.
@@ -34,5 +37,6 @@ Pas de design ni d'implémentation — c'est l'intention au niveau epic.>
 - [ ] STORY-NNN — <titre court>
 
 ## Notes
+<!-- spdd: help="Contexte produit, dépendances externes, contraintes timing." -->
 
 <contexte produit, dépendances externes, contraintes timing.>

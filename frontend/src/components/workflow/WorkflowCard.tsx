@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { type Meta } from '../../../wailsjs/go/main/App';
-import { STATUS_BADGE } from '../hub/HubList';
+import { STATUS_BADGE } from '@/lib/statusBadge';
 import {
   COLUMN_ORDER,
   useWorkflowStore,

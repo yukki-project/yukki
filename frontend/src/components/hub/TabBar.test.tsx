@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TabBar } from './TabBar';
 import { useTabsStore } from '@/stores/tabs';
 
@@ -45,8 +45,7 @@ describe('TabBar', () => {
     });
     render(<TabBar />);
     fireEvent.click(screen.getByRole('tab', { name: /beta/ }));
-    await vi.runAllTimersAsync?.();
-    expect(SwitchProject).toHaveBeenCalledWith(1);
+    await waitFor(() => expect(SwitchProject).toHaveBeenCalledWith(1));
   });
 
   it('clicking X button calls CloseProject', async () => {
@@ -57,8 +56,7 @@ describe('TabBar', () => {
     });
     render(<TabBar />);
     fireEvent.click(screen.getByRole('button', { name: /Close project alpha/i }));
-    await vi.runAllTimersAsync?.();
-    expect(CloseProject).toHaveBeenCalledWith(0);
+    await waitFor(() => expect(CloseProject).toHaveBeenCalledWith(0));
   });
 
   it('clicking + button calls OpenProject', async () => {
@@ -69,7 +67,6 @@ describe('TabBar', () => {
     });
     render(<TabBar />);
     fireEvent.click(screen.getByRole('button', { name: /Open project/i }));
-    await vi.runAllTimersAsync?.();
-    expect(OpenProject).toHaveBeenCalledWith('');
+    await waitFor(() => expect(OpenProject).toHaveBeenCalledWith(''));
   });
 });

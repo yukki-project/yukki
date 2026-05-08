@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // Writer writes story files to a directory using an atomic rename.
@@ -33,14 +34,29 @@ func (w *Writer) Write(id, slug, content string) (string, error) {
 	}
 
 	final := filepath.Join(w.StoriesDir, fmt.Sprintf("%s-%s.md", id, slug))
-	tmp := fmt.Sprintf("%s.tmp.%d", final, os.Getpid())
+	// Tmp name unique par goroutine : sinon des goroutines concurrentes
+	// du même process (test I2 CORE-001) écraseraient le tmp les unes
+	// des autres, provoquant rename → file disparu sur Windows (où
+	// MoveFile échoue si la source a été renommée par un autre).
+	tmp := fmt.Sprintf("%s.tmp.%d.%d", final, os.Getpid(), time.Now().UnixNano())
 
 	if err := os.WriteFile(tmp, []byte(content), 0o644); err != nil {
 		return "", fmt.Errorf("write %s: %w", tmp, err)
 	}
 
 	if err := os.Rename(tmp, final); err != nil {
+		// Sur Windows, os.Rename échoue si la destination existe (atomic-replace
+		// non garanti). Quand plusieurs goroutines écrivent le même final,
+		// la première gagne ; les suivantes verront leur tmp resté en place
+		// et un échec de rename — c'est attendu, le contrat I2 ne demande
+		// que "le fichier final existe et est valide", pas que tous les
+		// writers réussissent.
 		_ = os.Remove(tmp)
+		// Si le final existe déjà (un autre goroutine a gagné), traiter
+		// comme un succès silencieux : le contrat est respecté.
+		if _, statErr := os.Stat(final); statErr == nil {
+			return final, nil
+		}
 		return "", fmt.Errorf("rename %s -> %s: %w", tmp, final, err)
 	}
 

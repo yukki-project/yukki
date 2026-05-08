@@ -31,11 +31,12 @@ func cfgLoaderAndWriter(t *testing.T, app *App, projectDir string) {
 
 // captureEmits silences the package-level emitEvent during the test
 // (replaces it with a no-op that ignores arguments). Restored at cleanup.
+// L'accès passe par setEmitEvent (atomic) pour éviter la race entre la
+// goroutine en cours d'exécution et le restore par t.Cleanup.
 func captureEmits(t *testing.T) {
 	t.Helper()
-	prev := emitEvent
-	emitEvent = func(ctx context.Context, name string, payload ...any) {}
-	t.Cleanup(func() { emitEvent = prev })
+	prev := setEmitEvent(func(ctx context.Context, name string, payload ...any) {})
+	t.Cleanup(func() { setEmitEvent(prev) })
 }
 
 func TestNewApp_AssignsDeps(t *testing.T) {
@@ -661,6 +662,8 @@ func TestApp_RunStory_NoProject(t *testing.T) {
 }
 
 func TestApp_RunStory_AlreadyRunning(t *testing.T) {
+	withTempRegistry(t) // isole le draft store : OnStartup peut emit "draft:restore-available"
+	captureEmits(t)     // si emit fire malgré la registry temp, no-op au lieu de Wails real
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 	setTestProject(t, app, t.TempDir())
@@ -797,6 +800,8 @@ func TestApp_RunStory_ShutdownDuringGeneration(t *testing.T) {
 }
 
 func TestApp_AbortRunning_NothingToAbort(t *testing.T) {
+	withTempRegistry(t) // isole le draft store : OnStartup peut emit "draft:restore-available"
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 	if err := app.AbortRunning(); err != nil {

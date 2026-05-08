@@ -1,4 +1,7 @@
-# Placeholder so that //go:embed all:dist (in frontend/embed.go) succeeds
-# when the frontend has not been built yet (first-time `go build ./...` in
-# static-checks CI). The real Vite bundle is produced by `wails build`
-# and is gitignored except for this file.
+# Placeholder pour //go:embed all:dist
+#
+# Le `dist/` réel est produit par `wails build` / `npm run build` ; ce
+# `.gitkeep` garantit qu'un fichier existe pour que la directive Go embed
+# de `frontend/embed.go` ne fail pas en CI (avant build du frontend).
+#
+# Ne pas supprimer.

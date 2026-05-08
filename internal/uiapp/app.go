@@ -34,6 +34,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/yukki-project/yukki/internal/artifacts"
+	"github.com/yukki-project/yukki/internal/draft"
+	"github.com/yukki-project/yukki/internal/promptbuilder"
 	"github.com/yukki-project/yukki/internal/provider"
 	"github.com/yukki-project/yukki/internal/skills"
 	"github.com/yukki-project/yukki/internal/templates"
@@ -80,9 +82,9 @@ type ClaudeStatus struct {
 // Public methods (PascalCase) become auto-generated TypeScript bindings
 // under frontend/wailsjs/go/main/App.
 type App struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	logger *slog.Logger
+	ctx      context.Context
+	cancel   context.CancelFunc
+	logger   *slog.Logger
 	provider provider.Provider
 
 	// openedProjects holds the ordered list of currently open projects
@@ -110,6 +112,18 @@ type App struct {
 	// sub-context derived from a.ctx. AbortRunning calls this. Reset
 	// to nil on RunStory return. Read/write only under cancelMu.
 	runStoryCancel context.CancelFunc
+
+	// draftStore persists in-progress SPDD drafts to the platform config dir.
+	// Initialised by OnStartup; nil-safe (methods guard against nil store).
+	draftStore *draft.DraftStore
+
+	// sessions holds active streaming suggestion sessions, keyed by sessionID.
+	// Values are *suggestSession. Modified concurrently; sync.Map is used.
+	sessions sync.Map
+
+	// sectionDefs holds the SPDD section definitions used to build suggestion prompts.
+	// Loaded at OnStartup from the active project or the embedded fallback.
+	sectionDefs promptbuilder.SectionDefinitions
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.
@@ -131,12 +145,40 @@ func (a *App) OnStartup(ctx context.Context) {
 		a.logger.Info("ui startup", "provider", a.provider.Name())
 	}
 	a.restoreRegistry()
+
+	// Initialise the draft store with the platform config directory.
+	store, err := draft.NewDraftStore("")
+	if err != nil {
+		if a.logger != nil {
+			a.logger.Warn("draft store init failed", "err", err)
+		}
+	} else {
+		a.draftStore = store
+		// Emit restore-available event if there are pending drafts.
+		if summaries, listErr := store.List(); listErr == nil && len(summaries) > 0 {
+			emitEvent(a.ctx, "draft:restore-available", summaries)
+		}
+	}
+
+	// Load SPDD section definitions for suggestion prompts.
+	defs, defsErr := promptbuilder.LoadSectionDefs(a.activeProjectDir())
+	if defsErr != nil && a.logger != nil {
+		a.logger.Warn("section defs load failed — using fallback", "err", defsErr)
+	}
+	a.sectionDefs = defs
 }
 
 // OnShutdown is invoked by Wails when the user closes the window. Cancels
 // the in-flight context so child operations (subprocess `claude` etc.)
 // receive a cancellation signal and clean up promptly.
 func (a *App) OnShutdown(ctx context.Context) {
+	// Cancel all active suggestion sessions before shutting down.
+	a.sessions.Range(func(_, v any) bool {
+		if s, ok := v.(*suggestSession); ok {
+			s.cancel()
+		}
+		return true
+	})
 	a.persistRegistry()
 	if a.cancel != nil {
 		a.cancel()

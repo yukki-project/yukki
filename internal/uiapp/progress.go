@@ -3,16 +3,44 @@ package uiapp
 import (
 	"context"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// emitEvent is the package-level indirection over runtime.EventsEmit so
-// unit tests can capture emissions without spinning up a Wails context.
-// Production callers (the real `yukki ui` binary) hit the Wails runtime
-// directly. Mirror of the openDirectoryDialog pattern in app.go (D-B5b).
-var emitEvent = runtime.EventsEmit
+// emitEventFunc est le type de la fonction d'émission Wails.
+type emitEventFunc = func(ctx context.Context, name string, payload ...any)
+
+// emitEventStore protège l'indirection over runtime.EventsEmit derrière
+// un atomic.Pointer pour éviter la race detector quand `captureEmits`
+// (test helper) réassigne la fonction pendant qu'une goroutine en cours
+// (ex. SpddSuggestStart) la lit.
+var emitEventStore atomic.Pointer[emitEventFunc]
+
+func init() {
+	fn := emitEventFunc(runtime.EventsEmit)
+	emitEventStore.Store(&fn)
+}
+
+// emitEvent appelle la fonction d'émission courante (production : Wails ;
+// tests : no-op via captureEmits). L'accès au pointeur est atomique —
+// multiples readers + writer cohabitent sans race.
+func emitEvent(ctx context.Context, name string, payload ...any) {
+	if p := emitEventStore.Load(); p != nil {
+		(*p)(ctx, name, payload...)
+	}
+}
+
+// setEmitEvent installe une nouvelle fonction d'émission et retourne la
+// précédente. Utilisé exclusivement par les helpers de test (captureEmits).
+func setEmitEvent(fn emitEventFunc) emitEventFunc {
+	prev := emitEventStore.Swap(&fn)
+	if prev == nil {
+		return nil
+	}
+	return *prev
+}
 
 // Wails event names. Stable wire contract — do not rename without
 // updating the frontend listener in NewStoryModal.tsx.

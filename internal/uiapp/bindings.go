@@ -1,4 +1,4 @@
-﻿// Package uiapp â€” bindings.go : new multi-project Wails bindings.
+// Package uiapp — bindings.go : new multi-project Wails bindings.
 //
 // Introduced by UI-009 (multi-project File menu + tabs).
 // All mutations to openedProjects / activeIndex / recentProjects are
@@ -6,10 +6,14 @@
 package uiapp
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"github.com/yukki-project/yukki/internal/draft"
+	"github.com/yukki-project/yukki/internal/storyspec"
 )
 
 // SelectDirectory opens a native directory-picker dialog and returns the
@@ -333,3 +337,85 @@ func (a *App) persistRegistry() {
 	}
 }
 
+// ─── CORE-007 — Draft persistence bindings ───────────────────────────────────
+
+// DraftSave persists d to <configDir>/yukki/drafts/<id>.json.
+// If d.ID is empty, the file is keyed by "unsaved-<epoch-ms>".
+// Returns draft.ErrPathTraversal if the id would escape the drafts directory.
+func (a *App) DraftSave(d draft.Draft) error {
+	if a.draftStore == nil {
+		return errors.New("draft store is not available")
+	}
+	return a.draftStore.Save(d)
+}
+
+// DraftLoad returns the saved draft identified by id.
+// Returns draft.ErrPathTraversal if id contains path-traversal sequences.
+// Returns a wrapped os.ErrNotExist if no matching draft is found.
+func (a *App) DraftLoad(id string) (draft.Draft, error) {
+	if a.draftStore == nil {
+		return draft.Draft{}, errors.New("draft store is not available")
+	}
+	return a.draftStore.Load(id)
+}
+
+// DraftList returns all available drafts sorted by most-recently-saved first.
+// Returns an empty slice when no drafts exist.
+func (a *App) DraftList() ([]draft.DraftSummary, error) {
+	if a.draftStore == nil {
+		return nil, nil
+	}
+	return a.draftStore.List()
+}
+
+// DraftDelete removes the draft identified by id (idempotent).
+// Returns draft.ErrPathTraversal if id contains path-traversal sequences.
+func (a *App) DraftDelete(id string) error {
+	if a.draftStore == nil {
+		return errors.New("draft store is not available")
+	}
+	return a.draftStore.Delete(id)
+}
+
+// StoryValidate returns a ValidationReport for the front-matter fields of d.
+// Known modules are loaded from the active project's .yukki/modules.yaml,
+// falling back to the embedded default list when the file is absent.
+func (a *App) StoryValidate(d draft.Draft) storyspec.ValidationReport {
+	projectDir := a.activeProjectDir()
+	knownModules, err := storyspec.LoadKnownModules(projectDir)
+	if err != nil && a.logger != nil {
+		a.logger.Warn("StoryValidate: load known modules", "err", err)
+	}
+	return storyspec.Validate(d.ID, d.Slug, d.Status, d.Created, d.Updated, d.Modules, knownModules)
+}
+
+// StoryExport renders the draft to SPDD Markdown and writes it atomically to
+// <activeProject>/.yukki/stories/<id>-<slug>.md.
+//
+// If the story already exists and options.Overwrite is false, it returns a
+// *storyspec.ExportConflictError wrapped in a regular error (serialised as
+// JSON by the Wails runtime; use errors.As on the Go side).
+func (a *App) StoryExport(d draft.Draft, options storyspec.ExportOptions) (storyspec.ExportResult, error) {
+	dir := a.activeProjectDir()
+	if dir == "" {
+		return storyspec.ExportResult{}, errors.New("no active project")
+	}
+	storiesDir := filepath.Join(dir, ".yukki", "stories")
+	result, err := storyspec.StoryExport(d, options, storiesDir)
+	if err != nil {
+		return storyspec.ExportResult{}, err
+	}
+	emitEvent(a.ctx, "story:exported", result)
+	return result, nil
+}
+
+// activeProjectDir returns the root directory of the currently active project,
+// or "" when no project is open.
+func (a *App) activeProjectDir() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	if a.activeIndex < 0 || a.activeIndex >= len(a.openedProjects) {
+		return ""
+	}
+	return a.openedProjects[a.activeIndex].Path
+}

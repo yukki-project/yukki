@@ -1,0 +1,19 @@
+# Normalisation EOL : par défaut Git détecte le type texte et utilise
+# l'EOL natif au checkout (LF sur Linux/macOS, CRLF sur Windows si
+# core.autocrlf=true). C'est OK pour la plupart des fichiers.
+* text=auto
+
+# Fichiers golden / fixtures qui sont comparés bit-pour-bit par les
+# tests : forcer LF sur tous les OS pour que le diff binaire reste
+# stable indépendamment de la plateforme du runner CI.
+internal/storyspec/testdata/*.md  text eol=lf
+*.golden                          text eol=lf
+
+# Templates SPDD : utilisés en production via embed FS, EOL stable.
+.yukki/templates/*.md  text eol=lf
+
+# Scripts shell : LF requis pour `bash`.
+*.sh  text eol=lf
+
+# Go sources : LF (gofmt l'attend).
+*.go  text eol=lf
