@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SpddFmForm } from './SpddFmForm';
 import { SpddAcEditor } from './SpddAcEditor';
-import { GenericProseTextarea } from './GenericProseTextarea';
+import { WysiwygProseEditor } from './WysiwygProseEditor';
 import type { ProseSectionKey, SectionKey, SpddSection } from './types';
 import type { EditState, SectionState } from '@/lib/genericSerializer';
 import type { ParsedTemplate } from '@/lib/templateParser';
@@ -222,9 +222,35 @@ function SectionBlock({
       ) : section.key === 'ac' ? (
         <SpddAcEditor readOnly={readOnly} />
       ) : (
-        <ProseTextarea sectionKey={section.key as ProseSectionKey} readOnly={readOnly} />
+        <ProseSectionWysiwyg sectionKey={section.key as ProseSectionKey} readOnly={readOnly} />
       )}
     </section>
+  );
+}
+
+// UI-014i O6 — Wrapper qui adapte le store legacy story à WysiwygProseEditor.
+// Symétrique avec le chemin générique : read-only et édition utilisent le
+// même composant (WysiwygProseEditor → Tiptap WYSIWYG en édition + toggle
+// Source pour retrouver le textarea brut si besoin / pour l'AI popover
+// legacy depuis le mode source).
+function ProseSectionWysiwyg({
+  sectionKey,
+  readOnly,
+}: {
+  sectionKey: ProseSectionKey;
+  readOnly: boolean;
+}): JSX.Element {
+  const value = useSpddEditorStore((s) => s.draft.sections[sectionKey]);
+  const setSection = useSpddEditorStore((s) => s.setSection);
+  const heading = SECTIONS.find((s) => s.key === sectionKey)?.label;
+  return (
+    <WysiwygProseEditor
+      value={value}
+      onChange={(next) => setSection(sectionKey, next)}
+      readOnly={readOnly}
+      sectionHeading={heading}
+      artifactType="story"
+    />
   );
 }
 
@@ -307,7 +333,10 @@ function GenericSectionBlock({
           }}
         />
       ) : (
-        <GenericProseTextarea
+        // UI-014i O5 — drop-in WysiwygProseEditor (lecture stylée +
+        // édition fallback textarea). Mode édition WYSIWYG Tiptap = livraison
+        // ultérieure (O2/O4/O7/O8 reportés).
+        <WysiwygProseEditor
           value={section.content}
           onChange={handleContentChange}
           readOnly={readOnly}
@@ -330,88 +359,8 @@ function artifactTypeFromFmValues(fm: Record<string, string | string[]>): string
   return ''; // canvas, analysis, story partagent les préfixes — laissé vide
 }
 
-// ─── Static sections ──────────────────────────────────────────────────────
-
-const PROSE_PLACEHOLDERS: Record<ProseSectionKey, string> = {  bg: "Pose le décor : pourquoi cette story existe et quel contexte motive sa rédaction.",
-  bv: "Décris la valeur métier : à qui ça sert et quel gain mesurable.",
-  si: "Liste précise de ce qui est dans le périmètre. Une puce = un comportement.",
-  so: "Précise ce qui est explicitement exclu, et pourquoi.",
-  oq: "Note les questions à trancher avec le PO ou l'archi avant l'analyse.",
-  no: "Liens vers tickets, threads, captures. Tout ce qui éclaire le contexte.",
-};
-
-function countWords(s: string): number {
-  return s.trim() === '' ? 0 : s.trim().split(/\s+/).length;
-}
-
-function ProseTextarea({
-  sectionKey,
-  readOnly,
-}: {
-  sectionKey: ProseSectionKey;
-  readOnly?: boolean;
-}): JSX.Element {
-  const value = useSpddEditorStore((s) => s.draft.sections[sectionKey]);
-  const setSection = useSpddEditorStore((s) => s.setSection);
-  const openAiPopover = useSpddEditorStore((s) => s.openAiPopover);
-  const aiPhase = useSpddEditorStore((s) => s.aiPhase);
-  const aiSelection = useSpddEditorStore((s) => s.aiSelection);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Whether THIS textarea's section is being reviewed in the diff panel
-  const isMuted = (aiPhase === 'generating' || aiPhase === 'diff') &&
-    aiSelection?.sectionKey === sectionKey;
-
-  // Auto-resize on value change
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
-
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent<HTMLTextAreaElement>) => {
-      if (readOnly) return;
-      if (aiPhase !== 'idle' && aiPhase !== 'popover') return;
-      const el = textareaRef.current;
-      if (!el) return;
-      const start = el.selectionStart;
-      const end = el.selectionEnd;
-      if (start === end) return; // no selection
-      const selected = value.slice(start, end);
-      if (countWords(selected) < 3) return; // too short
-      openAiPopover(
-        { sectionKey, text: selected, start, end },
-        { x: e.clientX, y: e.clientY },
-      );
-    },
-    [readOnly, aiPhase, openAiPopover, sectionKey, value],
-  );
-
-  return (
-    <textarea
-      ref={textareaRef}
-      rows={4}
-      value={value}
-      placeholder={PROSE_PLACEHOLDERS[sectionKey]}
-      readOnly={readOnly}
-      onChange={readOnly ? undefined : (e) => {
-        setSection(sectionKey, e.target.value);
-        const el = e.target;
-        el.style.height = 'auto';
-        el.style.height = `${el.scrollHeight}px`;
-      }}
-      onMouseUp={readOnly ? undefined : handleMouseUp}
-      className={cn(
-        'w-full resize-none overflow-hidden rounded-yk bg-transparent',
-        'text-[14px] leading-[1.62] text-yk-text-primary',
-        'placeholder:text-yk-text-faint',
-        'focus:outline-none',
-        'transition-all duration-200',
-        isMuted && 'opacity-40 grayscale',
-        readOnly && 'cursor-default select-text',
-      )}
-    />
-  );
-}
+// UI-014i O6 — Note : le composant ProseTextarea legacy a été supprimé.
+// La symétrie story/générique passe maintenant par WysiwygProseEditor
+// pour les deux paths (cf. ProseSectionWysiwyg ci-dessus). Le mode source
+// du WysiwygProseEditor (toggle "Source") fournit le textarea brut + AI
+// popover via GenericProseTextarea quand l'utilisateur en a besoin.
