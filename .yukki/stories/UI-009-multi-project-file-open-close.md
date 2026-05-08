@@ -2,9 +2,9 @@
 id: UI-009
 slug: multi-project-file-open-close
 title: Ouverture / fermeture de plusieurs projets yukki (File menu)
-status: reviewed
+status: synced
 created: 2026-05-06
-updated: 2026-05-06
+updated: 2026-05-08
 owner: Thibaut Sannier
 modules:
   - frontend

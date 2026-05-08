@@ -1,8 +1,8 @@
-﻿---
+---
 id: UI-014h
 slug: universal-template-driven-editor
 story: .yukki/stories/UI-014h-universal-template-driven-editor.md
-status: draft
+status: implemented
 created: 2026-05-08
 updated: 2026-05-08
 ---

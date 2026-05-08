@@ -2,9 +2,9 @@
 id: UI-014g
 slug: template-driven-artifact-editor
 title: Mode édition structuré dans StoryViewer piloté par template
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

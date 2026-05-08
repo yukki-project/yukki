@@ -2,9 +2,9 @@
 id: UI-009
 slug: multi-project-file-open-close
 story: .yukki/stories/UI-009-multi-project-file-open-close.md
-status: draft
+status: synced
 created: 2026-05-06
-updated: 2026-05-06
+updated: 2026-05-08
 ---
 
 # Analyse — Multi-projet (File menu + tabs)

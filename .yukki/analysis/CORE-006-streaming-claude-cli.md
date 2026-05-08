@@ -2,9 +2,9 @@
 id: CORE-006
 slug: streaming-claude-cli
 story: .yukki/stories/CORE-006-streaming-claude-cli.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Streaming live de la réponse Claude dans l'UI

@@ -2,9 +2,9 @@
 id: UI-001a
 slug: app-skeleton-and-subcommand
 title: App skeleton — `yukki ui` sub-cmd lance une fenêtre Wails vide + scaffold React
-status: done
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-08
 owner: Thibaut Sannier
 modules:
   - cmd/yukki

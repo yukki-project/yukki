@@ -2,9 +2,9 @@
 id: UI-014f
 slug: spdd-editor-wire-to-backend
 story: .yukki/stories/UI-014f-spdd-editor-wire-to-backend.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Câblage de l'éditeur SPDD aux backends Go

@@ -2,9 +2,9 @@
 id: UI-014c
 slug: spdd-editor-wysiwyg-markdown-toggle-mock
 title: Bascule WYSIWYG ↔ Markdown sans perte (mock)
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

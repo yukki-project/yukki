@@ -3,9 +3,9 @@ id: UI-001a
 slug: app-skeleton-and-subcommand
 story: .yukki/stories/UI-001a-app-skeleton-and-subcommand.md
 parent-analysis: .yukki/analysis/UI-001-init-desktop-app-wails-react.md
-status: reviewed
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-08
 ---
 
 # Analyse — UI-001a (delta) — App skeleton & sub-cmd `yukki ui`

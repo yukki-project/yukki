@@ -2,9 +2,9 @@
 id: CORE-006
 slug: streaming-claude-cli
 title: Streaming live de la réponse Claude dans l'UI
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: thibaut
 modules:
   - internal/provider

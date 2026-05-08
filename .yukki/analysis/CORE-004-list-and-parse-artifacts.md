@@ -2,9 +2,9 @@
 id: CORE-004
 slug: list-and-parse-artifacts
 story: .yukki/stories/CORE-004-list-and-parse-artifacts.md
-status: reviewed
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-08
 ---
 
 # Analyse — Listing & parsing des artefacts SPDD dans le cœur métier

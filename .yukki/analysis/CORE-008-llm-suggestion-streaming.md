@@ -2,9 +2,9 @@
 id: CORE-008
 slug: llm-suggestion-streaming
 story: .yukki/stories/CORE-008-llm-suggestion-streaming.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Streaming des suggestions IA contextuelles via ClaudeProvider

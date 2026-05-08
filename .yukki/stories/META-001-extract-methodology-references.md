@@ -2,9 +2,9 @@
 id: META-001
 slug: extract-methodology-references
 title: Extraire les références méthodologiques des skills vers .yukki/methodology/
-status: done
+status: synced
 created: 2026-04-30
-updated: 2026-04-30
+updated: 2026-05-08
 owner: Thibaut Sannier
 modules:
   - spdd/methodology

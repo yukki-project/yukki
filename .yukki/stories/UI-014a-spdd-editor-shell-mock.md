@@ -2,9 +2,9 @@
 id: UI-014a
 slug: spdd-editor-shell-mock
 title: Coquille de l'éditeur SPDD avec sommaire et document (mock)
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

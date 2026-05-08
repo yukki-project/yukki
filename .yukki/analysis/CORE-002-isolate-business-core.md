@@ -2,9 +2,9 @@
 id: CORE-002
 slug: isolate-business-core
 story: .yukki/stories/CORE-002-isolate-business-core.md
-status: reviewed
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-08
 ---
 
 # Analyse — Isoler le cœur métier de la CLI pour exposition MCP future

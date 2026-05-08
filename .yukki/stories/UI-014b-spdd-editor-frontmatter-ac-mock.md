@@ -2,9 +2,9 @@
 id: UI-014b
 slug: spdd-editor-frontmatter-ac-mock
 title: Front-matter form et blocs Acceptance Criteria avec validation visuelle (mock)
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

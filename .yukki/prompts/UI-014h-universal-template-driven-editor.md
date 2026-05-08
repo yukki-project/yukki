@@ -1,4 +1,4 @@
-﻿---
+---
 id: UI-014h
 slug: universal-template-driven-editor
 story: .yukki/stories/UI-014h-universal-template-driven-editor.md

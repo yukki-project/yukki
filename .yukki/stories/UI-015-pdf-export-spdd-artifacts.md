@@ -2,7 +2,7 @@
 id: UI-015
 slug: pdf-export-spdd-artifacts
 title: Export PDF des artefacts SPDD
-status: draft
+status: implemented
 created: 2026-05-08
 updated: 2026-05-08
 owner: Thibaut Sannier

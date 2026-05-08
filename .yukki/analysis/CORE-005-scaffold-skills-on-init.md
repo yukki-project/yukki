@@ -2,9 +2,9 @@
 id: CORE-005
 slug: scaffold-skills-on-init
 title: Scaffolding des skills Claude/Copilot lors de l'initialisation d'un projet
-status: reviewed
+status: synced
 created: 2026-05-06
-updated: 2026-05-06
+updated: 2026-05-08
 story: .yukki/stories/CORE-005-scaffold-skills-on-init.md
 ---
 
