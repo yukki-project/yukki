@@ -62,7 +62,9 @@ func AllowedKinds() []string {
 
 // ListArtifacts scans <dir>/.yukki/<kind>/*.md, parses the YAML
 // frontmatter of each regular file, and returns the typed list sorted
-// by Updated desc with ID lexico ascending as fallback.
+// by Created desc with Slug lexico ascending as fallback (cf. UI-013 —
+// HubList affiche les plus récents d'abord par date de création, ordre
+// stable sur Slug en cas d'égalité).
 //
 // A corrupted frontmatter on a single file is surfaced via Meta.Error
 // and does not abort the scan. An invalid `kind` returns (nil, err)

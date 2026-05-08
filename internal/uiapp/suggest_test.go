@@ -95,6 +95,19 @@ func TestApp_SpddSuggestStart_ReturnsSessionID(t *testing.T) {
 	if !strings.HasPrefix(sessionID, "spdd-") {
 		t.Errorf("sessionID should start with 'spdd-', got %q", sessionID)
 	}
+
+	// Drain the goroutine before t.Cleanup restores emitEvent — sinon la
+	// goroutine peut lire la variable de package `emitEvent` après que le
+	// cleanup l'ait réassignée → race detector trip.
+	_ = app.SpddSuggestCancel(sessionID)
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, ok := app.sessions.Load(sessionID); !ok {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Errorf("session %s did not clean up within deadline", sessionID)
 }
 
 func TestApp_SpddSuggestCancel_UnknownSession_ReturnsError(t *testing.T) {

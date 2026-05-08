@@ -27,12 +27,13 @@ func writeArtifact(t *testing.T, root, kind, name, content string) string {
 
 func TestListArtifacts_Nominal(t *testing.T) {
 	root := t.TempDir()
+	// UI-013 : sort par Created desc puis Slug asc.
 	writeArtifact(t, root, "stories", "STORY-001-a.md",
-		"---\nid: STORY-001\nslug: a\ntitle: A\nstatus: draft\nupdated: 2026-04-30\n---\n# A\n")
+		"---\nid: STORY-001\nslug: a\ntitle: A\nstatus: draft\ncreated: 2026-04-30\n---\n# A\n")
 	writeArtifact(t, root, "stories", "STORY-002-b.md",
-		"---\nid: STORY-002\nslug: b\ntitle: B\nstatus: draft\nupdated: 2026-05-02\n---\n# B\n")
+		"---\nid: STORY-002\nslug: b\ntitle: B\nstatus: draft\ncreated: 2026-05-02\n---\n# B\n")
 	writeArtifact(t, root, "stories", "STORY-003-c.md",
-		"---\nid: STORY-003\nslug: c\ntitle: C\nstatus: draft\nupdated: 2026-05-01\n---\n# C\n")
+		"---\nid: STORY-003\nslug: c\ntitle: C\nstatus: draft\ncreated: 2026-05-01\n---\n# C\n")
 
 	out, err := ListArtifacts(root, "stories")
 	if err != nil {
@@ -41,7 +42,7 @@ func TestListArtifacts_Nominal(t *testing.T) {
 	if len(out) != 3 {
 		t.Fatalf("len = %d, want 3", len(out))
 	}
-	// Sorted by Updated desc → 2026-05-02 first, 2026-05-01, 2026-04-30
+	// Sorted by Created desc → 2026-05-02 first, 2026-05-01, 2026-04-30
 	if out[0].ID != "STORY-002" || out[1].ID != "STORY-003" || out[2].ID != "STORY-001" {
 		t.Fatalf("unexpected order: %v", []string{out[0].ID, out[1].ID, out[2].ID})
 	}
@@ -55,15 +56,15 @@ func TestListArtifacts_Nominal(t *testing.T) {
 	}
 }
 
-// ─── Tie on Updated → fallback to ID lexico ascending
+// ─── Tie on Created → fallback to Slug lexico ascending (UI-013)
 
-func TestListArtifacts_TieOnUpdatedSortedByID(t *testing.T) {
+func TestListArtifacts_TieOnCreatedSortedBySlug(t *testing.T) {
 	root := t.TempDir()
-	// Two artefacts with the SAME `updated` value, different IDs.
+	// Two artefacts with the SAME `created` value, different slugs.
 	writeArtifact(t, root, "stories", "STORY-002-b.md",
-		"---\nid: STORY-002\nslug: b\ntitle: B\nupdated: 2026-05-01\n---\n# B\n")
+		"---\nid: STORY-002\nslug: b\ntitle: B\ncreated: 2026-05-01\n---\n# B\n")
 	writeArtifact(t, root, "stories", "STORY-001-a.md",
-		"---\nid: STORY-001\nslug: a\ntitle: A\nupdated: 2026-05-01\n---\n# A\n")
+		"---\nid: STORY-001\nslug: a\ntitle: A\ncreated: 2026-05-01\n---\n# A\n")
 
 	out, err := ListArtifacts(root, "stories")
 	if err != nil {
@@ -72,8 +73,8 @@ func TestListArtifacts_TieOnUpdatedSortedByID(t *testing.T) {
 	if len(out) != 2 {
 		t.Fatalf("len = %d, want 2", len(out))
 	}
-	if out[0].ID != "STORY-001" || out[1].ID != "STORY-002" {
-		t.Fatalf("expected ID asc fallback, got %s, %s", out[0].ID, out[1].ID)
+	if out[0].Slug != "a" || out[1].Slug != "b" {
+		t.Fatalf("expected slug asc fallback, got %s, %s", out[0].Slug, out[1].Slug)
 	}
 }
 
