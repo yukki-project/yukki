@@ -800,6 +800,8 @@ func TestApp_RunStory_ShutdownDuringGeneration(t *testing.T) {
 }
 
 func TestApp_AbortRunning_NothingToAbort(t *testing.T) {
+	withTempRegistry(t) // isole le draft store : OnStartup peut emit "draft:restore-available"
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 	if err := app.AbortRunning(); err != nil {
