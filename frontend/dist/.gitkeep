@@ -1,0 +1,7 @@
+# Placeholder pour //go:embed all:dist
+#
+# Le `dist/` réel est produit par `wails build` / `npm run build` ; ce
+# `.gitkeep` garantit qu'un fichier existe pour que la directive Go embed
+# de `frontend/embed.go` ne fail pas en CI (avant build du frontend).
+#
+# Ne pas supprimer.
