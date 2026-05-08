@@ -1,7 +1,7 @@
 ---
-id: UI-015
+id: UI-014g
 slug: template-driven-artifact-editor
-story: .yukki/stories/UI-015-template-driven-artifact-editor.md
+story: .yukki/stories/UI-014g-template-driven-artifact-editor.md
 status: draft
 created: 2026-05-07
 updated: 2026-05-07
@@ -9,7 +9,7 @@ updated: 2026-05-07
 
 # Analyse — Mode édition structuré dans StoryViewer piloté par template
 
-> Contexte stratégique pour la story `UI-015-template-driven-artifact-editor`.
+> Contexte stratégique pour la story `UI-014g-template-driven-artifact-editor`.
 > Produit par `/yukki-analysis` à partir d'un scan ciblé du codebase.
 
 ## Mots-clés métier extraits

@@ -1,7 +1,7 @@
 ﻿---
-id: UI-016
+id: UI-014h
 slug: universal-template-driven-editor
-story: .yukki/stories/UI-016-universal-template-driven-editor.md
+story: .yukki/stories/UI-014h-universal-template-driven-editor.md
 status: draft
 created: 2026-05-08
 updated: 2026-05-08
@@ -9,7 +9,7 @@ updated: 2026-05-08
 
 # Analyse — SpddEditor pilote son rendu depuis le template de l artefact
 
-> Contexte strategique pour la story `UI-016-universal-template-driven-editor`.
+> Contexte strategique pour la story `UI-014h-universal-template-driven-editor`.
 > Produit par `/yukki-analysis` a partir d un scan cible du codebase.
 > Ne pas dupliquer ni la story ni le canvas REASONS.
 
@@ -28,7 +28,7 @@ updated: 2026-05-08
   Tableau statique de 8 `SpddSection` (fm, bg, bv, si, so, ac, oq, no).
   Utilise comme source de verite par `SpddTOC` (liste des entrees) et
   `SpddDocument` (iteration de rendu). Hard-code pour les stories uniquement --
-  contrainte bloquante pour UI-016.
+  contrainte bloquante pour UI-014h.
 
 - **`StoryDraft` / `useSpddEditorStore`** -- `frontend/src/stores/spdd.ts`
   Store Zustand central. Agregat draft story + mode (wysiwyg|markdown) + etat
@@ -39,7 +39,7 @@ updated: 2026-05-08
 
 - **`ParsedTemplate` + `EditState`** -- `frontend/src/lib/templateParser.ts`
   + `frontend/src/lib/genericSerializer.ts`
-  Couche generique deja livree (UI-015, 24 tests verts). `parseTemplate(raw)`
+  Couche generique deja livree (UI-014g, 24 tests verts). `parseTemplate(raw)`
   produit `ParsedTemplate { fmSpecs, sections }`. `parseArtifactContent(raw,
   template)` produit `EditState { fmValues, sections }`. `serializeArtifact`
   pour le round-trip. Gere les sections orphelines. Sans dependance de store
@@ -49,7 +49,7 @@ updated: 2026-05-08
   `frontend/src/lib/templateParser.ts`
   Detecte le type par prefixe d ID (`INBOX` -> `inbox`, `EPIC` -> `epic`,
   tout le reste -> `story`). Limite critique : les artefacts d analyse et de
-  canvas partagent le meme prefixe que les stories (ex. `UI-016` detecte
+  canvas partagent le meme prefixe que les stories (ex. `UI-014h` detecte
   `story` meme s il est dans `.yukki/analysis/`). La detection doit etre
   completee par la lecture du chemin du fichier.
 
@@ -58,7 +58,7 @@ updated: 2026-05-08
   template : lit `selectedPath`, derive le type, charge le template via
   `ReadArtifact`, construit `EditState`, utilise `TemplatedEditor` en mode
   edit. C est la reference d implementation. Continue d exister pour
-  `WorkflowDrawer` -- ne pas supprimer dans UI-016.
+  `WorkflowDrawer` -- ne pas supprimer dans UI-014h.
 
 - **`WriteArtifact(path, content)` / `ReadArtifact(path)`** --
   Bindings Wails deja utilises par `StoryViewer`. `ReadArtifact` prend un
@@ -140,7 +140,7 @@ temporaire des deux modeles.
 ## Risques et points d attention
 
 - **Detection de type incorrecte par prefixe** (Integration -- Impact fort,
-  Probabilite certaine) -- `detectArtifactType('UI-016')` retourne `story`
+  Probabilite certaine) -- `detectArtifactType('UI-014h')` retourne `story`
   meme si c est une analyse. Mitigation : implementer
   `detectArtifactTypeFromPath` base sur le segment de repertoire et le
   privilegier dans `SpddEditor`.

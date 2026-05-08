@@ -1,8 +1,8 @@
 ---
-id: UI-015
+id: UI-014g
 slug: template-driven-artifact-editor
-story: .yukki/stories/UI-015-template-driven-artifact-editor.md
-analysis: .yukki/analysis/UI-015-template-driven-artifact-editor.md
+story: .yukki/stories/UI-014g-template-driven-artifact-editor.md
+analysis: .yukki/analysis/UI-014g-template-driven-artifact-editor.md
 status: implemented
 created: 2026-05-07
 updated: 2026-05-07

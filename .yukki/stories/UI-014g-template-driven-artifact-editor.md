@@ -1,5 +1,5 @@
 ---
-id: UI-015
+id: UI-014g
 slug: template-driven-artifact-editor
 title: Mode édition structuré dans StoryViewer piloté par template
 status: draft
