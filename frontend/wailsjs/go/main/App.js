@@ -133,3 +133,16 @@ export function SpddSuggestCancel(sessionID) {
 export function SpddSuggestPreview(req) {
   return window['go']['uiapp']['App']['SpddSuggestPreview'](req);
 }
+
+// UI-015 — PDF export
+export function SaveFilePdf(suggestedName) {
+  return window['go']['uiapp']['App']['SaveFilePdf'](suggestedName);
+}
+
+export function WritePdfFile(path, base64Content) {
+  return window['go']['uiapp']['App']['WritePdfFile'](path, base64Content);
+}
+
+export function ResolveCanvasChain(canvasPath) {
+  return window['go']['uiapp']['App']['ResolveCanvasChain'](canvasPath);
+}
