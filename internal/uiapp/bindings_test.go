@@ -475,8 +475,13 @@ func TestApp_SelectProject_DelegatesToOpenProject(t *testing.T) {
 // ─── CORE-007 — Draft binding tests ─────────────────────────────────────────
 
 // newAppWithDraftStore creates an App with a DraftStore backed by a temp directory.
+// withTempRegistry + captureEmits par défaut : sinon les tests qui appellent
+// ensuite OnStartup risquent un emit "draft:restore-available" sur la vraie
+// Wails runtime (cf. macos/windows CI flakiness).
 func newAppWithDraftStore(t *testing.T) (*App, string) {
 	t.Helper()
+	withTempRegistry(t)
+	captureEmits(t)
 	storeDir := t.TempDir()
 	store, err := draft.NewDraftStore(storeDir)
 	if err != nil {
@@ -538,6 +543,8 @@ func TestApp_DraftSave_PathTraversal_ReturnsError(t *testing.T) {
 
 func newAppWithProject(t *testing.T) (*App, string) {
 	t.Helper()
+	withTempRegistry(t)
+	captureEmits(t)
 	storeDir := t.TempDir()
 	store, err := draft.NewDraftStore(storeDir)
 	if err != nil {

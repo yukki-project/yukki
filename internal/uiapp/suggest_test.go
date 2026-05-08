@@ -15,8 +15,15 @@ import (
 // The ClaudeProvider binary is set to a non-existent path — tests that need
 // actual streaming use ChunkMockProvider via SpddSuggestStart's goroutine.
 // For unit-level tests we override the provider field directly after construction.
+//
+// Isolation par défaut : withTempRegistry (draft store en /tmp) +
+// captureEmits (emitEvent → no-op). Sinon OnStartup peut emit
+// "draft:restore-available" sur la vraie Wails runtime → log "cannot
+// call EventsEmit" + race en CI macOS/Windows.
 func newAppForSuggest(t *testing.T) *App {
 	t.Helper()
+	withTempRegistry(t)
+	captureEmits(t)
 	app := NewApp(&provider.MockProvider{}, newTestLogger())
 	app.OnStartup(context.Background())
 	// Load fallback section defs (no project open).
@@ -69,8 +76,12 @@ func TestApp_SpddSuggestStart_NonStreamingProvider_ReturnsError(t *testing.T) {
 // (with a fake binary path) so SpddSuggestStart accepts it as a ClaudeProvider.
 // The goroutine will fail immediately because the binary does not exist —
 // that triggers the error path, which is what we want to observe.
+//
+// Isolation par défaut : withTempRegistry + captureEmits (cf. newAppForSuggest).
 func streamingTestApp(t *testing.T) *App {
 	t.Helper()
+	withTempRegistry(t)
+	captureEmits(t)
 	cp := provider.NewClaude(newTestLogger())
 	cp.Binary = "nonexistent-claude-binary-for-test"
 	app := NewApp(cp, newTestLogger())
