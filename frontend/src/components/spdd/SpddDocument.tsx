@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { SpddFmForm } from './SpddFmForm';
 import { SpddAcEditor } from './SpddAcEditor';
-import { GenericProseTextarea } from './GenericProseTextarea';
+import { WysiwygProseEditor } from './WysiwygProseEditor';
 import type { ProseSectionKey, SectionKey, SpddSection } from './types';
 import type { EditState, SectionState } from '@/lib/genericSerializer';
 import type { ParsedTemplate } from '@/lib/templateParser';
@@ -222,10 +222,37 @@ function SectionBlock({
       ) : section.key === 'ac' ? (
         <SpddAcEditor readOnly={readOnly} />
       ) : (
-        <ProseTextarea sectionKey={section.key as ProseSectionKey} readOnly={readOnly} />
+        <ProseSectionWysiwyg sectionKey={section.key as ProseSectionKey} readOnly={readOnly} />
       )}
     </section>
   );
+}
+
+// UI-014i O6 — Wrapper qui adapte le store legacy story à WysiwygProseEditor.
+// En read-only : rendu stylé via WysiwygProseEditor (react-markdown).
+// En édition : `ProseTextarea` legacy (préserve l'AI popover existant
+// UI-014d/f, distinct du popover générique de UI-014h O10).
+function ProseSectionWysiwyg({
+  sectionKey,
+  readOnly,
+}: {
+  sectionKey: ProseSectionKey;
+  readOnly: boolean;
+}): JSX.Element {
+  const value = useSpddEditorStore((s) => s.draft.sections[sectionKey]);
+  if (readOnly) {
+    const heading = SECTIONS.find((s) => s.key === sectionKey)?.label;
+    return (
+      <WysiwygProseEditor
+        value={value}
+        onChange={() => {}} // pas d'édition en read-only
+        readOnly
+        sectionHeading={heading}
+        artifactType="story"
+      />
+    );
+  }
+  return <ProseTextarea sectionKey={sectionKey} readOnly={false} />;
 }
 
 // ─── Generic section block (UI-014h) ──────────────────────────────────────
@@ -307,7 +334,10 @@ function GenericSectionBlock({
           }}
         />
       ) : (
-        <GenericProseTextarea
+        // UI-014i O5 — drop-in WysiwygProseEditor (lecture stylée +
+        // édition fallback textarea). Mode édition WYSIWYG Tiptap = livraison
+        // ultérieure (O2/O4/O7/O8 reportés).
+        <WysiwygProseEditor
           value={section.content}
           onChange={handleContentChange}
           readOnly={readOnly}

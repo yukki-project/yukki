@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Pencil, Save, X } from 'lucide-react';
@@ -11,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { TemplatedEditor } from './TemplatedEditor';
 import { parseTemplate, detectArtifactType, templateNameForType } from '@/lib/templateParser';
 import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
+import { mdComponents } from '@/lib/markdownComponents';
 import type { ParsedTemplate } from '@/lib/templateParser';
 import type { EditState } from '@/lib/genericSerializer';
 import {
@@ -20,7 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CodeBlock } from './CodeBlock';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface StoryViewerProps {
@@ -100,24 +99,9 @@ function splitIntoSections(body: string): { intro: string; sections: Section[] }
 }
 
 // ---------------------------------------------------------------------------
-// Markdown components
+// Markdown components — UI-014i O1 : mapping partagé extrait dans
+// `lib/markdownComponents.tsx`. Réutilisé par WysiwygProseEditor.
 // ---------------------------------------------------------------------------
-
-const mdComponents = {
-  code({ className, children }: { className?: string; children?: ReactNode }) {
-    const lang = className?.replace(/^language-/, '');
-    if (lang) {
-      return (
-        <CodeBlock language={lang}>{String(children ?? '').replace(/\n$/, '')}</CodeBlock>
-      );
-    }
-    return (
-      <code className={cn('bg-muted px-1 py-0.5 rounded text-sm font-mono', className)}>
-        {children}
-      </code>
-    );
-  },
-};
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',

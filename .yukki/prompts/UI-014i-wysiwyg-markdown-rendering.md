@@ -511,3 +511,52 @@ sections que l'utilisateur a effectivement éditées.
 - **Pas de couplage circulaire `WysiwygProseEditor` ↔ store legacy** —
   le composant lui-même ne dépend d'aucun store ; seul le wrapper
   `ProseSectionWysiwyg` (O6) lit le store legacy.
+
+---
+
+## Changelog
+
+- 2026-05-08 — `O / S — generation 1` — `/yukki-generate` pour le slice
+  **rendu read-only** (axe Paths SPIDR). Livrables :
+  - **O1 ✓** — `frontend/src/lib/markdownComponents.tsx` (création).
+    Mapping `react-markdown` partagé : code (inline + block via shiki),
+    h1-h4, p, ul/ol/li, a (target=_blank pour externes), blockquote, pre.
+    StoryViewer.tsx refactoré pour importer depuis le module shared
+    (suppression de la définition locale + import `CodeBlock` devenu
+    inutile).
+  - **O3 partiel ✓** — `frontend/src/components/spdd/WysiwygProseEditor.tsx`
+    (création). API drop-in identique à GenericProseTextarea. Mode
+    read-only : `ReactMarkdown + remarkGfm + mdComponents` → rendu HTML
+    stylé. Mode édition : délègue à `GenericProseTextarea` (textarea
+    brut existant — préserve l'AI popover UI-014h O10).
+  - **O5 ✓** — `SpddDocument.tsx` `GenericSectionBlock` monte
+    WysiwygProseEditor au lieu de GenericProseTextarea. Sections
+    inbox/epic/analysis/canvas affichent le markdown rendu en lecture.
+  - **O6 ✓** — wrapper `ProseSectionWysiwyg` (inline dans SpddDocument)
+    pour le legacy story : read-only → WysiwygProseEditor stylé ;
+    édition → ProseTextarea legacy (préserve AI popover legacy
+    UI-014d/f). Sections story bg/bv/si/so/oq/no rendent en stylé en
+    lecture.
+  - Type-check vert. 146/146 tests verts (aucune régression).
+
+  **Reportés** (en attente revue humaine sur Open Questions) :
+  - **O2** — `package.json` deps Tiptap : décision Tiptap vs Lexical
+    NON tranchée. Le canvas listait cette Open Question explicitement
+    ("À trancher dans `/yukki-analysis` via spike comparatif court").
+    Sans la décision, je n'ai pas installé de lib externe.
+  - **O4** — `MarkdownToolbar.tsx` : dépend de l'éditeur Tiptap.
+  - **O7** — Toggle Source ↔ WYSIWYG cohérent : nécessite l'éditeur
+    Tiptap pour le côté WYSIWYG.
+  - **O8** — Tests round-trip strict : pertinents seulement avec un
+    serializer markdown bidirectionnel (Tiptap-markdown ou équivalent).
+
+  **Valeur livrée vs canvas** : AC1 (rendu read-only stylé) ✓ ; AC4
+  partiel (toggle Source = défaut, pas de WYSIWYG actif) ; AC5 (markdown
+  malformé) ✓ via la tolérance native de `react-markdown`. AC2 (toolbar)
+  et AC3 (round-trip strict) reportés avec O2/O4/O7/O8.
+
+  Le canvas reste en `status: draft` : la livraison est partielle. Le
+  passage à `implemented` sera fait quand Tiptap sera intégré. Si
+  l'arbitrage tombe sur "ne pas faire le WYSIWYG complet" (par exemple
+  garder uniquement le rendu read-only stylé), le canvas devra être
+  amendé via `/yukki-prompt-update` pour réduire le scope.
