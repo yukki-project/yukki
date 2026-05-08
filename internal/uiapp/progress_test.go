@@ -16,18 +16,19 @@ type capturedEvent struct {
 }
 
 // withEmitStub swaps emitEvent for a capturing fake during the test.
+// Atomic-safe via setEmitEvent (cf. progress.go) — pas de race avec les
+// goroutines en cours d'exécution dans d'autres tests.
 func withEmitStub(t *testing.T) *[]capturedEvent {
 	t.Helper()
-	prev := emitEvent
 	captured := &[]capturedEvent{}
-	emitEvent = func(ctx context.Context, name string, payload ...any) {
+	prev := setEmitEvent(func(ctx context.Context, name string, payload ...any) {
 		var p any
 		if len(payload) == 1 {
 			p = payload[0]
 		}
 		*captured = append(*captured, capturedEvent{name: name, payload: p})
-	}
-	t.Cleanup(func() { emitEvent = prev })
+	})
+	t.Cleanup(func() { setEmitEvent(prev) })
 	return captured
 }
 
