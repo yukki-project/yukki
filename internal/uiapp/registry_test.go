@@ -9,14 +9,19 @@ import (
 )
 
 // withTempRegistry redirects os.UserConfigDir() to a temp directory for
-// the duration of the test.  On Linux/macOS XDG_CONFIG_HOME is set; on
-// Windows APPDATA is set.  Both are set so the helper works on all
-// platforms in CI.
+// the duration of the test.  Doit couvrir les 3 plateformes :
+//   - Linux  : XDG_CONFIG_HOME (sinon $HOME/.config)
+//   - Windows: APPDATA
+//   - macOS  : $HOME/Library/Application Support — il faut donc rediriger
+//     HOME aussi (sinon le draft store réel est utilisé en CI macOS et
+//     OnStartup peut emit "draft:restore-available" via la vraie Wails
+//     runtime → log "cannot call EventsEmit" + race detector trip).
 func withTempRegistry(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 	t.Setenv("APPDATA", dir)
+	t.Setenv("HOME", dir)
 	return dir
 }
 
