@@ -79,3 +79,47 @@ func TestNewRootCmd_HasStorySubcommand(t *testing.T) {
 		t.Fatal("expected 'story' subcommand on root")
 	}
 }
+
+// UI-021 O1 — formatVersion couvre les 4 cas (vars vides, seule
+// version, version+commit, tout rempli).
+func TestFormatVersion_DevWhenEmpty(t *testing.T) {
+	prevV, prevC, prevD := version, commitSHA, buildDate
+	t.Cleanup(func() { version, commitSHA, buildDate = prevV, prevC, prevD })
+
+	version, commitSHA, buildDate = "", "", ""
+	if got := formatVersion(); got != "dev" {
+		t.Fatalf("expected 'dev', got %q", got)
+	}
+}
+
+func TestFormatVersion_OnlyVersion(t *testing.T) {
+	prevV, prevC, prevD := version, commitSHA, buildDate
+	t.Cleanup(func() { version, commitSHA, buildDate = prevV, prevC, prevD })
+
+	version, commitSHA, buildDate = "v0.4.0", "", ""
+	if got := formatVersion(); got != "v0.4.0" {
+		t.Fatalf("expected 'v0.4.0', got %q", got)
+	}
+}
+
+func TestFormatVersion_FullInfo(t *testing.T) {
+	prevV, prevC, prevD := version, commitSHA, buildDate
+	t.Cleanup(func() { version, commitSHA, buildDate = prevV, prevC, prevD })
+
+	version, commitSHA, buildDate = "v0.4.0", "abc1234", "2026-05-09T12:00:00Z"
+	want := "v0.4.0 (commit abc1234, built 2026-05-09T12:00:00Z)"
+	if got := formatVersion(); got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+}
+
+func TestFormatVersion_OnlyCommit(t *testing.T) {
+	prevV, prevC, prevD := version, commitSHA, buildDate
+	t.Cleanup(func() { version, commitSHA, buildDate = prevV, prevC, prevD })
+
+	version, commitSHA, buildDate = "v0.4.0", "abc1234", ""
+	want := "v0.4.0 (commit abc1234)"
+	if got := formatVersion(); got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+}

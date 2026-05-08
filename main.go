@@ -35,6 +35,19 @@ const (
 	exitIO       = 3
 )
 
+// UI-021 O1 — Variables peuplées au build via -ldflags. Restent
+// vides en build local non stampé (`go run`, `wails dev`) ; dans
+// ce cas formatVersion() retourne "dev".
+//
+//	-X main.version=vX.Y.Z
+//	-X main.commitSHA=abc1234
+//	-X main.buildDate=2026-05-09T12:00:00Z
+var (
+	version   = ""
+	commitSHA = ""
+	buildDate = ""
+)
+
 func main() {
 	root := newRootCmd()
 	if err := root.ExecuteContext(context.Background()); err != nil {
@@ -48,10 +61,34 @@ func newRootCmd() *cobra.Command {
 		Short:         "SPDD toolkit: generate, evolve and sync structured prompt artifacts",
 		SilenceUsage:  true,
 		SilenceErrors: false,
+		Version:       formatVersion(),
 	}
+	root.SetVersionTemplate("yukki {{.Version}}\n")
 	root.AddCommand(newStoryCmd())
 	root.AddCommand(newUICmd())
 	return root
+}
+
+// formatVersion compose la chaîne affichée par `yukki --version` et
+// retournée à l'AboutDialog via App.GetBuildInfo. Trois cas :
+//
+//   - vars vides → "dev"
+//   - seule version peuplée → "vX.Y.Z"
+//   - tout peuplé → "vX.Y.Z (commit ABCDEFG, built 2026-05-09T...)"
+func formatVersion() string {
+	if version == "" {
+		return "dev"
+	}
+	if commitSHA == "" && buildDate == "" {
+		return version
+	}
+	if commitSHA != "" && buildDate != "" {
+		return fmt.Sprintf("%s (commit %s, built %s)", version, commitSHA, buildDate)
+	}
+	if commitSHA != "" {
+		return fmt.Sprintf("%s (commit %s)", version, commitSHA)
+	}
+	return fmt.Sprintf("%s (built %s)", version, buildDate)
 }
 
 func newStoryCmd() *cobra.Command {

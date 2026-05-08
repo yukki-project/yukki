@@ -124,6 +124,12 @@ type App struct {
 	// sectionDefs holds the SPDD section definitions used to build suggestion prompts.
 	// Loaded at OnStartup from the active project or the embedded fallback.
 	sectionDefs promptbuilder.SectionDefinitions
+
+	// buildInfo holds the version / commit / build-date triplet
+	// injected at compile time. Set via SetBuildInfo() by ui.go
+	// at startup. Returned to the frontend by GetBuildInfo (cf.
+	// UI-021 O2 — about.go).
+	buildInfo BuildInfo
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.

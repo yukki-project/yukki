@@ -8,3 +8,11 @@
 export function WindowMinimise(): void;
 export function WindowToggleMaximise(): void;
 export function Quit(): void;
+
+// UI-021 — Built-in Wails runtime functions exposed for the
+// AboutDialog. Wails injects them into `window.runtime` at startup ;
+// les ajouts ci-dessous sont alignés sur la signature officielle
+// Wails v2 et seront cohérents avec une régénération future du
+// stub (une fois l'exclusion AV obtenue).
+export function BrowserOpenURL(url: string): void;
+export function ClipboardSetText(text: string): Promise<boolean>;

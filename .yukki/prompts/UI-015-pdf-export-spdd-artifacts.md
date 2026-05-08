@@ -3,9 +3,9 @@ id: UI-015
 slug: pdf-export-spdd-artifacts
 story: .yukki/stories/UI-015-pdf-export-spdd-artifacts.md
 analysis: .yukki/analysis/UI-015-pdf-export-spdd-artifacts.md
-status: implemented
+status: synced
 created: 2026-05-08
-updated: 2026-05-08
+updated: 2026-05-09
 ---
 
 > **Décisions tranchées en revue 2026-05-08** :

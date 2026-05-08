@@ -2,12 +2,12 @@
 id: UI-014e
 slug: spdd-editor-export-checklist-mock
 title: Bouton Exporter, checklist de validation et toast de confirmation (mock)
-status: implemented
+status: synced
 created: 2026-05-07
 updated: 2026-05-08
 owner: Thibaut
 modules:
-  - frontend
+    - frontend
 ---
 
 # Bouton Exporter, checklist de validation et toast de confirmation (mock)
