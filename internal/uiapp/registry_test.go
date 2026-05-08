@@ -16,13 +16,26 @@ import (
 //     HOME aussi (sinon le draft store réel est utilisé en CI macOS et
 //     OnStartup peut emit "draft:restore-available" via la vraie Wails
 //     runtime → log "cannot call EventsEmit" + race detector trip).
+//
+// Returns the EFFECTIVE os.UserConfigDir() after redirection (résout les
+// différences de chemin entre plateformes : sur macOS c'est
+// "<dir>/Library/Application Support", sur Linux/Windows c'est <dir>).
+// Les tests qui créent des fichiers de config doivent utiliser cette
+// valeur de retour comme racine.
 func withTempRegistry(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 	t.Setenv("APPDATA", dir)
 	t.Setenv("HOME", dir)
-	return dir
+	cfgDir, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("withTempRegistry: os.UserConfigDir failed after env redirect: %v", err)
+	}
+	if err := os.MkdirAll(cfgDir, 0o700); err != nil {
+		t.Fatalf("withTempRegistry: mkdir %s: %v", cfgDir, err)
+	}
+	return cfgDir
 }
 
 func TestRegistry_LoadMissing_ReturnsEmpty(t *testing.T) {
