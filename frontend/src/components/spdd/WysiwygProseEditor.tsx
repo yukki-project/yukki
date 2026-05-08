@@ -20,6 +20,15 @@ import { useEditor, EditorContent, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { mdComponents } from '@/lib/markdownComponents';
+import { useSpddSuggest } from '@/hooks/useSpddSuggest';
+import {
+  GenericAiPopoverPanel,
+  MIN_SELECTION_WORDS,
+  countWords,
+  type PopoverPos,
+  type SelectionInfo,
+} from './GenericProseTextarea';
+import type { AiActionType } from './aiActions';
 
 // tiptap-markdown installe une storage `markdown` non typée dans Tiptap.
 // Helper pour la lire sans `as any` au niveau des call sites.
@@ -122,6 +131,8 @@ function EditableSurface({
       value={value}
       onChange={onChange}
       onToggleSource={() => setEditMode('source')}
+      sectionHeading={sectionHeading}
+      artifactType={artifactType}
     />
   );
 }
@@ -130,12 +141,16 @@ interface WysiwygSurfaceProps {
   value: string;
   onChange: (md: string) => void;
   onToggleSource: () => void;
+  sectionHeading?: string;
+  artifactType?: string;
 }
 
 function WysiwygSurface({
   value,
   onChange,
   onToggleSource,
+  sectionHeading,
+  artifactType,
 }: WysiwygSurfaceProps): JSX.Element {
   const editor = useEditor({
     extensions: [
@@ -164,6 +179,79 @@ function WysiwygSurface({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, editor]);
 
+  // ─── AI popover (UI-014h O10 — Safeguard non court-circuité) ────────
+  // En mode WYSIWYG Tiptap, on lit la sélection via les coordonnées
+  // ProseMirror (`editor.state.selection.from/to`) plutôt que via les
+  // offsets caractères de la `value` markdown — l'éditeur travaille sur
+  // l'AST, pas sur la source. Sur Accepter, on remplace la *range
+  // ProseMirror* via deleteRange + insertContent, puis l'effet onUpdate
+  // sérialise le tout en markdown via getMarkdown().
+  const [selection, setSelection] = useState<SelectionInfo | null>(null);
+  const [popoverPos, setPopoverPos] = useState<PopoverPos | null>(null);
+  const [activeAction, setActiveAction] = useState<AiActionType | null>(null);
+  const suggest = useSpddSuggest();
+
+  const aiEnabled = !!sectionHeading;
+
+  const handleEditorMouseUp = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!aiEnabled || !editor) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) {
+        setSelection(null);
+        setPopoverPos(null);
+        return;
+      }
+      const text = editor.state.doc.textBetween(from, to, ' ');
+      if (countWords(text) < MIN_SELECTION_WORDS) {
+        setSelection(null);
+        setPopoverPos(null);
+        return;
+      }
+      setSelection({ start: from, end: to, text });
+      setPopoverPos({ x: e.clientX, y: e.clientY });
+    },
+    [aiEnabled, editor],
+  );
+
+  const closePopover = useCallback(() => {
+    setSelection(null);
+    setPopoverPos(null);
+    setActiveAction(null);
+    suggest.reset();
+  }, [suggest]);
+
+  const fireAction = useCallback(
+    (action: AiActionType) => {
+      if (!selection || !sectionHeading) return;
+      setActiveAction(action);
+      const heading = artifactType
+        ? `${sectionHeading} (${artifactType})`
+        : sectionHeading;
+      void suggest.start({
+        section: heading,
+        action,
+        selectedText: selection.text,
+      });
+    },
+    [selection, sectionHeading, artifactType, suggest],
+  );
+
+  const acceptSuggestion = useCallback(() => {
+    if (!selection || !suggest.streamText || !editor) return;
+    editor
+      .chain()
+      .focus()
+      .deleteRange({ from: selection.start, to: selection.end })
+      .insertContent(suggest.streamText)
+      .run();
+    // L'onUpdate de Tiptap déclenchera la resérialisation, mais on flush
+    // explicitement pour rester aligné sur le pattern handleBlur.
+    const md = getMarkdown(editor);
+    if (md !== value) onChange(md);
+    closePopover();
+  }, [selection, suggest.streamText, editor, value, onChange, closePopover]);
+
   // Emit markdown source on update (debounced via blur, not on every keystroke).
   const handleBlur = useCallback(() => {
     if (!editor) return;
@@ -182,6 +270,7 @@ function WysiwygSurface({
   }
 
   return (
+    <>
     <div className="rounded-yk border border-yk-line bg-yk-bg-1 focus-within:border-yk-primary">
       <div className="flex items-center gap-1 border-b border-yk-line-subtle bg-yk-bg-2 px-2 py-1">
         <MarkdownToolbar editor={editor} />
@@ -201,6 +290,7 @@ function WysiwygSurface({
       <EditorContent
         editor={editor}
         onBlur={handleBlur}
+        onMouseUp={aiEnabled ? handleEditorMouseUp : undefined}
         className={cn(
           'prose prose-sm max-w-none px-3 py-2',
           // Tiptap injecte un .ProseMirror — applique nos styles markdown via
@@ -221,6 +311,20 @@ function WysiwygSurface({
         )}
       />
     </div>
+    {selection && popoverPos && (
+      <GenericAiPopoverPanel
+        pos={popoverPos}
+        heading={sectionHeading ?? ''}
+        activeAction={activeAction}
+        state={suggest.state}
+        streamText={suggest.streamText}
+        error={suggest.error}
+        onAction={fireAction}
+        onAccept={acceptSuggestion}
+        onCancel={closePopover}
+      />
+    )}
+    </>
   );
 }
 

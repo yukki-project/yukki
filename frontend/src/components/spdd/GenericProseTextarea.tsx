@@ -169,7 +169,7 @@ export function GenericProseTextarea({
 
 // ─── Popover ─────────────────────────────────────────────────────────────
 
-interface GenericAiPopoverPanelProps {
+export interface GenericAiPopoverPanelProps {
   pos: PopoverPos;
   heading: string;
   activeAction: AiActionType | null;
@@ -181,7 +181,10 @@ interface GenericAiPopoverPanelProps {
   onCancel: () => void;
 }
 
-function GenericAiPopoverPanel({
+export { MIN_SELECTION_WORDS, countWords };
+export type { PopoverPos, SelectionInfo };
+
+export function GenericAiPopoverPanel({
   pos,
   heading,
   activeAction,
