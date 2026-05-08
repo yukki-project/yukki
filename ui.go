@@ -40,6 +40,15 @@ func newUICmd() *cobra.Command {
 			prov := newProvider(logger)
 			app := uiapp.NewApp(prov, logger)
 
+			// UI-021 O2 — câbler les vars de build (peuplées par
+			// -ldflags dans scripts/dev/ui-build.sh) vers l'App
+			// pour exposition au frontend via GetBuildInfo.
+			app.SetBuildInfo(uiapp.BuildInfo{
+				Version:   version,
+				CommitSHA: commitSHA,
+				BuildDate: buildDate,
+			})
+
 			err := wails.Run(&options.App{
 				Title:     "yukki",
 				Width:     1280,

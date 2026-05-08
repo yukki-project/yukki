@@ -146,3 +146,8 @@ export function WritePdfFile(path, base64Content) {
 export function ResolveCanvasChain(canvasPath) {
   return window['go']['uiapp']['App']['ResolveCanvasChain'](canvasPath);
 }
+
+// UI-021 — About dialog
+export function GetBuildInfo() {
+  return window['go']['uiapp']['App']['GetBuildInfo']();
+}

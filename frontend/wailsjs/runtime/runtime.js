@@ -14,3 +14,12 @@ export function WindowToggleMaximise() {
 export function Quit() {
   return window['runtime']['Quit']();
 }
+
+// UI-021 — see runtime.d.ts.
+export function BrowserOpenURL(url) {
+  return window['runtime']['BrowserOpenURL'](url);
+}
+
+export function ClipboardSetText(text) {
+  return window['runtime']['ClipboardSetText'](text);
+}

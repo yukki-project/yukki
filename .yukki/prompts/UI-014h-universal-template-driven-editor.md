@@ -3,9 +3,9 @@ id: UI-014h
 slug: universal-template-driven-editor
 story: .yukki/stories/UI-014h-universal-template-driven-editor.md
 analysis: .yukki/analysis/UI-014h-universal-template-driven-editor.md
-status: implemented
+status: synced
 created: 2026-05-08
-updated: 2026-05-08
+updated: 2026-05-09
 ---
 
 # Canvas REASONS — SpddEditor pilote son rendu depuis le template de l artefact

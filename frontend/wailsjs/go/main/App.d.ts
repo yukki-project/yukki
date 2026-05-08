@@ -61,6 +61,15 @@ export interface CanvasChain {
   CanvasPath: string;
 }
 
+// UI-021 — About dialog
+export function GetBuildInfo(): Promise<BuildInfo>;
+
+export interface BuildInfo {
+  Version: string;
+  CommitSHA: string;
+  BuildDate: string;
+}
+
 export interface DraftSummary {
   id: string;
   title: string;

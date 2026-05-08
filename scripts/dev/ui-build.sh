@@ -51,12 +51,24 @@ if [ "$#" -gt 0 ] && [ "$1" = "--" ]; then
     extra_args=("$@")
 fi
 
+# UI-021 O3 — Injection ldflags pour version / commit / date.
+# YUKKI_VERSION peut être surchargée par variable d'environnement
+# (utilisée par la CI release pour passer le tag git). En local, on
+# laisse "dev" par défaut. CommitSHA et BuildDate sont calculés à la
+# volée, avec fallback "" si git ou date ne sont pas disponibles
+# (par exemple shallow clone CI).
+yukki_version="${YUKKI_VERSION:-dev}"
+yukki_commit="$(git rev-parse --short HEAD 2>/dev/null || echo '')"
+yukki_date="$(date -u +%FT%TZ 2>/dev/null || echo '')"
+ldflags="-X main.version=${yukki_version} -X main.commitSHA=${yukki_commit} -X main.buildDate=${yukki_date}"
+
+echo ">> ldflags: ${ldflags}"
 echo ">> wails build -tags mock -skipbindings -platform ${platform:-auto} ${extra_args[*]}"
 
 if [ -n "$platform" ]; then
-    wails build -tags mock -skipbindings -platform "$platform" "${extra_args[@]}"
+    wails build -tags mock -skipbindings -ldflags "${ldflags}" -platform "$platform" "${extra_args[@]}"
 else
-    wails build -tags mock -skipbindings "${extra_args[@]}"
+    wails build -tags mock -skipbindings -ldflags "${ldflags}" "${extra_args[@]}"
 fi
 
 echo ""
