@@ -3,7 +3,7 @@ id: UI-014i
 slug: wysiwyg-markdown-rendering
 story: .yukki/stories/UI-014i-wysiwyg-markdown-rendering.md
 analysis: .yukki/analysis/UI-014i-wysiwyg-markdown-rendering.md
-status: draft
+status: implemented
 created: 2026-05-08
 updated: 2026-05-08
 ---
@@ -560,3 +560,36 @@ sections que l'utilisateur a effectivement éditées.
   l'arbitrage tombe sur "ne pas faire le WYSIWYG complet" (par exemple
   garder uniquement le rendu read-only stylé), le canvas devra être
   amendé via `/yukki-prompt-update` pour réduire le scope.
+
+- 2026-05-08 — `O / S — generation 2` — Décision tranchée par
+  l'utilisateur : `Tiptap` (recommandation analyse) confirmée. Slice 2
+  livré couvrant les Operations restantes :
+  - **O2 ✓** — `npm install @tiptap/core @tiptap/react @tiptap/starter-kit
+    tiptap-markdown` (4 packages, ~165 transitives). Versions Tiptap 3.x.
+  - **O3 plein ✓** — `WysiwygProseEditor` étend le mode édition :
+    `EditableSurface` route entre `WysiwygSurface` (Tiptap + StarterKit
+    + tiptap-markdown serializer) et `GenericProseTextarea` (mode source)
+    selon `editMode` (state local). `useEditor` instancie l'éditeur
+    avec `immediatelyRender: false`. Sérialisation markdown sur blur
+    seulement (pas à chaque keystroke) + garde-fou anti-divergence
+    cosmétique : `if (md !== value) onChange(md)`.
+  - **O4 ✓** — `frontend/src/components/spdd/MarkdownToolbar.tsx`
+    (création). 9 boutons : Bold, Italic, H2, H3, BulletList,
+    OrderedList, Code inline, CodeBlock, Link. États actifs via
+    `editor.isActive(...)`. Lien : prompt natif (URL).
+  - **O7 ✓** — Toggle Source ↔ WYSIWYG via composant `SourceToggle`
+    (état local `editMode`). Bascule conserve le contenu (flush en
+    markdown avant la transition).
+  - **O8 ✓** — `WysiwygProseEditor.roundtrip.test.ts` (création) avec
+    8 tests : gras/italique, H2/H3, listes, code inline, blocs de code
+    avec language, liens, malformé sans crash, vide reste vide.
+    Convention adoptée : tiptap-markdown normalise `_italic_` → `*italic*`
+    (les deux valides en CommonMark) — le test source utilise la
+    convention de sortie comme référence.
+
+  Type-check vert. **154/154 tests** (8 nouveaux round-trip).
+
+  **Status canvas → `implemented`.** Tous les AC du DoD couverts :
+  AC1 (rendu read-only) ✓, AC2 (toolbar produit markdown propre) ✓,
+  AC3 (round-trip strict) ✓ via tests dédiés, AC4 (toggle Source ↔
+  WYSIWYG) ✓, AC5 (markdown malformé) ✓.

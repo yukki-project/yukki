@@ -14,7 +14,9 @@ import { cn } from '@/lib/utils';
 export const mdComponents: Components = {
   // ─── Code ────────────────────────────────────────────────────────────
   // - bloc multi-ligne (triple backticks) : délègue à CodeBlock (shiki)
-  // - inline (single backtick) : <code> stylé compact
+  // - inline (single backtick) : badge contrasté pour ressortir clairement
+  //   sur fond sombre (le `bg-muted` par défaut se confondait avec le
+  //   fond yk-bg-page).
   code({ className, children }: { className?: string; children?: ReactNode }) {
     const lang = className?.replace(/^language-/, '');
     if (lang) {
@@ -27,7 +29,9 @@ export const mdComponents: Components = {
     return (
       <code
         className={cn(
-          'rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]',
+          'rounded-yk-sm bg-[color:var(--yk-primary-soft)]',
+          'px-1.5 py-0.5 font-jbmono text-[0.88em]',
+          'text-violet-300/90',
           className,
         )}
       >
@@ -158,6 +162,65 @@ export const mdComponents: Components = {
       <pre {...props} className="my-2 overflow-x-auto rounded bg-muted p-3 text-[12.5px]">
         {children}
       </pre>
+    );
+  },
+
+  // ─── Tables (GFM) ────────────────────────────────────────────────────
+  // Style à contraste fort pour ressortir sur fond sombre :
+  // header distingué, bordures visibles, lignes alternées.
+  table({ children, ...props }) {
+    return (
+      <div className="my-3 overflow-x-auto rounded-yk border border-yk-line">
+        <table
+          {...props}
+          className="w-full border-collapse text-[13px] text-yk-text-primary"
+        >
+          {children}
+        </table>
+      </div>
+    );
+  },
+  thead({ children, ...props }) {
+    return (
+      <thead
+        {...props}
+        className="bg-yk-bg-3 text-yk-text-primary"
+      >
+        {children}
+      </thead>
+    );
+  },
+  tbody({ children, ...props }) {
+    return <tbody {...props}>{children}</tbody>;
+  },
+  tr({ children, ...props }) {
+    return (
+      <tr
+        {...props}
+        className="border-t border-yk-line-subtle even:bg-yk-bg-2/40"
+      >
+        {children}
+      </tr>
+    );
+  },
+  th({ children, ...props }) {
+    return (
+      <th
+        {...props}
+        className="px-3 py-1.5 text-left font-jbmono text-[11.5px] font-semibold uppercase tracking-wider text-yk-text-secondary"
+      >
+        {children}
+      </th>
+    );
+  },
+  td({ children, ...props }) {
+    return (
+      <td
+        {...props}
+        className="px-3 py-1.5 align-top leading-[1.55]"
+      >
+        {children}
+      </td>
     );
   },
 };
