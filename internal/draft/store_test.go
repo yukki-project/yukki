@@ -13,11 +13,11 @@ import (
 
 func TestDraft_JSONRoundtrip(t *testing.T) {
 	original := Draft{
-		ID:     "CORE-007",
-		Slug:   "story-draft",
-		Title:  "Test draft",
-		Status: "draft",
-		Owner:  "Alice",
+		ID:      "CORE-007",
+		Slug:    "story-draft",
+		Title:   "Test draft",
+		Status:  "draft",
+		Owner:   "Alice",
 		Modules: []string{"internal/draft"},
 		Sections: map[string]string{
 			"bg": "background text",

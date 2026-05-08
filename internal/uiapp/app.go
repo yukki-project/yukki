@@ -82,9 +82,9 @@ type ClaudeStatus struct {
 // Public methods (PascalCase) become auto-generated TypeScript bindings
 // under frontend/wailsjs/go/main/App.
 type App struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	logger *slog.Logger
+	ctx      context.Context
+	cancel   context.CancelFunc
+	logger   *slog.Logger
 	provider provider.Provider
 
 	// openedProjects holds the ordered list of currently open projects

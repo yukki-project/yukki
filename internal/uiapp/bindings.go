@@ -1,4 +1,4 @@
-﻿// Package uiapp — bindings.go : new multi-project Wails bindings.
+// Package uiapp — bindings.go : new multi-project Wails bindings.
 //
 // Introduced by UI-009 (multi-project File menu + tabs).
 // All mutations to openedProjects / activeIndex / recentProjects are
@@ -419,4 +419,3 @@ func (a *App) activeProjectDir() string {
 	}
 	return a.openedProjects[a.activeIndex].Path
 }
-

@@ -28,10 +28,10 @@ func TestBuild_ContainsFiveElements(t *testing.T) {
 	}
 	checks := []string{
 		"Tu es un rédacteur SPDD",        // préambule
-		"Background : contexte métier.",   // définition section
-		"Améliorer la lisibilité",         // critère d'action
-		"du texte à améliorer",            // texte sélectionné
-		"sans guillemets ni explication",  // instruction de format
+		"Background : contexte métier.",  // définition section
+		"Améliorer la lisibilité",        // critère d'action
+		"du texte à améliorer",           // texte sélectionné
+		"sans guillemets ni explication", // instruction de format
 	}
 	for _, c := range checks {
 		if !strings.Contains(prompt, c) {
