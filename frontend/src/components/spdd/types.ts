@@ -12,7 +12,6 @@ export type SectionStatus =
 export interface SpddSection {
   readonly key: SectionKey;
   readonly label: string;
-  readonly required: boolean;
 }
 
 export interface MockAcceptanceCriterion {
@@ -71,7 +70,7 @@ export type InspectorContext =
   | { kind: 'prose'; section: ProseSectionKey }
   | { kind: 'ac' };
 
-// ─── UI-015 — Generic template-driven editor ──────────────────────────────
+// ─── UI-014g — Generic template-driven editor ──────────────────────────────
 
 export type SectionWidget = 'textarea' | 'ac-cards';
 export type FrontmatterWidget = 'text' | 'date' | 'select' | 'tags';
@@ -79,12 +78,20 @@ export type FrontmatterWidget = 'text' | 'date' | 'select' | 'tags';
 export interface SectionSpec {
   heading: string;
   widget: SectionWidget;
+  /** UI-014h O11 — section requise (rempli par annotation `<!-- spdd: required -->`). */
+  required: boolean;
+  /** UI-014h O11 — texte d aide affiche dans l Inspector (annotation `help="..."`). */
+  help: string;
 }
 
 export interface FrontmatterSpec {
   key: string;
   widget: FrontmatterWidget;
   options?: string[]; // defined when widget === 'select'
+  /** UI-014h O11 — champ requis (defaults to true pour FM jusqu a annotations FM dediees). */
+  required: boolean;
+  /** UI-014h O11 — texte d aide pour le champ FM (vide jusqu a annotations FM dediees). */
+  help: string;
 }
 
 export interface GenericAc {

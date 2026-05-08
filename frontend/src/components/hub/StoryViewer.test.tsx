@@ -92,7 +92,18 @@ beforeEach(() => {
   vi.clearAllMocks();
   useArtifactsStore.setState({ selectedPath: '', kind: 'stories', items: [], error: null });
   localStorage.clear();
-  mockReadArtifact.mockResolvedValue(STORY_MD);
+  // Path-aware mock : templates rejettent, ce qui force le fallback textarea
+  // brut (les tests d'édition ci-dessous valident ce mode). Pour tester le
+  // mode template-driven, voir les composants dédiés (TemplatedEditor.test).
+  mockReadArtifact.mockImplementation((path: string) => {
+    if (typeof path === 'string' && path.includes('/templates/')) {
+      return Promise.reject(new Error('no template in test'));
+    }
+    if (typeof path === 'string' && path.includes('\\templates\\')) {
+      return Promise.reject(new Error('no template in test'));
+    }
+    return Promise.resolve(STORY_MD);
+  });
   mockWriteArtifact.mockResolvedValue(undefined);
 });
 
@@ -145,7 +156,8 @@ describe('StoryViewer', () => {
     useArtifactsStore.setState({ selectedPath: '/proj/.yukki/stories/x.md' });
     await waitFor(() => screen.getByRole('button', { name: /éditer/i }));
     fireEvent.click(screen.getByRole('button', { name: /éditer/i }));
-    const textarea = screen.getByRole('textbox', { name: /éditeur/i });
+    // Attente du fallback textarea (templateLoading → false après rejet du mock)
+    const textarea = await waitFor(() => screen.getByRole('textbox', { name: /éditeur/i }));
     expect(textarea).toBeInTheDocument();
     // Frontmatter must NOT appear in the textarea
     expect((textarea as HTMLTextAreaElement).value).not.toContain('id: UI-010');
@@ -171,7 +183,7 @@ describe('StoryViewer', () => {
     useArtifactsStore.setState({ selectedPath: '/proj/.yukki/stories/x.md' });
     await waitFor(() => screen.getByRole('button', { name: /éditer/i }));
     fireEvent.click(screen.getByRole('button', { name: /éditer/i }));
-    const textarea = screen.getByRole('textbox', { name: /éditeur/i });
+    const textarea = await waitFor(() => screen.getByRole('textbox', { name: /éditeur/i }));
     fireEvent.change(textarea, { target: { value: 'modified content' } });
     // wait for React to commit the state update from fireEvent.change
     await waitFor(() =>
@@ -187,9 +199,8 @@ describe('StoryViewer', () => {
     useArtifactsStore.setState({ selectedPath: '/proj/.yukki/stories/x.md' });
     await waitFor(() => screen.getByRole('button', { name: /éditer/i }));
     fireEvent.click(screen.getByRole('button', { name: /éditer/i }));
-    fireEvent.change(screen.getByRole('textbox', { name: /éditeur/i }), {
-      target: { value: 'modified' },
-    });
+    const textarea = await waitFor(() => screen.getByRole('textbox', { name: /éditeur/i }));
+    fireEvent.change(textarea, { target: { value: 'modified' } });
     fireEvent.click(screen.getByRole('button', { name: /annuler/i }));
     fireEvent.click(screen.getByRole('button', { name: /^ignorer$/i }));
     expect(mockWriteArtifact).not.toHaveBeenCalled();
@@ -202,9 +213,8 @@ describe('StoryViewer', () => {
     useArtifactsStore.setState({ selectedPath: '/proj/.yukki/stories/x.md' });
     await waitFor(() => screen.getByRole('button', { name: /éditer/i }));
     fireEvent.click(screen.getByRole('button', { name: /éditer/i }));
-    fireEvent.change(screen.getByRole('textbox', { name: /éditeur/i }), {
-      target: { value: 'modified' },
-    });
+    const textarea = await waitFor(() => screen.getByRole('textbox', { name: /éditeur/i }));
+    fireEvent.change(textarea, { target: { value: 'modified' } });
     fireEvent.click(screen.getByRole('button', { name: /enregistrer/i }));
     await waitFor(() => expect(mockWriteArtifact).toHaveBeenCalled());
     // Still in edit mode

@@ -1,4 +1,4 @@
-// UI-015 — Template-driven editor. Renders sections derived from a ParsedTemplate:
+// UI-014g — Template-driven editor. Renders sections derived from a ParsedTemplate:
 // - 'ac-cards' sections → GenericAcEditor
 // - 'textarea' sections → auto-resize textarea
 // - frontmatter fields  → typed inputs (text, date, select, tags)

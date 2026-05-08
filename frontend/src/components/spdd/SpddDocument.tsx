@@ -14,22 +14,27 @@ import {
 } from '@/components/ui/tooltip';
 import { SpddFmForm } from './SpddFmForm';
 import { SpddAcEditor } from './SpddAcEditor';
+import { GenericProseTextarea } from './GenericProseTextarea';
 import type { ProseSectionKey, SectionKey, SpddSection } from './types';
 import type { EditState, SectionState } from '@/lib/genericSerializer';
+import type { ParsedTemplate } from '@/lib/templateParser';
 
 export interface SpddDocumentProps {
   onActiveSectionFromScroll: (key: SectionKey) => void;
-  /** UI-016: quand non-null, pilote le rendu depuis le template. */
+  /** UI-014h: quand non-null, pilote le rendu depuis le template. */
   editState?: EditState | null;
-  /** UI-016: callback de mise à jour d'une section générique. */
+  /** UI-014h O9: nécessaire pour rendre le FM en tête (fmSpecs). */
+  parsedTemplate?: ParsedTemplate | null;
+  /** UI-014h: callback de mise à jour d'une section générique. */
   onEditStateChange?: (updated: EditState) => void;
-  /** UI-016: mode lecture seule — désactive l'édition du contenu. */
+  /** UI-014h: mode lecture seule — désactive l'édition du contenu. */
   readOnly?: boolean;
 }
 
 export function SpddDocument({
   onActiveSectionFromScroll,
   editState,
+  parsedTemplate,
   onEditStateChange,
   readOnly,
 }: SpddDocumentProps): JSX.Element {
@@ -72,7 +77,9 @@ export function SpddDocument({
     const sections = root.querySelectorAll<HTMLElement>('[data-section-key]');
     sections.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [onActiveSectionFromScroll]);
+    // Re-observe when switching between story/template modes (editState changes)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onActiveSectionFromScroll, !!editState]);
 
   return (
     <TooltipProvider delayDuration={250}>
@@ -82,21 +89,63 @@ export function SpddDocument({
       >
         <div className="mx-auto max-w-[720px] px-14 pb-20 pt-7">
           {editState && onEditStateChange ? (
-            /* UI-016: rendu piloté par template */
-            editState.sections.map((section, idx) => (
-              <GenericSectionBlock
-                key={idx}
-                section={section}
-                index={idx}
-                editState={editState}
-                onEditStateChange={onEditStateChange}
-                readOnly={readOnly ?? true}
-              />
-            ))
+            /* UI-014h: rendu piloté par template */
+            <>
+              {/* UI-014h O9: front-matter en tête, piloté par parsedTemplate.fmSpecs */}
+              {parsedTemplate && parsedTemplate.fmSpecs.length > 0 && (
+                <section
+                  id="spdd-section-generic-fm"
+                  data-section-key="spdd-section-generic-fm"
+                  className="scroll-mt-20 pb-10"
+                  aria-labelledby="spdd-section-generic-fm-title"
+                >
+                  <header className="mb-3 flex items-center gap-2 border-b border-yk-line-subtle pb-2">
+                    <h2
+                      id="spdd-section-generic-fm-title"
+                      className="text-[17px] font-semibold leading-tight tracking-[-0.01em] text-yk-text-primary"
+                    >
+                      Front-matter
+                    </h2>
+                    <span className="rounded-yk-sm bg-[color:var(--yk-warning-soft)] px-1.5 py-0.5 font-jbmono text-[9.5px] uppercase tracking-wider text-yk-warning">
+                      obligatoire
+                    </span>
+                  </header>
+                  <SpddFmForm
+                    fmSpecs={parsedTemplate.fmSpecs}
+                    values={editState.fmValues}
+                    readOnly={readOnly}
+                    onValuesChange={(key, next) => {
+                      onEditStateChange({
+                        ...editState,
+                        fmValues: { ...editState.fmValues, [key]: next },
+                      });
+                    }}
+                  />
+                </section>
+              )}
+              {editState.sections.map((section, idx) => (
+                <GenericSectionBlock
+                  key={idx}
+                  section={section}
+                  index={idx}
+                  editState={editState}
+                  onEditStateChange={onEditStateChange}
+                  readOnly={readOnly ?? true}
+                  artifactType={artifactTypeFromFmValues(editState.fmValues)}
+                  parsedTemplate={parsedTemplate}
+                />
+              ))}
+            </>
           ) : (
-            /* Fallback: sections statiques story */
+            /* Fallback: sections statiques story — `required` lu depuis le
+                template story.md si parsedTemplate est disponible (UI-014h). */
             SECTIONS.map((section) => (
-              <SectionBlock key={section.key} section={section} />
+              <SectionBlock
+                key={section.key}
+                section={section}
+                readOnly={readOnly ?? false}
+                parsedTemplate={parsedTemplate ?? null}
+              />
             ))
           )}
         </div>
@@ -105,8 +154,23 @@ export function SpddDocument({
   );
 }
 
-function SectionBlock({ section }: { section: SpddSection }): JSX.Element {
+function SectionBlock({
+  section,
+  readOnly,
+  parsedTemplate,
+}: {
+  section: SpddSection;
+  readOnly: boolean;
+  parsedTemplate: ParsedTemplate | null;
+}): JSX.Element {
   const id = `spdd-section-${section.key}`;
+  // UI-014h — required 100% template-driven : annotation `<!-- spdd: required -->`
+  // dans story.md. Pas de fallback hardcodé. FM est traité comme toujours
+  // requis (contrainte structurelle YAML).
+  const tmplSpec = parsedTemplate?.sections.find(
+    (s) => s.heading.toLowerCase() === section.label.toLowerCase(),
+  );
+  const required = section.key === 'fm' ? true : (tmplSpec?.required ?? false);
 
   return (
     <section
@@ -125,12 +189,12 @@ function SectionBlock({ section }: { section: SpddSection }): JSX.Element {
         <span
           className={cn(
             'rounded-yk-sm px-1.5 py-0.5 font-jbmono text-[9.5px] uppercase tracking-wider',
-            section.required
+            required
               ? 'bg-[color:var(--yk-warning-soft)] text-yk-warning'
               : 'bg-yk-bg-2 text-yk-text-muted',
           )}
         >
-          {section.required ? 'obligatoire' : 'optionnel'}
+          {required ? 'obligatoire' : 'optionnel'}
         </span>
         <span className="flex-1" />
         <Tooltip>
@@ -154,17 +218,17 @@ function SectionBlock({ section }: { section: SpddSection }): JSX.Element {
       </header>
 
       {section.key === 'fm' ? (
-        <SpddFmForm />
+        <SpddFmForm readOnly={readOnly} />
       ) : section.key === 'ac' ? (
-        <SpddAcEditor />
+        <SpddAcEditor readOnly={readOnly} />
       ) : (
-        <ProseTextarea sectionKey={section.key as ProseSectionKey} />
+        <ProseTextarea sectionKey={section.key as ProseSectionKey} readOnly={readOnly} />
       )}
     </section>
   );
 }
 
-// ─── Generic section block (UI-016) ──────────────────────────────────────
+// ─── Generic section block (UI-014h) ──────────────────────────────────────
 
 interface GenericSectionBlockProps {
   section: SectionState;
@@ -172,6 +236,10 @@ interface GenericSectionBlockProps {
   editState: EditState;
   onEditStateChange: (updated: EditState) => void;
   readOnly: boolean;
+  /** UI-014h O10 — type d'artefact passé au popover AI comme contexte. */
+  artifactType?: string;
+  /** UI-014h — template parsed pour lire le badge obligatoire/optionnel. */
+  parsedTemplate?: ParsedTemplate | null;
 }
 
 function GenericSectionBlock({
@@ -180,8 +248,15 @@ function GenericSectionBlock({
   editState,
   onEditStateChange,
   readOnly,
+  artifactType,
+  parsedTemplate,
 }: GenericSectionBlockProps): JSX.Element {
   const id = `spdd-section-generic-${index}`;
+  // UI-014h — required lu depuis le template (mêmes annotations que le legacy)
+  const tmplSpec = parsedTemplate?.sections.find(
+    (s) => s.heading.toLowerCase() === section.heading.toLowerCase(),
+  );
+  const required = tmplSpec?.required ?? false;
 
   const handleContentChange = useCallback(
     (value: string) => {
@@ -207,67 +282,52 @@ function GenericSectionBlock({
         >
           {section.heading}
         </h2>
+        <span
+          className={cn(
+            'rounded-yk-sm px-1.5 py-0.5 font-jbmono text-[9.5px] uppercase tracking-wider',
+            required
+              ? 'bg-[color:var(--yk-warning-soft)] text-yk-warning'
+              : 'bg-yk-bg-2 text-yk-text-muted',
+          )}
+        >
+          {required ? 'obligatoire' : 'optionnel'}
+        </span>
       </header>
 
       {section.widget === 'ac-cards' ? (
-        /* AC editor — désactivé en lecture seule */
-        readOnly ? (
-          <GenericProseTextarea value={section.content} onChange={() => {}} readOnly />
-        ) : (
-          <SpddAcEditor />
-        )
+        /* UI-014h O8: AC editor template-driven via props parallèles. */
+        <SpddAcEditor
+          items={section.acs}
+          readOnly={readOnly}
+          onItemsChange={(next) => {
+            const newSections = editState.sections.map((s, i) =>
+              i === index ? { ...s, acs: next } : s,
+            );
+            onEditStateChange({ ...editState, sections: newSections });
+          }}
+        />
       ) : (
         <GenericProseTextarea
           value={section.content}
           onChange={handleContentChange}
           readOnly={readOnly}
+          sectionHeading={section.heading}
+          artifactType={artifactType}
         />
       )}
     </section>
   );
 }
 
-// ─── Generic prose textarea (UI-016) ─────────────────────────────────────
-
-function GenericProseTextarea({
-  value,
-  onChange,
-  readOnly,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  readOnly?: boolean;
-}): JSX.Element {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
-
-  return (
-    <textarea
-      ref={textareaRef}
-      rows={4}
-      value={value}
-      readOnly={readOnly}
-      onChange={readOnly ? undefined : (e) => {
-        onChange(e.target.value);
-        const el = e.target;
-        el.style.height = 'auto';
-        el.style.height = `${el.scrollHeight}px`;
-      }}
-      className={cn(
-        'w-full resize-none overflow-hidden rounded-yk bg-transparent',
-        'text-[14px] leading-[1.62] text-yk-text-primary',
-        'placeholder:text-yk-text-faint',
-        'focus:outline-none',
-        readOnly && 'cursor-default select-text',
-      )}
-    />
-  );
+// UI-014h O10 — heuristique pour deviner le type d'artefact depuis fmValues.
+// Utilisé pour enrichir le contexte du prompt LLM (heading + type).
+function artifactTypeFromFmValues(fm: Record<string, string | string[]>): string {
+  const id = fm['id'];
+  if (typeof id !== 'string') return '';
+  if (id.startsWith('INBOX-')) return 'inbox';
+  if (id.startsWith('EPIC-')) return 'epic';
+  if (id.startsWith('ROADMAP-')) return 'roadmap';
+  return ''; // canvas, analysis, story partagent les préfixes — laissé vide
 }
 
 // ─── Static sections ──────────────────────────────────────────────────────
@@ -284,7 +344,13 @@ function countWords(s: string): number {
   return s.trim() === '' ? 0 : s.trim().split(/\s+/).length;
 }
 
-function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Element {
+function ProseTextarea({
+  sectionKey,
+  readOnly,
+}: {
+  sectionKey: ProseSectionKey;
+  readOnly?: boolean;
+}): JSX.Element {
   const value = useSpddEditorStore((s) => s.draft.sections[sectionKey]);
   const setSection = useSpddEditorStore((s) => s.setSection);
   const openAiPopover = useSpddEditorStore((s) => s.openAiPopover);
@@ -306,6 +372,7 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent<HTMLTextAreaElement>) => {
+      if (readOnly) return;
       if (aiPhase !== 'idle' && aiPhase !== 'popover') return;
       const el = textareaRef.current;
       if (!el) return;
@@ -319,7 +386,7 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
         { x: e.clientX, y: e.clientY },
       );
     },
-    [aiPhase, openAiPopover, sectionKey, value],
+    [readOnly, aiPhase, openAiPopover, sectionKey, value],
   );
 
   return (
@@ -328,13 +395,14 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
       rows={4}
       value={value}
       placeholder={PROSE_PLACEHOLDERS[sectionKey]}
-      onChange={(e) => {
+      readOnly={readOnly}
+      onChange={readOnly ? undefined : (e) => {
         setSection(sectionKey, e.target.value);
         const el = e.target;
         el.style.height = 'auto';
         el.style.height = `${el.scrollHeight}px`;
       }}
-      onMouseUp={handleMouseUp}
+      onMouseUp={readOnly ? undefined : handleMouseUp}
       className={cn(
         'w-full resize-none overflow-hidden rounded-yk bg-transparent',
         'text-[14px] leading-[1.62] text-yk-text-primary',
@@ -342,6 +410,7 @@ function ProseTextarea({ sectionKey }: { sectionKey: ProseSectionKey }): JSX.Ele
         'focus:outline-none',
         'transition-all duration-200',
         isMuted && 'opacity-40 grayscale',
+        readOnly && 'cursor-default select-text',
       )}
     />
   );

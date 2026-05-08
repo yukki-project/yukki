@@ -1,4 +1,4 @@
-// UI-015 — Parse artifact content into EditState and serialize back.
+// UI-014g — Parse artifact content into EditState and serialize back.
 // Round-trip guarantee: parseArtifactContent(serializeArtifact(state)) ≈ state.
 // No store dependency — pure functions only.
 
@@ -12,6 +12,12 @@ export interface SectionState {
   widget: SectionWidget;
   content: string;      // used when widget === 'textarea'
   acs: GenericAc[];     // used when widget === 'ac-cards'
+  /**
+   * UI-014h O13 — true si le heading était présent dans le fichier source ;
+   * false si la section a été synthétisée à partir du template (placeholder vide).
+   * Utilisé par `computeDivergence` pour détecter les sections requises absentes.
+   */
+  presentInFile: boolean;
 }
 
 export interface EditState {
@@ -25,7 +31,10 @@ export interface EditState {
 
 function parseFmValues(raw: string): Record<string, string | string[]> {
   const result: Record<string, string | string[]> = {};
-  const lines = raw.split('\n');
+  // UI-014h O11 fix: split sur \r?\n pour gérer les fichiers Windows (CRLF) ;
+  // sinon les lignes gardent un \r traîlant et la regex ^...:\s*(.*)$ ne matche
+  // pas (en JS, `.` et `$` ne couvrent pas \r).
+  const lines = raw.split(/\r?\n/);
   let currentList: string | null = null;
 
   for (const line of lines) {
@@ -99,7 +108,8 @@ function extractGwt(block: string, label: 'Given' | 'When' | 'Then'): string {
 
 function splitBodySections(body: string): Array<{ heading: string; content: string }> {
   const result: Array<{ heading: string; content: string }> = [];
-  const lines = body.split('\n');
+  // UI-014h O11 fix: split sur \r?\n pour normaliser les fichiers CRLF.
+  const lines = body.split(/\r?\n/);
   let currentHeading: string | null = null;
   const currentContent: string[] = [];
 
@@ -151,18 +161,37 @@ export function parseArtifactContent(raw: string, template: ParsedTemplate): Edi
     templateHeadings.add(spec.heading.toLowerCase());
     const fileSection = fileSectionIndex.get(spec.heading.toLowerCase());
     const content = fileSection?.content ?? '';
+    const presentInFile = fileSection !== undefined;
 
     if (spec.widget === 'ac-cards') {
-      sections.push({ heading: spec.heading, widget: 'ac-cards', content: '', acs: parseAcs(content) });
+      sections.push({
+        heading: spec.heading,
+        widget: 'ac-cards',
+        content: '',
+        acs: parseAcs(content),
+        presentInFile,
+      });
     } else {
-      sections.push({ heading: spec.heading, widget: 'textarea', content, acs: [] });
+      sections.push({
+        heading: spec.heading,
+        widget: 'textarea',
+        content,
+        acs: [],
+        presentInFile,
+      });
     }
   }
 
   // Append orphan sections (present in file but not in template)
   for (const fileSection of fileSections) {
     if (!templateHeadings.has(fileSection.heading.toLowerCase())) {
-      sections.push({ heading: fileSection.heading, widget: 'textarea', content: fileSection.content, acs: [] });
+      sections.push({
+        heading: fileSection.heading,
+        widget: 'textarea',
+        content: fileSection.content,
+        acs: [],
+        presentInFile: true,
+      });
     }
   }
 

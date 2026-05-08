@@ -15,7 +15,7 @@ const TITLES: Record<ShellMode, string> = {
   roadmap: 'Roadmap', // META-005
   settings: 'Settings',
   workflow: 'Workflow',
-  // UI-016: 'editor' supprimé
+  // UI-014h: 'editor' supprimé
 };
 
 const DEFAULT_WIDTH = 300;

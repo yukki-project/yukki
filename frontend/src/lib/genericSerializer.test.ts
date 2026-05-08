@@ -1,4 +1,4 @@
-// UI-015 — Round-trip tests for templateParser + genericSerializer.
+// UI-014g — Round-trip tests for templateParser + genericSerializer.
 // Validates that parseArtifactContent(serializeArtifact(state)) ≈ state
 // for story and inbox artifact types.
 
@@ -108,7 +108,7 @@ child-stories: []
 // ─── Sample artifact fixtures ─────────────────────────────────────────────
 
 const SAMPLE_STORY_MD = `---
-id: UI-015
+id: UI-014g
 slug: template-driven-artifact-editor
 title: "Mode édition structuré"
 status: draft
@@ -262,7 +262,7 @@ describe('parseArtifactContent — story', () => {
 
   it('extracts frontmatter values', () => {
     const state = parseArtifactContent(SAMPLE_STORY_MD, tmpl);
-    expect(state.fmValues['id']).toBe('UI-015');
+    expect(state.fmValues['id']).toBe('UI-014g');
     expect(state.fmValues['status']).toBe('draft');
     expect(state.fmValues['owner']).toBe('Thibaut');
   });
@@ -318,7 +318,7 @@ describe('Round-trip: story', () => {
     const state = parseArtifactContent(SAMPLE_STORY_MD, tmpl);
     const serialized = serializeArtifact(state, tmpl);
     const state2 = parseArtifactContent(serialized, tmpl);
-    expect(state2.fmValues['id']).toBe('UI-015');
+    expect(state2.fmValues['id']).toBe('UI-014g');
   });
 
   it('preserves AC count after round-trip', () => {
@@ -386,5 +386,31 @@ describe('Fallback: empty template', () => {
     const tmpl = parseTemplate('');
     expect(tmpl.fmSpecs).toHaveLength(0);
     expect(tmpl.sections).toHaveLength(0);
+  });
+});
+
+// ─── UI-014h O11 fix — CRLF handling ──────────────────────────────────────
+
+describe('CRLF line endings (Windows files)', () => {
+  it('parseArtifactContent extrait fmValues malgré CRLF', () => {
+    // Régression UI-014h : avant le fix, parseFmValues split sur '\n' laissait
+    // un \r traînant qui cassait la regex `^kv:\s*(.*)$` (en JS, `.` ne matche
+    // pas \r). Résultat : aucun key:value parsé sauf le dernier (sans \r).
+    const raw = `---\r\nid: INBOX-001\r\nslug: test-crlf\r\ntitle: Test CRLF\r\nstatus: unsorted\r\n---\r\n\r\n## Idée\r\n\r\nContenu.\r\n`;
+    const tmpl = parseTemplate(`---\r\nid: <ID>\r\n---\r\n\r\n## Idée\r\n`);
+    const state = parseArtifactContent(raw, tmpl);
+    expect(state.fmValues['id']).toBe('INBOX-001');
+    expect(state.fmValues['slug']).toBe('test-crlf');
+    expect(state.fmValues['title']).toBe('Test CRLF');
+    expect(state.fmValues['status']).toBe('unsorted');
+  });
+
+  it('parseTemplate détecte les sections malgré CRLF', () => {
+    const tmpl = parseTemplate(
+      `---\r\nid: <ID>\r\n---\r\n\r\n# <titre>\r\n\r\n## Idée\r\n<!-- spdd: required help="aide" -->\r\n\r\n<placeholder>\r\n`,
+    );
+    const idee = tmpl.sections.find((s) => s.heading === 'Idée');
+    expect(idee?.required).toBe(true);
+    expect(idee?.help).toBe('aide');
   });
 });

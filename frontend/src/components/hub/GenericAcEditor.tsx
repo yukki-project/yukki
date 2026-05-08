@@ -1,4 +1,4 @@
-// UI-015 — Generic AC editor: Given/When/Then cards driven by props, no store.
+// UI-014g — Generic AC editor: Given/When/Then cards driven by props, no store.
 // Visually identical to SpddAcEditor but fully decoupled from useSpddEditorStore.
 
 import { useCallback, useRef } from 'react';

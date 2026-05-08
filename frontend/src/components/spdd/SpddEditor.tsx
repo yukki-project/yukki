@@ -9,6 +9,7 @@ import { SpddFooter } from './SpddFooter';
 import { SpddTOC } from './SpddTOC';
 import { SpddDocument } from './SpddDocument';
 import { SpddInspector } from './SpddInspector';
+import { GenericInspector } from './GenericInspector';
 import { SpddMarkdownView } from './SpddMarkdownView';
 import { AiPopover } from './AiPopover';
 import { AiDiffPanel } from './AiDiffPanel';
@@ -20,6 +21,7 @@ import { markdownToDraft } from './parser';
 import { ReadArtifact, WriteArtifact } from '../../../wailsjs/go/main/App';
 import { parseTemplate, detectArtifactTypeFromPath, templatePathFor } from '@/lib/templateParser';
 import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
+import { computeDivergence, divergenceWarnings } from '@/lib/templateDivergence';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { SectionKey } from './types';
@@ -84,10 +86,16 @@ export function SpddEditor(): JSX.Element {
 
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
 
-  // UI-016: state local pour le rendu piloté par template
+  // UI-014h: state local pour le rendu piloté par template
   const [editState, setEditState] = useState<EditState | null>(null);
   const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  // UI-014h O12: section active dans le chemin générique (pour TOC + Inspector)
+  const [activeGenericIndex, setActiveGenericIndex] = useState<number>(0);
+  // UI-014h O13: dismissal local du banner de divergence (par fichier ouvert)
+  const [divergenceDismissed, setDivergenceDismissed] = useState(false);
+  // UI-014h — saved indicator local pour le chemin générique (Ctrl+S → WriteArtifact OK)
+  const [genericSavedAt, setGenericSavedAt] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Charger l'artefact sélectionné depuis le hub
@@ -105,7 +113,10 @@ export function SpddEditor(): JSX.Element {
         resetDraft(loaded);
         useSpddEditorStore.setState({ markdownWarnings: warnings });
 
-        // UI-016: charger le template pour piloter le rendu
+        // UI-014h: charger le template pour piloter le rendu et les annotations.
+        // Story garde le rendu legacy (editState === null) mais on charge tout
+        // de même `parsedTemplate` pour accéder aux `required`/`help` annotés
+        // dans story.md (au lieu de hardcoder dans sections.ts).
         const type = detectArtifactTypeFromPath(selectedPath);
         const tmplPath = templatePathFor(selectedPath, type);
         if (tmplPath) {
@@ -113,12 +124,20 @@ export function SpddEditor(): JSX.Element {
             const tmplRaw = await ReadArtifact(tmplPath);
             if (aborted) return;
             const tmpl = parseTemplate(tmplRaw);
-            const es = parseArtifactContent(raw, tmpl);
             setParsedTemplate(tmpl);
-            setEditState(es);
-            setIsEditMode(false); // retour en lecture seule pour chaque nouveau fichier
+            if (type !== 'story') {
+              const es = parseArtifactContent(raw, tmpl);
+              setEditState(es);
+              // Effacer les warnings story — l'artefact est piloté par son propre template
+              useSpddEditorStore.setState({ markdownWarnings: [] });
+            } else {
+              setEditState(null);
+            }
+            setIsEditMode(false);
+            setDivergenceDismissed(false);
+            setGenericSavedAt(null);
           } catch {
-            // Template absent ou type non couvert → fallback sections statiques
+            // Template absent ou erreur de lecture → fallback complet
             if (!aborted) {
               setParsedTemplate(null);
               setEditState(null);
@@ -138,7 +157,7 @@ export function SpddEditor(): JSX.Element {
     return () => { aborted = true; };
   }, [selectedPath, resetDraft]);
 
-  // UI-016: sauvegarde via WriteArtifact + serializeArtifact (Ctrl+S)
+  // UI-014h: sauvegarde via WriteArtifact + serializeArtifact (Ctrl+S)
   useEffect(() => {
     if (!editState || !parsedTemplate) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -148,7 +167,10 @@ export function SpddEditor(): JSX.Element {
         if (!path) return;
         const content = serializeArtifact(editState, parsedTemplate);
         WriteArtifact(path, content)
-          .then(() => toast({ title: 'Sauvegardé ✓', duration: 3000 }))
+          .then(() => {
+            setGenericSavedAt(new Date().toISOString());
+            toast({ title: 'Sauvegardé ✓', duration: 3000 });
+          })
           .catch((err: unknown) => toast({
             title: "Erreur d'enregistrement",
             description: String(err),
@@ -186,8 +208,21 @@ export function SpddEditor(): JSX.Element {
   }, [suggestResult.state]);
 
   const dismissWarnings = useCallback(() => {
-    useSpddEditorStore.setState({ markdownWarnings: [] });
-  }, []);
+    if (editState && parsedTemplate) {
+      // UI-014h O13: dismiss du banner de divergence (local, par fichier)
+      setDivergenceDismissed(true);
+    } else {
+      useSpddEditorStore.setState({ markdownWarnings: [] });
+    }
+  }, [editState, parsedTemplate]);
+
+  // UI-014h O13: warnings affichés = divergence (chemin générique) ou markdownWarnings (story)
+  const warningsToShow: string[] = (() => {
+    if (editState && parsedTemplate && !divergenceDismissed) {
+      return divergenceWarnings(computeDivergence(editState, parsedTemplate));
+    }
+    return markdownWarnings;
+  })();
 
   // Debounce IntersectionObserver-driven activeSection updates so they don't
   // jitter while a smooth-scroll is still resolving.
@@ -214,6 +249,12 @@ export function SpddEditor(): JSX.Element {
       if (isProgrammaticScrollRef.current) return;
       if (scrollDebounceRef.current) window.clearTimeout(scrollDebounceRef.current);
       scrollDebounceRef.current = window.setTimeout(() => {
+        // UI-014h O12: les keys génériques ont le format `spdd-section-generic-<idx>`
+        const genericMatch = (key as string).match(/^spdd-section-generic-(\d+)$/);
+        if (genericMatch) {
+          setActiveGenericIndex(parseInt(genericMatch[1], 10));
+          return;
+        }
         setActiveSection(key);
       }, 80);
     },
@@ -227,13 +268,13 @@ export function SpddEditor(): JSX.Element {
   }, []);
 
   const isMarkdown = viewMode === 'markdown';
-  // O7: layout piloté par editState + isEditMode
+  // UI-014h — layout piloté par editState. Symétrie story/inbox : Inspector
+  // toujours visible (sauf markdown ou diff panel). Le mode lecture seule
+  // affecte les inputs, pas la visibilité de l'Inspector.
   const hasEditState = editState !== null;
-  // Inspecteur visible : mode story (pas de editState) OU mode édition avec editState
   const showDiffPanel = !isMarkdown && !hasEditState && (aiPhase === 'generating' || aiPhase === 'diff');
-  const showInspector = !isMarkdown && (!hasEditState || isEditMode) && !showDiffPanel;
-  // Grille : 2 colonnes en lecture seule (editState non-null et pas en édition), 3 sinon
-  const gridCols = isMarkdown || (hasEditState && !isEditMode)
+  const showInspector = !isMarkdown && !showDiffPanel;
+  const gridCols = isMarkdown
     ? 'grid-cols-[240px_1fr]'
     : 'grid-cols-[240px_1fr_360px]';
 
@@ -246,23 +287,31 @@ export function SpddEditor(): JSX.Element {
         editState={editState}
         isEditMode={isEditMode}
         onToggleEditMode={() => setIsEditMode((v) => !v)}
+        genericSavedAt={genericSavedAt}
+        parsedTemplate={parsedTemplate}
       />
 
       <div
         className={cn('grid min-h-0 overflow-hidden', gridCols)}
       >
-        {/* Warnings banner spans all columns */}
-        {markdownWarnings.length > 0 && (
-          <WarningsBanner warnings={markdownWarnings} onDismiss={dismissWarnings} />
+        {/* Warnings banner spans all columns — UI-014h O13: divergence template ou markdown */}
+        {warningsToShow.length > 0 && (
+          <WarningsBanner warnings={warningsToShow} onDismiss={dismissWarnings} />
         )}
 
         {/* TOC — always visible */}
         <aside
           aria-label="Sommaire"
           className="overflow-y-auto border-r border-yk-line bg-yk-bg-1"
-          style={{ gridRow: markdownWarnings.length > 0 ? '2' : '1' }}
+          style={{ gridRow: warningsToShow.length > 0 ? '2' : '1' }}
         >
-          <SpddTOC onSectionClick={handleTocClick} editState={editState} />
+          <SpddTOC
+            onSectionClick={handleTocClick}
+            editState={editState}
+            parsedTemplate={parsedTemplate}
+            activeGenericIndex={activeGenericIndex}
+            onGenericSectionClick={setActiveGenericIndex}
+          />
         </aside>
 
         {/* Center: Markdown or WYSIWYG */}
@@ -278,23 +327,34 @@ export function SpddEditor(): JSX.Element {
           <SpddDocument
             onActiveSectionFromScroll={handleScrollSection}
             editState={editState}
+            parsedTemplate={parsedTemplate}
             onEditStateChange={setEditState}
-            readOnly={hasEditState && !isEditMode}
+            readOnly={!isEditMode}
           />
         )}
 
-        {/* Inspector — only in WYSIWYG mode without editState; swapped for DiffPanel when AI is active */}
+        {/* Inspector — story ou générique selon le mode */}
         {showInspector && (
           <aside
             aria-label={showDiffPanel ? 'Panneau de diff IA' : 'Inspector'}
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
           >
-            {showDiffPanel ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} /> : <SpddInspector />}
+            {showDiffPanel
+              ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} />
+              : hasEditState
+                ? (
+                  <GenericInspector
+                    editState={editState!}
+                    parsedTemplate={parsedTemplate}
+                    activeIndex={activeGenericIndex}
+                  />
+                )
+                : <SpddInspector />}
           </aside>
         )}
       </div>
 
-      <SpddFooter />
+      <SpddFooter editState={editState} parsedTemplate={parsedTemplate} />
 
       {/* Global floating AI popover */}
       <AiPopover suggestResult={suggestResult} />

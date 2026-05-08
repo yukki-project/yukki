@@ -8,7 +8,7 @@
 
 import { create } from 'zustand';
 import { DEMO_STORY } from '@/components/spdd/mockStory';
-import { SECTIONS } from '@/components/spdd/sections';
+import { HEADING_TO_KEY, SECTIONS } from '@/components/spdd/sections';
 import { draftToMarkdown } from '@/components/spdd/serializer';
 import { markdownToDraft } from '@/components/spdd/parser';
 import type {
@@ -23,6 +23,7 @@ import type {
   ViewMode,
 } from '@/components/spdd/types';
 import type { AiActionType } from '@/components/spdd/aiActions';
+import type { ParsedTemplate } from '@/lib/templateParser';
 
 export interface SpddEditorState {
   draft: StoryDraft;
@@ -241,41 +242,80 @@ function isProseFilled(value: string | undefined): boolean {
   return Boolean(value && value.trim().length > 0);
 }
 
+/** UI-014h — Détermine si une section (par key) est requise selon le template.
+ *  Le front-matter (`fm`) est toujours requis : YAML frontmatter est une
+ *  contrainte structurelle, indépendante du template. Pour les autres keys,
+ *  on lit l'annotation `<!-- spdd: required -->` correspondante via
+ *  parsedTemplate.sections (matching par heading↔key). */
+export function isKeyRequired(
+  key: SectionKey,
+  parsedTemplate: ParsedTemplate | null,
+): boolean {
+  if (key === 'fm') return true;
+  if (!parsedTemplate) return false;
+  const meta = SECTIONS.find((s) => s.key === key);
+  if (!meta) return false;
+  const spec = parsedTemplate.sections.find(
+    (s) => s.heading.toLowerCase() === meta.label.toLowerCase(),
+  );
+  return spec?.required ?? false;
+}
+
 export function selectSectionStatus(
   state: SpddEditorState,
   key: SectionKey,
+  parsedTemplate: ParsedTemplate | null,
 ): SectionStatus {
   if (state.activeSection === key) return 'active';
-  const meta = SECTIONS.find((s) => s.key === key);
-  if (!meta) return 'optional';
+  if (!SECTIONS.find((s) => s.key === key)) return 'optional';
 
-  if (key === 'fm') return isFmComplete(state.draft) ? 'done' : 'todo';
-  if (key === 'ac') return isAcComplete(state.draft) ? 'done' : 'todo';
+  const required = isKeyRequired(key, parsedTemplate);
+  let filled: boolean;
+  if (key === 'fm') filled = isFmComplete(state.draft);
+  else if (key === 'ac') filled = isAcComplete(state.draft);
+  else filled = isProseFilled(state.draft.sections[key as ProseSectionKey]);
 
-  const proseKey = key as ProseSectionKey;
-  const filled = isProseFilled(state.draft.sections[proseKey]);
-  if (meta.required) return filled ? 'done' : 'todo';
+  if (required) return filled ? 'done' : 'todo';
   return 'optional';
 }
 
-export function selectRequiredCompleted(state: SpddEditorState): number {
-  let n = 0;
-  if (isFmComplete(state.draft)) n++;
-  if (isProseFilled(state.draft.sections.bg)) n++;
-  if (isProseFilled(state.draft.sections.bv)) n++;
-  if (isProseFilled(state.draft.sections.si)) n++;
-  if (isAcComplete(state.draft)) n++;
-  return n;
+function isKeyFilled(state: SpddEditorState, key: SectionKey): boolean {
+  if (key === 'fm') return isFmComplete(state.draft);
+  if (key === 'ac') return isAcComplete(state.draft);
+  return isProseFilled(state.draft.sections[key as ProseSectionKey]);
 }
 
-export function selectMissingRequiredLabels(state: SpddEditorState): string[] {
-  const missing: string[] = [];
-  if (!isFmComplete(state.draft)) missing.push('Front-matter');
-  if (!isProseFilled(state.draft.sections.bg)) missing.push('Background');
-  if (!isProseFilled(state.draft.sections.bv)) missing.push('Business Value');
-  if (!isProseFilled(state.draft.sections.si)) missing.push('Scope In');
-  if (!isAcComplete(state.draft)) missing.push('Acceptance Criteria');
-  return missing;
+/** UI-014h — Iteration template-driven : FM (toujours requis) + chaque
+ *  section du template marquée `required`. */
+function iterRequiredKeys(parsedTemplate: ParsedTemplate | null): SectionKey[] {
+  const keys: SectionKey[] = ['fm'];
+  if (!parsedTemplate) return keys;
+  for (const spec of parsedTemplate.sections) {
+    if (!spec.required) continue;
+    const key = HEADING_TO_KEY[spec.heading.toLowerCase()];
+    if (key && key !== 'fm') keys.push(key);
+  }
+  return keys;
+}
+
+export function selectRequiredTotal(parsedTemplate: ParsedTemplate | null): number {
+  return iterRequiredKeys(parsedTemplate).length;
+}
+
+export function selectRequiredCompleted(
+  state: SpddEditorState,
+  parsedTemplate: ParsedTemplate | null,
+): number {
+  return iterRequiredKeys(parsedTemplate).filter((k) => isKeyFilled(state, k)).length;
+}
+
+export function selectMissingRequiredLabels(
+  state: SpddEditorState,
+  parsedTemplate: ParsedTemplate | null,
+): string[] {
+  return iterRequiredKeys(parsedTemplate)
+    .filter((k) => !isKeyFilled(state, k))
+    .map((k) => SECTIONS.find((s) => s.key === k)?.label ?? k);
 }
 
 export function selectAcCompletion(

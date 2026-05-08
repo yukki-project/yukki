@@ -12,7 +12,7 @@ export type ShellMode =
   | 'roadmap' // META-005
   | 'settings'
   | 'workflow';
-  // UI-016: 'editor' supprimé — ArtifactEditor remplace SpddEditor+StoryViewer
+  // UI-014h: 'editor' supprimé — ArtifactEditor remplace SpddEditor+StoryViewer
 
 // 'workflow' et 'editor' volontairement non inclus : ils ne pilotent pas
 // useArtifactsStore.setKind (Invariant I3 UI-006 + I2 UI-008).
@@ -66,7 +66,7 @@ export const useShellStore = create<ShellState>()(
       name: 'yukki:shell-prefs',
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        // UI-015: 'editor' mode retired from ActivityBar — redirect to stories
+        // UI-014g: 'editor' mode retired from ActivityBar — redirect to stories
         if ((state.activeMode as string) === 'editor') {
           state.activeMode = 'stories';
         }

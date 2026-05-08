@@ -1,5 +1,6 @@
 // UI-014a — Smoke tests for the SPDD editor store selectors.
 // UI-014b — Tests for store mutations.
+// UI-014h — Selectors take parsedTemplate (template-driven required, no hardcode).
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -10,6 +11,22 @@ import {
   useSpddEditorStore,
 } from './spdd';
 import { DEMO_STORY } from '@/components/spdd/mockStory';
+import type { ParsedTemplate } from '@/lib/templateParser';
+
+// Template story synthétique reproduisant les annotations actuelles de
+// `.yukki/templates/story.md` : bg/bv/si/ac requis, so/oq/no optionnels.
+const STORY_TMPL: ParsedTemplate = {
+  fmSpecs: [],
+  sections: [
+    { heading: 'Background',          widget: 'textarea', required: true,  help: '' },
+    { heading: 'Business Value',      widget: 'textarea', required: true,  help: '' },
+    { heading: 'Scope In',            widget: 'textarea', required: true,  help: '' },
+    { heading: 'Scope Out',           widget: 'textarea', required: false, help: '' },
+    { heading: 'Acceptance Criteria', widget: 'ac-cards', required: true,  help: '' },
+    { heading: 'Open Questions',      widget: 'textarea', required: false, help: '' },
+    { heading: 'Notes',               widget: 'textarea', required: false, help: '' },
+  ],
+};
 
 describe('useSpddEditorStore', () => {
   beforeEach(() => {
@@ -21,18 +38,18 @@ describe('useSpddEditorStore', () => {
   });
 
   it('reports 4/5 required sections completed for the demo fixture', () => {
-    expect(selectRequiredCompleted(useSpddEditorStore.getState())).toBe(4);
+    expect(selectRequiredCompleted(useSpddEditorStore.getState(), STORY_TMPL)).toBe(4);
   });
 
   it('flags Acceptance Criteria as the missing required section', () => {
-    expect(selectMissingRequiredLabels(useSpddEditorStore.getState())).toEqual([
-      'Acceptance Criteria',
-    ]);
+    expect(
+      selectMissingRequiredLabels(useSpddEditorStore.getState(), STORY_TMPL),
+    ).toEqual(['Acceptance Criteria']);
   });
 
   it('marks the active section as such, even if otherwise complete', () => {
     useSpddEditorStore.getState().setActiveSection('ac');
-    expect(selectSectionStatus(useSpddEditorStore.getState(), 'ac')).toBe(
+    expect(selectSectionStatus(useSpddEditorStore.getState(), 'ac', STORY_TMPL)).toBe(
       'active',
     );
   });
@@ -40,18 +57,18 @@ describe('useSpddEditorStore', () => {
   it('reports done on FM, Bg, Bv, SI when not active', () => {
     useSpddEditorStore.getState().setActiveSection('ac');
     const state = useSpddEditorStore.getState();
-    expect(selectSectionStatus(state, 'fm')).toBe('done');
-    expect(selectSectionStatus(state, 'bg')).toBe('done');
-    expect(selectSectionStatus(state, 'bv')).toBe('done');
-    expect(selectSectionStatus(state, 'si')).toBe('done');
+    expect(selectSectionStatus(state, 'fm', STORY_TMPL)).toBe('done');
+    expect(selectSectionStatus(state, 'bg', STORY_TMPL)).toBe('done');
+    expect(selectSectionStatus(state, 'bv', STORY_TMPL)).toBe('done');
+    expect(selectSectionStatus(state, 'si', STORY_TMPL)).toBe('done');
   });
 
   it('reports optional on Scope Out / Open Questions / Notes (empty in fixture)', () => {
     useSpddEditorStore.getState().setActiveSection('ac');
     const state = useSpddEditorStore.getState();
-    expect(selectSectionStatus(state, 'so')).toBe('optional');
-    expect(selectSectionStatus(state, 'oq')).toBe('optional');
-    expect(selectSectionStatus(state, 'no')).toBe('optional');
+    expect(selectSectionStatus(state, 'so', STORY_TMPL)).toBe('optional');
+    expect(selectSectionStatus(state, 'oq', STORY_TMPL)).toBe('optional');
+    expect(selectSectionStatus(state, 'no', STORY_TMPL)).toBe('optional');
   });
 
   it('marks AC1 complete and AC2/AC3 partial in the fixture', () => {

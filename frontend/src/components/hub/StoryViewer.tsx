@@ -146,7 +146,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
   const [dirtyContent, setDirtyContent] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
 
-  // UI-015 — Templated editor state
+  // UI-014g — Templated editor state
   const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
   const [templateLoading, setTemplateLoading] = useState(false);
@@ -218,7 +218,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
       const tmpl = parsedTemplateRef.current;
       const es = editStateRef.current;
       if (tmpl !== null && es !== null) {
-        // UI-015: structured editor path
+        // UI-014g: structured editor path
         fullContent = serializeArtifact(es, tmpl);
       } else {
         // Fallback: raw textarea path
@@ -252,7 +252,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
     setEditState(null);
     setMode('edit');
 
-    // UI-015: try to load the template for this artifact type
+    // UI-014g: try to load the template for this artifact type
     const currentContent = contentRef.current;
     const currentMeta = splitFrontmatter(currentContent).meta;
     const artifactId = currentMeta.scalars.id ?? '';
@@ -262,7 +262,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
     if (templateName) {
       setTemplateLoading(true);
       // Derive absolute template path from the artifact's absolute path.
-      // artifactPath e.g. "C:\workspace\yukki\.yukki\stories\UI-015.md"
+      // artifactPath e.g. "C:\workspace\yukki\.yukki\stories\UI-014g.md"
       // → template  e.g. "C:\workspace\yukki\.yukki\templates\story.md"
       const artifactPath = pathRef.current ?? '';
       const normalized = artifactPath.replace(/\\/g, '/');
@@ -281,7 +281,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
         })
         .catch((err) => {
           // Template not found — fallback to raw textarea (state stays null)
-          console.warn('[UI-015] template load failed:', templatePath, err);
+          console.warn('[UI-014g] template load failed:', templatePath, err);
         })
         .finally(() => setTemplateLoading(false));
     }

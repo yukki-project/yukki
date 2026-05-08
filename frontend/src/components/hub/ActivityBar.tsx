@@ -34,7 +34,7 @@ const PRIMARY_ITEMS: ActivityItem[] = [
   { mode: 'tests', label: 'Tests', Icon: CheckSquare },
   { mode: 'roadmap', label: 'Roadmap', Icon: Map },         // META-005
   { mode: 'workflow', label: 'Workflow', Icon: Workflow },
-  // UI-015: 'editor' supprimé — l'édition se fait inline dans StoryViewer
+  // UI-014g: 'editor' supprimé — l'édition se fait inline dans StoryViewer
 ];
 
 const SETTINGS_ITEM: ActivityItem = {

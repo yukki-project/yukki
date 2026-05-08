@@ -1,4 +1,4 @@
-// UI-015 — Parse a .yukki/templates/<type>.md file into a structured spec
+// UI-014g — Parse a .yukki/templates/<type>.md file into a structured spec
 // that drives TemplatedEditor. No store dependency — pure functions only.
 
 import type { FrontmatterSpec, FrontmatterWidget, SectionSpec, SectionWidget } from '@/components/spdd/types';
@@ -32,7 +32,8 @@ function deriveFmWidget(key: string, value: string): { widget: FrontmatterWidget
 
 function parseFmSpecs(frontmatterBlock: string): FrontmatterSpec[] {
   const specs: FrontmatterSpec[] = [];
-  const lines = frontmatterBlock.split('\n');
+  // UI-014h O11 fix: split sur \r?\n pour gérer CRLF (sinon trailing \r casse la regex kv).
+  const lines = frontmatterBlock.split(/\r?\n/);
   let inList = false;
   let listKey = '';
 
@@ -51,11 +52,16 @@ function parseFmSpecs(frontmatterBlock: string): FrontmatterSpec[] {
       // Next lines will be list items
       inList = true;
       listKey = key;
-      specs.push({ key: listKey, widget: 'tags' });
+      // UI-014h O11: defaults required=true, help='' for FM (annotations FM dediees suivront)
+      specs.push({ key: listKey, widget: 'tags', required: true, help: '' });
       continue;
     }
     const { widget, options } = deriveFmWidget(key, value);
-    specs.push(options ? { key, widget, options } : { key, widget });
+    specs.push(
+      options
+        ? { key, widget, options, required: true, help: '' }
+        : { key, widget, required: true, help: '' },
+    );
   }
   return specs;
 }
@@ -67,6 +73,37 @@ function deriveSectionWidget(sectionBody: string): SectionWidget {
   const hasWhen = /\*\*When\*\*/i.test(sectionBody);
   const hasThen = /\*\*Then\*\*/i.test(sectionBody);
   return hasGiven && hasWhen && hasThen ? 'ac-cards' : 'textarea';
+}
+
+// ─── Section annotation parsing (UI-014h O11) ─────────────────────────────
+//
+// Annotation HTML inseree juste apres un `## Heading` :
+//   <!-- spdd: required help="texte d aide" -->
+// `required` est un flag booleen (presence = true). `help="..."` est optionnel.
+// Defaut si pas d annotation : required=false, help=''.
+
+interface SectionAnnotation {
+  required: boolean;
+  help: string;
+}
+
+function parseSectionAnnotation(sectionBody: string): SectionAnnotation {
+  const lines = sectionBody.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    const m = trimmed.match(/^<!--\s*spdd:\s*(.+?)\s*-->$/);
+    if (m) {
+      const inner = m[1];
+      const required = /\brequired\b/.test(inner);
+      const helpMatch = inner.match(/help="([^"]*)"/);
+      const help = helpMatch ? helpMatch[1] : '';
+      return { required, help };
+    }
+    // Premier contenu non-vide non-annotation : on stoppe le scan
+    break;
+  }
+  return { required: false, help: '' };
 }
 
 // ─── Main parser ──────────────────────────────────────────────────────────
@@ -89,19 +126,26 @@ export function parseTemplate(templateRaw: string): ParsedTemplate {
 
   // Split body into ## sections
   const sections: SectionSpec[] = [];
-  const lines = body.split('\n');
+  // UI-014h O11 fix: split sur \r?\n pour gérer CRLF.
+  const lines = body.split(/\r?\n/);
   let currentHeading: string | null = null;
   const currentContent: string[] = [];
 
   const flushSection = () => {
     if (currentHeading !== null) {
       const sectionBody = currentContent.join('\n');
+      const annotation = parseSectionAnnotation(sectionBody);
       sections.push({
         heading: currentHeading,
         widget: deriveSectionWidget(sectionBody),
+        required: annotation.required,
+        help: annotation.help,
       });
-      currentContent.length = 0;
     }
+    // UI-014h O11 fix: toujours vider — sinon le contenu du preambule
+    // (lignes avant le premier `##`, ex. `# <titre>`) reste accumule et pollue
+    // la premiere section, masquant l annotation `<!-- spdd: ... -->`.
+    currentContent.length = 0;
   };
 
   for (const line of lines) {
@@ -147,9 +191,9 @@ export function templateNameForType(type: ArtifactType): string | null {
  * Prefer over detectArtifactType(id) when the path is available.
  *
  * Examples:
- *   "C:/w/.yukki/stories/UI-016.md"  → 'story'
- *   "C:/w/.yukki/analysis/UI-016.md" → 'analysis'
- *   "C:/w/.yukki/prompts/UI-016.md"  → 'canvas'
+ *   "C:/w/.yukki/stories/UI-014h.md"  → 'story'
+ *   "C:/w/.yukki/analysis/UI-014h.md" → 'analysis'
+ *   "C:/w/.yukki/prompts/UI-014h.md"  → 'canvas'
  *   "C:/w/.yukki/inbox/INBOX-001.md" → 'inbox'
  *   "C:/w/.yukki/epics/EPIC-001.md"  → 'epic'
  */
@@ -173,7 +217,7 @@ export function detectArtifactTypeFromPath(absolutePath: string): ArtifactType {
  * Returns null if the type has no template or the path does not contain "/.yukki/".
  *
  * Example:
- *   templatePathFor("C:/w/.yukki/stories/UI-016.md", "story")
+ *   templatePathFor("C:/w/.yukki/stories/UI-014h.md", "story")
  *   → "C:/w/.yukki/templates/story.md"
  */
 export function templatePathFor(absolutePath: string, type: ArtifactType): string | null {

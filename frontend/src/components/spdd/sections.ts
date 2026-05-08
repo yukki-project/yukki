@@ -1,22 +1,32 @@
 // UI-014a — Static SPDD section definitions.
 //
 // Order is the SPDD template canonical order (see .yukki/templates/story.md).
-// `required` reflects which sections gate the export checklist (UI-014e).
+//
+// UI-014h — `required` n'est plus stocké ici : il est dérivé de l'annotation
+// `<!-- spdd: required -->` du template story.md (cf. parseTemplate). Le
+// mapping key↔label reste structurel — il vient du fait que `StoryDraft` a
+// des champs typés (bg, bv, ...) tandis que les annotations parlent en
+// heading humain ("Background", ...).
 
 import type { SpddSection } from './types';
 
 export const SECTIONS: readonly SpddSection[] = [
-  { key: 'fm', label: 'Front-matter',        required: true  },
-  { key: 'bg', label: 'Background',          required: true  },
-  { key: 'bv', label: 'Business Value',      required: true  },
-  { key: 'si', label: 'Scope In',            required: true  },
-  { key: 'so', label: 'Scope Out',           required: false },
-  { key: 'ac', label: 'Acceptance Criteria', required: true  },
-  { key: 'oq', label: 'Open Questions',      required: false },
-  { key: 'no', label: 'Notes',               required: false },
+  { key: 'fm', label: 'Front-matter'        },
+  { key: 'bg', label: 'Background'          },
+  { key: 'bv', label: 'Business Value'      },
+  { key: 'si', label: 'Scope In'            },
+  { key: 'so', label: 'Scope Out'           },
+  { key: 'ac', label: 'Acceptance Criteria' },
+  { key: 'oq', label: 'Open Questions'      },
+  { key: 'no', label: 'Notes'               },
 ];
 
-export const REQUIRED_COUNT = SECTIONS.filter((s) => s.required).length;
+/** Mapping inverse heading template → SectionKey. Utilisé par les selectors
+ *  pour trouver la valeur correspondante dans `StoryDraft` quand on itère
+ *  les sections requises annoncées par le template. */
+export const HEADING_TO_KEY: Record<string, SpddSection['key']> = Object.fromEntries(
+  SECTIONS.map((s) => [s.label.toLowerCase(), s.key]),
+);
 
 // SPDD section hints used by the `?` tooltip (UI-014a) and the "Définition
 // SPDD" card in the inspector. Copy taken from .yukki/templates/story.md
