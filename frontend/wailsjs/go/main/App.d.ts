@@ -50,6 +50,17 @@ export function SpddSuggestStart(req: SuggestionRequest): Promise<string>;
 export function SpddSuggestCancel(sessionID: string): Promise<void>;
 export function SpddSuggestPreview(req: SuggestionRequest): Promise<string>;
 
+// UI-015 — PDF export
+export function SaveFilePdf(suggestedName: string): Promise<string>;
+export function WritePdfFile(path: string, base64Content: string): Promise<void>;
+export function ResolveCanvasChain(canvasPath: string): Promise<CanvasChain>;
+
+export interface CanvasChain {
+  StoryPath: string;
+  AnalysisPath: string;
+  CanvasPath: string;
+}
+
 export interface DraftSummary {
   id: string;
   title: string;
