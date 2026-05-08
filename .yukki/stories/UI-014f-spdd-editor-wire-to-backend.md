@@ -2,9 +2,9 @@
 id: UI-014f
 slug: spdd-editor-wire-to-backend
 title: Câblage de l'éditeur SPDD aux backends Go (remplace les mocks)
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

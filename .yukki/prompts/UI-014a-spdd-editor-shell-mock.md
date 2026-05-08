@@ -3,9 +3,9 @@ id: UI-014a
 slug: spdd-editor-shell-mock
 story: .yukki/stories/UI-014a-spdd-editor-shell-mock.md
 analysis: .yukki/analysis/UI-014a-spdd-editor-shell-mock.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Canvas REASONS — Coquille de l'éditeur SPDD avec sommaire et document (mock)

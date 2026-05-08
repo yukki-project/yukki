@@ -2,7 +2,7 @@
 id: UI-014i
 slug: wysiwyg-markdown-rendering
 title: Rendu markdown WYSIWYG des sections prose (read-only + édition)
-status: draft
+status: synced
 created: 2026-05-08
 updated: 2026-05-08
 owner: Thibaut

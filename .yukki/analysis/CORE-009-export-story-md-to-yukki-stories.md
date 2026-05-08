@@ -2,9 +2,9 @@
 id: CORE-009
 slug: export-story-md-to-yukki-stories
 story: .yukki/stories/CORE-009-export-story-md-to-yukki-stories.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Export du fichier .md final dans .yukki/stories/

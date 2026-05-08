@@ -2,9 +2,9 @@
 id: UI-014d
 slug: spdd-editor-ai-assist-mock
 title: Assistance IA contextuelle sur sélection — popover et panneau diff (mock LLM)
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

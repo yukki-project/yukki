@@ -2,7 +2,7 @@
 id: UI-015
 slug: pdf-export-spdd-artifacts
 story: .yukki/stories/UI-015-pdf-export-spdd-artifacts.md
-status: reviewed
+status: implemented
 created: 2026-05-08
 updated: 2026-05-08
 ---

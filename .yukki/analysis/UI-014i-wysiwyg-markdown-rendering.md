@@ -2,7 +2,7 @@
 id: UI-014i
 slug: wysiwyg-markdown-rendering
 story: .yukki/stories/UI-014i-wysiwyg-markdown-rendering.md
-status: draft
+status: synced
 created: 2026-05-08
 updated: 2026-05-08
 ---

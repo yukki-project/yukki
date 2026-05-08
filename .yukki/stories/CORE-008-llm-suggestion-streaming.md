@@ -2,9 +2,9 @@
 id: CORE-008
 slug: llm-suggestion-streaming
 title: Streaming des suggestions IA contextuelles via ClaudeProvider
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - internal/provider

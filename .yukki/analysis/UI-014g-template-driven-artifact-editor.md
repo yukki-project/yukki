@@ -2,9 +2,9 @@
 id: UI-014g
 slug: template-driven-artifact-editor
 story: .yukki/stories/UI-014g-template-driven-artifact-editor.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Mode édition structuré dans StoryViewer piloté par template

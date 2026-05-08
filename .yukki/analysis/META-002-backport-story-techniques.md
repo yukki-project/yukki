@@ -2,9 +2,9 @@
 id: META-002
 slug: backport-story-techniques
 story: .yukki/stories/META-002-backport-story-techniques.md
-status: reviewed
+status: synced
 created: 2026-04-30
-updated: 2026-04-30
+updated: 2026-05-08
 ---
 
 # Analyse — Extraire SPIDR / INVEST / formulation des AC depuis /yukki-story vers .yukki/methodology/

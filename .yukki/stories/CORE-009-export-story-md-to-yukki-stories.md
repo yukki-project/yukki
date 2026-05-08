@@ -2,9 +2,9 @@
 id: CORE-009
 slug: export-story-md-to-yukki-stories
 title: Export du fichier .md final dans .yukki/stories/ avec contrôle de conformité
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - internal/uiapp

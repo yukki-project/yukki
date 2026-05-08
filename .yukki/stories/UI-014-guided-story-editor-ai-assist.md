@@ -2,9 +2,9 @@
 id: UI-014
 slug: guided-story-editor-ai-assist
 title: Éditeur guidé de stories SPDD avec assistance générative
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - frontend

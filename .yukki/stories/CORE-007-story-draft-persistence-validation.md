@@ -2,9 +2,9 @@
 id: CORE-007
 slug: story-draft-persistence-validation
 title: Persistance des brouillons SPDD et validation front-matter côté Go
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 owner: Thibaut
 modules:
   - internal/uiapp

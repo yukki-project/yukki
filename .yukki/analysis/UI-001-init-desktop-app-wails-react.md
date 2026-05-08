@@ -1,9 +1,9 @@
 ---
 id: UI-001
 slug: init-desktop-app-wails-react
-status: reviewed
+status: synced
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-08
 covers-stories:
   - .yukki/stories/UI-001a-app-skeleton-and-subcommand.md
   - .yukki/stories/UI-001b-hub-viewer-claude-banner.md

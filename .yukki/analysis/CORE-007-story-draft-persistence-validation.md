@@ -2,9 +2,9 @@
 id: CORE-007
 slug: story-draft-persistence-validation
 story: .yukki/stories/CORE-007-story-draft-persistence-validation.md
-status: draft
+status: implemented
 created: 2026-05-07
-updated: 2026-05-07
+updated: 2026-05-08
 ---
 
 # Analyse — Persistance des brouillons SPDD et validation front-matter côté Go

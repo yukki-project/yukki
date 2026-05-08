@@ -2,9 +2,9 @@
 id: META-002
 slug: backport-story-techniques
 title: Extraire SPIDR / INVEST / formulation des AC depuis /yukki-story vers .yukki/methodology/
-status: done
+status: synced
 created: 2026-04-30
-updated: 2026-04-30
+updated: 2026-05-08
 owner: Thibaut Sannier
 modules:
   - spdd/methodology

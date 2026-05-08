@@ -1,11 +1,18 @@
 ---
+id: UI-014h
+slug: universal-template-driven-editor
+title: SpddEditor pilote son rendu depuis le template de l'artefact
+status: implemented
+created: 2026-05-08
+updated: 2026-05-08
+owner: Thibaut Sannier
 modules:
   - frontend
 ---
 
-## Background
-
 # SpddEditor pilote son rendu depuis le template de l'artefact
+
+## Background
 
 
 `SpddEditor` (UI-014) est maintenant branché sur `selectedPath` : quand
