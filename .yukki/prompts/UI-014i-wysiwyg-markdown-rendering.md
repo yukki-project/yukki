@@ -3,7 +3,7 @@ id: UI-014i
 slug: wysiwyg-markdown-rendering
 story: .yukki/stories/UI-014i-wysiwyg-markdown-rendering.md
 analysis: .yukki/analysis/UI-014i-wysiwyg-markdown-rendering.md
-status: implemented
+status: synced
 created: 2026-05-08
 updated: 2026-05-08
 ---
@@ -376,17 +376,23 @@ sections que l'utilisateur a effectivement éditées.
   ```
 - **Comportement** :
   1. `ProseSectionWysiwyg` est un petit wrapper local dans
-     `SpddDocument.tsx` (ou un fichier voisin) qui :
+     `SpddDocument.tsx` qui :
      - lit `value = useSpddEditorStore((s) => s.draft.sections[sectionKey])`
      - écrit via `setSection(sectionKey, next)` du store
      - dérive `sectionHeading` depuis `SECTIONS.find(s => s.key === sectionKey).label`
      - propage `readOnly` + `artifactType: 'story'`
-     - délègue à `<WysiwygProseEditor ... />`
-  2. `ProseTextarea` (composant existant) peut être supprimé une fois
-     `ProseSectionWysiwyg` validé — sinon le garder le temps de la
-     transition (flag de safeguard).
-  3. L'AI popover legacy (`openAiPopover` du store) reste utilisé pour
-     les stories (le wrapper transmet la sectionKey au popover existant).
+     - délègue à `<WysiwygProseEditor ... />` (read **et** édition —
+       symétrie complète avec le chemin générique)
+  2. `ProseTextarea` (composant legacy) **supprimé** dans le slice 2
+     (commit 8ded441 — "fix(spdd): UI-014i — symétrie story / générique
+     sur Tiptap WYSIWYG"). Aucun code mort restant.
+  3. **AI popover préservé** via le mode source du `WysiwygProseEditor` :
+     toggle "Source" dans la toolbar monte `GenericProseTextarea` qui
+     conserve la détection sélection ≥ 3 mots → popover AI universel
+     (UI-014h O10). En mode WYSIWYG (Tiptap), l'éditeur gère sa propre
+     sélection ; l'utilisateur bascule en mode source pour invoquer
+     l'IA. Coût : 1 clic sur "Source" — l'AI popover legacy direct sur
+     selection a été retiré au profit d'un seul popover universel.
 - **Tests** :
   - Cas (ajout au fichier de tests précédent) :
     - story prose section `'bg'` → contenu rendu via WYSIWYG/markdown
@@ -593,3 +599,22 @@ sections que l'utilisateur a effectivement éditées.
   AC1 (rendu read-only) ✓, AC2 (toolbar produit markdown propre) ✓,
   AC3 (round-trip strict) ✓ via tests dédiés, AC4 (toggle Source ↔
   WYSIWYG) ✓, AC5 (markdown malformé) ✓.
+
+- 2026-05-08 — `sync` — `/yukki-sync` après refactor pur (commit 8ded441
+  "symétrie story / générique sur Tiptap WYSIWYG") :
+  - `ProseSectionWysiwyg` délègue désormais à `WysiwygProseEditor` en
+    read **et** en édition (au lieu de retomber sur `ProseTextarea`
+    legacy en édition). Symétrie complète story / chemin générique.
+  - `ProseTextarea` legacy supprimé de `SpddDocument.tsx` (code mort).
+  - L'AI popover legacy direct sur sélection a disparu en mode WYSIWYG.
+    Il reste accessible via le toggle "Source" → `GenericProseTextarea`
+    avec son popover universel (UI-014h O10) — Safeguard "AI popover
+    préservé" respecté (chemin = 1 clic sur "Source" au lieu d'un
+    déclenchement automatique).
+  - Helper stub `tiptapRoundtrip` retiré de `WysiwygProseEditor.tsx`
+    (le test round-trip de O8 a sa propre implémentation autonome).
+
+  Sections d'intention (R/E/A/N/Safeguards) inchangées. O6 mis à jour
+  (sa description bullet 2 et bullet 3 reflètent la réalité du code).
+  Type-check vert ; 154/154 tests verts (aucune régression).
+  **Status → `synced`.**
