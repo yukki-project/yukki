@@ -4,54 +4,62 @@
  * Mirror values from sketch/yukki/project/spdd-editor.css (the design
  * prototype). Any change to these values must be motivated by a canvas
  * update, not by ad-hoc tweaks at the component layer.
+ *
+ * UI-018a — Les variables `--yk-*` qui ont une équivalence dans la
+ * palette canonique sont aliasées sur `var(--ykp-*)` (Invariant I2 :
+ * zéro régression visuelle SpddEditor). Les nuances spécifiques au
+ * SpddEditor sans équivalent dans la palette (`--yk-bg-3`,
+ * `--yk-bg-elev`) gardent leur valeur hex en dur. La migration des
+ * classes consommatrices `bg-yk-*` vers `bg-ykp-*` est traitée en
+ * suivi (UI-018b ou UI-018c).
  */
 
 .yk {
-  /* Surfaces */
-  --yk-bg-page: #0c0d12;
-  --yk-bg-1: #131419;
-  --yk-bg-2: #181a21;
-  --yk-bg-3: #1f2129;
-  --yk-bg-elev: #232631;
-  --yk-bg-input: #16171d;
+  /* Surfaces — aliasées quand équivalence */
+  --yk-bg-page:  var(--ykp-bg-page);
+  --yk-bg-1:     var(--ykp-bg-subtle);
+  --yk-bg-2:     var(--ykp-bg-elevated);
+  --yk-bg-3:     #1f2129;            /* nuance interne SpddEditor — pas dans la palette */
+  --yk-bg-elev:  #232631;            /* idem */
+  --yk-bg-input: var(--ykp-bg-input);
 
   /* Lines */
-  --yk-line: #23252e;
-  --yk-line-subtle: #1c1e25;
-  --yk-line-strong: #2e3140;
+  --yk-line:        var(--ykp-line);
+  --yk-line-subtle: var(--ykp-line-subtle);
+  --yk-line-strong: var(--ykp-line-strong);
 
   /* Text */
-  --yk-text-primary: #e6e7ee;
-  --yk-text-secondary: #9ea1b3;
-  --yk-text-muted: #6b6e80;
-  --yk-text-faint: #4b4d5a;
+  --yk-text-primary:   var(--ykp-text-primary);
+  --yk-text-secondary: var(--ykp-text-secondary);
+  --yk-text-muted:     var(--ykp-text-muted);
+  --yk-text-faint:     var(--ykp-text-faint);
 
   /* Accent */
-  --yk-primary: #8b6cff;
-  --yk-primary-soft: rgba(139, 108, 255, 0.14);
-  --yk-primary-ring: rgba(139, 108, 255, 0.32);
+  --yk-primary:      var(--ykp-primary);
+  --yk-primary-soft: var(--ykp-primary-soft);
+  --yk-primary-ring: var(--ykp-ring);
 
   /* Semantics */
-  --yk-success: #4ec38a;
-  --yk-success-soft: rgba(78, 195, 138, 0.13);
-  --yk-warning: #e8a657;
-  --yk-warning-soft: rgba(232, 166, 87, 0.13);
-  --yk-danger: #e76d6d;
-  --yk-danger-soft: rgba(231, 109, 109, 0.13);
+  --yk-success:      var(--ykp-success);
+  --yk-success-soft: var(--ykp-success-soft);
+  --yk-warning:      var(--ykp-warning);
+  --yk-warning-soft: var(--ykp-warning-soft);
+  --yk-danger:       var(--ykp-danger);
+  --yk-danger-soft:  var(--ykp-danger-soft);
 
-  /* Code-ish text colors used by the markdown view (UI-014c will use these) */
-  --yk-code-key: #c8b6ff;
-  --yk-code-string: #9be3a8;
-  --yk-code-heading: #ffd089;
-  --yk-code-subheading: #ffb3c1;
+  /* Code-ish text colors used by the markdown view */
+  --yk-code-key:        var(--ykp-code-key);
+  --yk-code-string:     var(--ykp-code-string);
+  --yk-code-heading:    var(--ykp-code-heading);
+  --yk-code-subheading: var(--ykp-code-subheading);
 
-  /* Radii */
+  /* Radii — non aliasées (pas de couleurs) */
   --yk-radius-sm: 4px;
-  --yk-radius: 6px;
+  --yk-radius:    6px;
   --yk-radius-md: 8px;
   --yk-radius-lg: 10px;
 
-  /* Fonts */
-  --yk-font-ui: 'Inter', system-ui, sans-serif;
+  /* Fonts — non aliasées */
+  --yk-font-ui:   'Inter', system-ui, sans-serif;
   --yk-font-mono: 'JetBrains Mono', 'Consolas', monospace;
 }
