@@ -2,7 +2,7 @@
 id: OPS-001
 slug: debug-mode-logs-and-error-boundary
 title: Mode debug + logs persistants + error boundary
-status: accepted
+status: reviewed
 created: 2026-05-08
 updated: 2026-05-09
 owner: Thibaut Sannier
@@ -43,14 +43,26 @@ la session, on revient en arrière).
   rattrape les exceptions de rendu et affiche un panneau d'erreur
   lisible (titre, message court, stack trace dépliable, boutons
   « Copier », « Ouvrir les logs », « Recharger l'app »).
-- **Logs persistants sur disque** : tous les events ≥ WARN
+- **Logs persistants sur disque** : tous les events ≥ INFO
   (frontend + Go) sont écrits dans `<configDir>/yukki/logs/yukki-<YYYY-MM-DD>.log`
   avec format structuré (timestamp / level / source / message /
-  stack si applicable).
-- **Toggle « Mode debug »** dans un menu accessible (Settings, ou
-  raccourci) : passé en `on`, abaisse le seuil à DEBUG et active
-  des traces supplémentaires (IPC Wails, render React, store
-  Zustand côté frontend).
+  stack si applicable). Les events de cycle de vie (startup,
+  shutdown, projet ouvert, settings hydraté) sont visibles sans
+  activer le mode debug.
+- **Toggle « Mode debug »** dans un menu **Developer** dédié
+  (séparé du FileMenu et du HelpMenu) ainsi qu'un raccourci
+  global `Ctrl+Shift+D` : passé en `on`, abaisse le seuil à DEBUG
+  et active des traces supplémentaires (IPC Wails, render React,
+  store Zustand côté frontend).
+- **Build-time gating** : le menu Developer, le toggle, le
+  drawer logs, et le flag CLI `--debug` ne sont présents que dans
+  les builds compilés avec le tag Go `devbuild`. Les builds de
+  release n'exposent **aucune** surface debug (UI ni CLI).
+- **Drawer logs intégré** : panneau rétractable depuis le bas
+  de la fenêtre quand le mode debug est actif. Tail live du
+  fichier du jour, filtres par niveau (DEBUG/INFO/WARN/ERROR)
+  et par source (frontend/go), bouton « Pause auto-scroll »,
+  fermeture par `Esc` ou clic sur le badge `DEBUG ON`.
 - **Capture étendue côté frontend** : `window.onerror`, unhandled
   Promise rejections, erreurs des bindings Wails IPC.
 - **Capture étendue côté Go** : panic recovery dans les bindings
@@ -58,7 +70,7 @@ la session, on revient en arrière).
 - **Rotation** : un nouveau fichier par jour, archivage au-delà
   d'une limite (taille ou nb de fichiers — à arbitrer en analyse).
 - **Bouton « Ouvrir le dossier de logs »** dans le panneau d'erreur
-  ET dans Settings — ouvre le dossier dans l'explorateur OS.
+  ET dans le menu Developer — ouvre le dossier dans l'explorateur OS.
 
 ## Scope Out
 
@@ -66,13 +78,14 @@ la session, on revient en arrière).
   distant.
 - Auto-restart / crash recovery transparent (l'utilisateur recharge
   manuellement via le bouton du panneau d'erreur).
-- Visualiseur de logs intégré dans l'app (l'utilisateur ouvre le
-  fichier avec son éditeur de texte préféré).
 - Tracing distribué / OpenTelemetry (yukki est un binaire mono-
   process desktop).
 - Anonymisation / scrubbing des PII dans les logs (un log peut
   contenir des paths utilisateur — c'est attendu pour le
   diagnostic, à signaler à l'utilisateur).
+- Visualiseur de logs en mode normal (release build) — la lecture
+  reste « ouvrir le fichier dans un éditeur ». Le drawer intégré
+  est réservé aux builds dev.
 
 ## Acceptance Criteria
 
@@ -116,11 +129,40 @@ la session, on revient en arrière).
 
 ### AC5 — Ouverture du dossier de logs
 
-- **Given** un panneau d'erreur (AC1) ou la page Settings est
-  affiché
+- **Given** un panneau d'erreur (AC1) ou le menu Developer est
+  ouvert
 - **When** l'utilisateur clique sur « Ouvrir le dossier de logs »
 - **Then** l'explorateur de fichiers OS s'ouvre sur
   `<configDir>/yukki/logs/`, focus sur le fichier du jour
+
+### AC6 — Drawer logs intégré (build dev)
+
+- **Given** l'app est compilée avec le tag `devbuild` et le mode
+  debug est activé
+- **When** l'utilisateur clique sur le badge `DEBUG ON` dans la
+  TitleBar (ou utilise le raccourci dédié)
+- **Then** un drawer s'ouvre depuis le bas de la fenêtre, affiche
+  les 500 dernières entrées du fichier du jour avec auto-scroll,
+  et propose au minimum un filtre par niveau et un filtre par
+  source ; `Esc` referme le drawer
+
+### AC7 — Toggle invisible en build de release
+
+- **Given** l'app est compilée **sans** le tag `devbuild`
+- **When** l'utilisateur ouvre n'importe quel menu de la TitleBar
+  ou inspecte la ligne de commande
+- **Then** aucun item Mode debug ni Drawer logs n'apparaît, le
+  flag `--debug` est inconnu de Cobra, et toute valeur
+  `debugMode=true` héritée de `settings.json` est ignorée par le
+  runtime (le seuil reste INFO)
+
+### AC8 — Niveau par défaut INFO
+
+- **Given** l'app est lancée sans flag CLI ni mode debug
+- **When** l'utilisateur ouvre `<configDir>/yukki/logs/yukki-<YYYY-MM-DD>.log`
+- **Then** le fichier contient au minimum un event INFO de
+  startup (`ui startup`) et les events INFO/WARN/ERROR émis par
+  la session ; les events DEBUG sont absents
 
 ## Open Questions
 
@@ -143,17 +185,43 @@ la session, on revient en arrière).
       à chaque démarrage) et la sûreté (l'utilisateur n'oublie
       pas qu'il génère des logs verbeux).
 - [x] ~~**Niveau par défaut** ?~~ → **résolu 2026-05-09** :
-      `WARN` en mode normal (capture WARN / ERROR / FATAL),
+      `INFO` en mode normal (capture INFO / WARN / ERROR / FATAL),
       bascule à `DEBUG` quand le mode debug est activé (capture
-      DEBUG / INFO / WARN / ERROR / FATAL). Garde les fichiers
-      légers et lisibles en utilisation courante, et fournit le
-      contexte complet quand on diagnostique un bug.
+      DEBUG / INFO / WARN / ERROR / FATAL). **Amendé après revue
+      utilisateur** (initialement WARN) — un fichier vide au
+      démarrage normal est trompeur ; INFO permet de voir le
+      cycle de vie (startup, projet ouvert, settings hydraté)
+      sans activer le toggle, ce qui est la convention des
+      éditeurs desktop modernes (VS Code, JetBrains, Chrome).
 - [x] ~~**Format du log** ?~~ → **résolu 2026-05-09** : texte
       lisible style « slog text » (par exemple
       `2026-05-09T18:32:14Z WARN frontend HubList refresh failed
       err="no project"`). Cohérent avec le format slog Go par
       défaut, compatible `grep` et éditeurs de texte, lisible
       directement par l'utilisateur qui veut signaler un bug.
+
+### Amendements post-implémentation (2026-05-09)
+
+- [x] **Surface UI du toggle** : déplacé du **FileMenu** vers un
+      **menu Developer dédié** (à droite de Help dans la
+      TitleBar). Le FileMenu retrouve sa cohérence métier
+      (fichier/projet uniquement). Le menu Developer scale pour
+      d'autres outils dev futurs (dump state, copier
+      diagnostic, etc.).
+- [x] **Drawer logs intégré** : visualiseur tail-style en bas
+      de fenêtre, accessible quand le mode debug est actif.
+      Initialement en scope-out, basculé en scope-in après
+      revue utilisateur. Évite l'aller-retour vers l'éditeur
+      externe pendant un debug actif.
+- [x] **Build-time gating** : tout l'attirail debug (menu,
+      drawer, badge, flag CLI) est conditionné au build tag Go
+      `devbuild`. Les builds de release ne contiennent même
+      pas le code, et `settings.json` héritant de `debugMode=true`
+      est ignoré au runtime (`debugMode := persisted && IsDevBuild`).
+      Pattern aligné avec le tag `mock` existant.
+- [x] **Renommage flag CLI** : `--verbose` → `--debug`,
+      sémantique alignée avec le toggle UI. Flag absent dans
+      les builds non-`devbuild`.
 
 ## Notes
 

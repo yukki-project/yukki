@@ -15,6 +15,11 @@ import { useTabsStore, activeProject } from '@/stores/tabs';
 import { useShellStore } from '@/stores/shell';
 import { useProjectStore } from '@/stores/project';
 import { useArtifactsStore } from '@/stores/artifacts';
+import { useSettingsStore } from '@/stores/settings';
+import { useDevToolsStore } from '@/stores/devTools';
+import { hydrateBuildFlags } from '@/lib/buildFlags';
+import { LogsDrawer } from '@/components/hub/LogsDrawer';
+import type { LogLine } from '../wailsjs/go/main/App';
 import type { ProjectOpenedPayload, ProjectClosedPayload, ProjectSwitchedPayload } from '@/lib/wails-events';
 
 export default function App() {
@@ -31,6 +36,9 @@ export default function App() {
   const setProjectDir = useProjectStore((s) => s.setProjectDir);
   const setHasSpdd = useProjectStore((s) => s.setHasSpdd);
   const refreshArtifacts = useArtifactsStore((s) => s.refresh);
+  const hydrateSettings = useSettingsStore((s) => s.hydrate);
+  const debugMode = useSettingsStore((s) => s.debugMode);
+  const setDebugMode = useSettingsStore((s) => s.setDebugMode);
 
   const current = activeProject({ openedProjects, activeIndex, recentProjects } as Parameters<typeof activeProject>[0]);
 
@@ -143,6 +151,46 @@ export default function App() {
     void refreshClaude();
   }, [refreshClaude]);
 
+  // OPS-001 O12 — hydrate the settings store on first mount so the
+  // TitleBar badge and DeveloperMenu reflect the persisted state.
+  // Also hydrate the build flag so isDevBuild() returns the right
+  // value before any debug surface is rendered.
+  useEffect(() => {
+    void Promise.all([hydrateSettings(), hydrateBuildFlags()]);
+  }, [hydrateSettings]);
+
+  // OPS-001 prompt-update — subscribe to the live log stream once
+  // mounted. The Go backend only emits "log:event" in dev builds
+  // (EmitLogEventListener returns nil otherwise), so the listener is
+  // safe to attach unconditionally — release builds never see an
+  // event. We do NOT gate by isDevBuild() here because that helper
+  // resolves async via Wails IPC; gating would race the first paint
+  // and miss the listener attachment forever.
+  const pushLogEntry = useDevToolsStore((s) => s.pushEntry);
+  useEffect(() => {
+    const off = EventsOn<LogLine>('log:event', (line) => pushLogEntry(line));
+    return () => off();
+  }, [pushLogEntry]);
+
+  // OPS-001 O12 — global Ctrl+Shift+D / Cmd+Shift+D toggle. The
+  // existing ctrl shortcut block above checks `e.ctrlKey` then
+  // matches single-letter keys, so it would route 'D' to that
+  // handler if we added it there. Keep this listener separate to
+  // require *both* ctrl/meta and shift, and to avoid colliding with
+  // browser devtools shortcuts (Ctrl+Shift+D opens a profile
+  // picker in some Chromium variants but not in the embedded
+  // WebView2 used by Wails).
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.ctrlKey || e.metaKey) || !e.shiftKey) return;
+      if (e.key !== 'd' && e.key !== 'D') return;
+      e.preventDefault();
+      void setDebugMode(!debugMode);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [debugMode, setDebugMode]);
+
   return (
     <main className="h-screen flex flex-col bg-ykp-bg-page text-ykp-text-primary overflow-hidden">
       <TitleBar />
@@ -166,6 +214,7 @@ export default function App() {
         </>
       )}
       <Toaster />
+      <LogsDrawer />
     </main>
   );
 }

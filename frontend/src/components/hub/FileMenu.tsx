@@ -1,4 +1,7 @@
 // UI-009 — FileMenu : menu Fichier dans le TitleBar.
+// OPS-001 prompt-update Q2 — items debug retirés (déplacés dans
+// DeveloperMenu). Le FileMenu reste focalisé sur les actions
+// fichier/projet.
 import { FolderOpen, Clock, Sparkles } from 'lucide-react';
 import {
   InitializeYukki,
@@ -18,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTabsStore } from '@/stores/tabs';
+import { logger } from '@/lib/logger';
 import { useState, useCallback } from 'react';
 
 export function FileMenu(): JSX.Element {
@@ -63,7 +67,7 @@ export function FileMenu(): JSX.Element {
       await InitializeYukki(path);
       await handleOpenProject(path);
     } catch (e) {
-      console.error('InitializeYukki failed', e);
+      logger.error('InitializeYukki failed', e instanceof Error ? e : new Error(String(e)));
     }
   }, [handleOpenProject]);
 

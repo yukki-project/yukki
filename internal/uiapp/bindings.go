@@ -8,6 +8,7 @@ package uiapp
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -41,6 +42,7 @@ func (a *App) SelectDirectory() (string, error) {
 //  5. newOpenedProject â†’ returns ErrNoYukki if .yukki/ absent.
 //  6. Append + set activeIndex, update recentProjects, saveRegistry, emit.
 func (a *App) OpenProject(path string) (ProjectMeta, error) {
+	a.traceBinding("OpenProject", slog.String("path", path))
 	selected := path
 	if selected == "" {
 		var err error
@@ -109,6 +111,7 @@ func (a *App) OpenProject(path string) (ProjectMeta, error) {
 // activeIndex is adjusted to follow the remaining projects.
 // Emits "project:closed" with the removed index.
 func (a *App) CloseProject(idx int) error {
+	a.traceBinding("CloseProject", slog.Int("idx", idx))
 	a.mu.Lock()
 	if idx < 0 || idx >= len(a.openedProjects) {
 		a.mu.Unlock()
@@ -143,6 +146,7 @@ func (a *App) CloseProject(idx int) error {
 // SwitchProject sets the active project to idx.
 // Emits "project:switched" with the newly active project's meta.
 func (a *App) SwitchProject(idx int) error {
+	a.traceBinding("SwitchProject", slog.Int("idx", idx))
 	a.mu.Lock()
 	if idx < 0 || idx >= len(a.openedProjects) {
 		a.mu.Unlock()
@@ -214,6 +218,7 @@ func (a *App) ReorderProjects(order []int) error {
 // LoadRegistry returns the raw ProjectsRegistry from disk (used by the
 // frontend to hydrate useTabsStore on startup).
 func (a *App) LoadRegistry() (ProjectsRegistry, error) {
+	a.traceBinding("LoadRegistry")
 	reg, err := loadRegistry()
 	if err != nil {
 		return ProjectsRegistry{}, err
@@ -224,6 +229,7 @@ func (a *App) LoadRegistry() (ProjectsRegistry, error) {
 // ListRecentProjects returns recent projects from the in-memory list,
 // excluding any project that is currently open (max maxRecentProjects).
 func (a *App) ListRecentProjects() ([]ProjectMeta, error) {
+	a.traceBinding("ListRecentProjects")
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 

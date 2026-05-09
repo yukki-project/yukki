@@ -2,7 +2,7 @@
 id: OPS-001
 slug: debug-mode-logs-and-error-boundary
 story: .yukki/stories/OPS-001-debug-mode-logs-and-error-boundary.md
-status: draft
+status: reviewed
 created: 2026-05-09
 updated: 2026-05-09
 ---
@@ -267,33 +267,46 @@ livrant un toggle minimal réutilisé plus tard.*
 
 ## Decisions à prendre avant le canvas
 
-> Les 5 OQ de la story sont tranchées. Voici les décisions
-> résiduelles soulevées par l'analyse.
+> Les 5 OQ de la story sont tranchées. Toutes les décisions
+> résiduelles soulevées par l'analyse ont été tranchées en
+> revue (cf. tableau ci-dessous), l'analyse passe en `reviewed`.
 
-- [ ] **Couplage avec UI-020 (Settings page)** : OPS-001 livre
-      un toggle minimal (par exemple item dans le FileMenu
-      « Activer le mode debug », ou raccourci `Ctrl+Shift+D`),
-      ou attend que UI-020 soit prête ? → recommandation :
-      OPS-001 livre un toggle minimal dans le FileMenu (1
-      ligne) ; UI-020 reprendra ensuite ce toggle dans une
-      section Settings dédiée.
-- [ ] **Helper `internal/configdir` mutualisé** : créer dans
-      cette story (refactor du draft store pour l'utiliser
-      aussi), ou dupliquer le pattern et mutualiser plus
-      tard ? → recommandation : créer maintenant, le coût
-      est trivial (1 fichier, 1 fonction) et évite la dette.
-- [ ] **`LogToBackend` — granularité du binding** : 1 binding
-      générique `LogToBackend(payload)` ou bindings dédiés par
-      niveau (`LogError`, `LogWarn`, `LogInfo`, `LogDebug`) ?
-      → recommandation : 1 binding générique, le payload
-      contient le `level`. Évite la duplication du
-      transport et reste flexible.
-- [ ] **Bascule de jour à minuit** : re-évaluer le chemin au
-      début de chaque écriture (overhead léger), ou un timer
-      qui rotate explicitement à minuit ? → recommandation :
-      re-évaluer à chaque écriture, plus simple, l'overhead
-      est négligeable face au coût d'écriture disque.
-- [ ] **Stub `BrowserOpenURL`** : OPS-001 le livre ou UI-021
-      le livre ? → recommandation : la première story qui
-      atterrit le livre, l'autre consomme. Probablement
-      OPS-001 si elle est ordonnancée avant UI-021.
+- [x] ~~**Scission SPIDR**~~ → **résolu 2026-05-09** :
+      OPS-001 reste **monolithique**. Les 3 axes (ErrorBoundary,
+      logs persistants, toggle debug) partagent l'infra
+      (`configdir` helper, `settings` store, façade `logger`) ;
+      les scinder créerait 3 PRs avec couplage temporel fort
+      sans bénéfice de livraison incrémentale réelle.
+      L'estimation 2-3j tient en une story.
+- [x] ~~**Couplage avec UI-020 (Settings page)**~~ → **résolu
+      2026-05-09** : OPS-001 livre un toggle minimal sous deux
+      formes complémentaires : (1) item « Activer le mode debug »
+      dans le `FileMenu` existant, (2) raccourci clavier
+      `Ctrl+Shift+D`. Le badge orange « DEBUG ON » dans
+      `TitleBar` confirme l'état. UI-020 reprendra plus tard
+      l'action dans une section Settings dédiée sans casser le
+      contrat (mêmes bindings `LoadSettings`/`SaveSettings`).
+- [x] ~~**Helper `internal/configdir` mutualisé**~~ → **résolu
+      2026-05-09** : créer **maintenant** `internal/configdir/configdir.go`
+      avec `BaseDir() string`, et **migrer `internal/draft`** dans
+      la même story pour qu'il consomme le helper. Coût trivial
+      (1 fichier + 1 fonction + 1 import + 1 substitution dans
+      draft) ; évite la dette de 3 endroits qui calculent le
+      même chemin.
+- [x] ~~**`LogToBackend` — granularité du binding**~~ → **résolu
+      2026-05-09** : **un seul binding générique**
+      `LogToBackend(payload struct{ Level, Source, Msg, Stack string }) error`.
+      Le frontend choisit le niveau dans le payload. La façade
+      `frontend/src/lib/logger.ts` expose `error / warn / info /
+      debug` qui appellent toutes `LogToBackend` avec le bon niveau.
+      Évite la duplication du transport et reste flexible si on
+      ajoute un niveau plus tard.
+- [x] ~~**Bascule de jour à minuit**~~ → **résolu 2026-05-09** :
+      **re-évaluer le chemin à chaque écriture** (`today :=
+      time.Now().Format("2006-01-02")` au début de chaque appel,
+      rouvrir le writer si différent). Simple, pas de goroutine
+      ni timer, naturellement robuste à un changement d'horloge
+      système. Overhead négligeable face à l'écriture disque.
+- [x] ~~**Stub `BrowserOpenURL`**~~ → **obsolète 2026-05-09** :
+      déjà livré par UI-021 (#27). OPS-001 consomme directement
+      `wailsjs/runtime/runtime.{d.ts,js}`.

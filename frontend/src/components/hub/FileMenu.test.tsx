@@ -2,16 +2,26 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { FileMenu } from './FileMenu';
 import { useTabsStore } from '@/stores/tabs';
+import { useSettingsStore } from '@/stores/settings';
 
 vi.mock('../../../wailsjs/go/main/App', () => ({
   OpenProject: vi.fn().mockResolvedValue({ Path: '/new', Name: 'new', LastOpened: '' }),
   CloseProject: vi.fn().mockResolvedValue(undefined),
   InitializeYukki: vi.fn().mockResolvedValue(undefined),
   ListRecentProjects: vi.fn().mockResolvedValue([]),
+  OpenLogsFolder: vi.fn().mockResolvedValue(undefined),
+  LoadSettings: vi.fn().mockResolvedValue({ DebugMode: false }),
+  SaveSettings: vi.fn().mockResolvedValue(undefined),
+  LogToBackend: vi.fn().mockResolvedValue(undefined),
+  SelectDirectory: vi.fn().mockResolvedValue(''),
+}));
+vi.mock('@/hooks/use-toast', () => ({
+  toast: vi.fn(),
 }));
 
 beforeEach(() => {
   useTabsStore.setState({ openedProjects: [], activeIndex: -1, recentProjects: [] });
+  useSettingsStore.setState({ debugMode: false, hydrated: true });
   vi.clearAllMocks();
 });
 
@@ -72,4 +82,8 @@ describe('FileMenu', () => {
     const recent = await waitFor(() => screen.getByText(/Recent Projects/i));
     expect(recent).toBeInTheDocument();
   });
+
+  // OPS-001 prompt-update Q2 — items debug retirés du FileMenu,
+  // déplacés dans DeveloperMenu. Les cas correspondants vivent
+  // désormais dans DeveloperMenu.test.tsx.
 });
