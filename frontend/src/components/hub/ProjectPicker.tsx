@@ -58,11 +58,11 @@ export function ProjectPicker() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-8">
+    <main className="min-h-screen flex items-center justify-center bg-ykp-bg-page p-8">
       <Card className="w-full max-w-md">
         <CardContent className="space-y-4 p-6">
           <h1 className="text-2xl font-bold">yukki</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-ykp-text-muted">
             Open a SPDD project directory to browse your artefacts.
           </p>
           {!pendingDir && (
@@ -96,7 +96,7 @@ export function ProjectPicker() {
               </Button>
             </div>
           )}
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-ykp-danger">{error}</p>}
         </CardContent>
       </Card>
     </main>

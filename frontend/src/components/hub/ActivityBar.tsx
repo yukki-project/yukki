@@ -60,13 +60,13 @@ function BarButton({ item, activeMode, onSelect }: BarButtonProps): JSX.Element 
           onClick={() => onSelect(item.mode)}
           className={cn(
             'relative flex h-12 w-full items-center justify-center transition-colors',
-            'text-muted-foreground hover:bg-accent hover:text-foreground',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
-            isActive && 'bg-accent/50 text-foreground',
+            'text-ykp-text-muted hover:bg-ykp-line hover:text-ykp-text-primary',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ykp-ring focus-visible:ring-inset',
+            isActive && 'bg-ykp-line/50 text-ykp-text-primary',
           )}
         >
           {isActive && (
-            <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-r bg-primary" />
+            <span className="absolute bottom-2 left-0 top-2 w-0.5 rounded-r bg-ykp-primary" />
           )}
           <item.Icon className="h-5 w-5" />
         </button>
@@ -83,7 +83,7 @@ export function ActivityBar(): JSX.Element {
     <TooltipProvider delayDuration={300}>
       <aside
         aria-label="Activity bar"
-        className="flex w-13 flex-col border-r border-border bg-card"
+        className="flex w-13 flex-col border-r border-ykp-line bg-ykp-bg-elevated"
       >
         {PRIMARY_ITEMS.map((item) => (
           <BarButton

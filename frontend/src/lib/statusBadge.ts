@@ -1,6 +1,6 @@
 // Shared artifact status badge classes — used in HubList, WorkflowCard, ArtifactReadView.
 export const STATUS_BADGE: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
+  draft: 'bg-ykp-bg-subtle text-ykp-text-muted',
   reviewed: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
   accepted: 'bg-purple-500/15 text-purple-700 dark:text-purple-300',
   implemented: 'bg-green-500/15 text-green-700 dark:text-green-300',

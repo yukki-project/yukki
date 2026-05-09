@@ -54,12 +54,12 @@ export function CollapsibleSection({
     <Collapsible.Root open={open} onOpenChange={handleOpenChange}>
       <Collapsible.Trigger asChild>
         <button
-          className="flex w-full items-center gap-2 text-left py-1 hover:text-foreground/80 transition-colors"
+          className="flex w-full items-center gap-2 text-left py-1 hover:text-ykp-text-primary/80 transition-colors"
           aria-label={`${open ? 'Replier' : 'Déplier'} la section ${title}`}
         >
           <ChevronRight
             className={cn(
-              'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+              'h-4 w-4 shrink-0 text-ykp-text-muted transition-transform duration-200',
               open && 'rotate-90',
             )}
           />

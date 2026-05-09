@@ -3,7 +3,7 @@ id: UI-018b
 slug: shadcn-classes-migration
 story: .yukki/stories/UI-018b-shadcn-classes-migration.md
 analysis: .yukki/analysis/UI-018b-shadcn-classes-migration.md
-status: draft
+status: implemented
 created: 2026-05-09
 updated: 2026-05-09
 ---

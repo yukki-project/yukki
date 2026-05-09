@@ -2,7 +2,7 @@
 id: UI-018b
 slug: shadcn-classes-migration
 story: .yukki/stories/UI-018b-shadcn-classes-migration.md
-status: draft
+status: reviewed
 created: 2026-05-09
 updated: 2026-05-09
 ---
@@ -10,13 +10,26 @@ updated: 2026-05-09
 # Analyse — Migration explicite des classes shadcn vers la palette canonique
 
 > Contexte stratégique pour `UI-018b-shadcn-classes-migration`,
-> dépend strictement de UI-018a (palette `--ykp-*` + classes
-> Tailwind associées). Toutes les Open Questions de la story
-> sont tranchées : liste des composants à migrer produite par
-> grep en analyse, sémantiques `destructive` / `success` ⇒
-> classes `bg-ykp-danger` / `bg-ykp-success` 1-pour-1, livraison
-> en une seule PR mécanique, composants tiers laissés tels
-> quels (audit ici, override hors-scope).
+> dépend strictement de UI-018a — **mergé sur main au commit
+> `cc2acc2` (PR #29) le 2026-05-09**. La palette `--ykp-*` est
+> désormais shippée, les classes Tailwind `bg-ykp-*` /
+> `text-ykp-*` / `border-ykp-*` exposées dans
+> `tailwind.config.js`, et la table de correspondance
+> shadcn → ykp vit dans
+> [`docs/palette.md`](../../docs/palette.md). Toutes les Open
+> Questions de la story sont tranchées : liste des composants à
+> migrer produite par grep ci-dessous, sémantiques
+> `destructive` / `success` ⇒ classes `bg-ykp-danger` /
+> `bg-ykp-success` 1-pour-1, livraison en une seule PR
+> mécanique, composants tiers laissés tels quels (audit ici,
+> override hors-scope).
+
+> **Refresh post-UI-018a (2026-05-09)** : le scan grep a été
+> ré-exécuté sur `main` après merge de UI-018a. Volume confirmé,
+> liste de fichiers actualisée (+ 2 fichiers découverts :
+> `WorkflowDrawer.tsx`, `CollapsibleSection.tsx`,
+> `markdownComponents.tsx`). 21 fichiers chrome au total à
+> migrer (vs estimation initiale 20).
 
 ## Mots-clés métier extraits
 
@@ -36,23 +49,25 @@ sur `20 fichiers chrome`, `bg-ykp-*` (équivalents Tailwind),
 ### Existants (déjà dans le code)
 
 - **Classes shadcn dans la chrome** (Value Object dispersé) —
-  ~139 occurrences de classes Tailwind référençant les
-  variables shadcn (`bg-background`, `text-foreground`,
-  `bg-muted`, `text-muted-foreground`, `border-border`,
-  `bg-card`, `bg-popover`, `bg-primary`, `bg-secondary`,
-  `bg-accent`, `bg-destructive`, `text-destructive`,
-  `border-input`, `ring-ring`) réparties sur **20 fichiers**
-  hors `components/ui/`. Top occurrences :
-  `text-muted-foreground` (44), `border-border` (17),
-  `text-foreground` / `bg-muted` (15 chacune), `bg-background`
-  (13), `bg-card` (9).
+  **~105 occurrences confirmées** dans
+  `frontend/src/components/` hors `ui/` (scan post-UI-018a),
+  réparties sur **19 fichiers** chrome composants + 2 fichiers
+  `lib/` (`statusBadge.ts`, `markdownComponents.tsx`) + 1
+  fichier racine (`App.tsx`) = **22 fichiers à migrer au
+  total**. Top occurrences (ordre indicatif) :
+  `text-muted-foreground`, `border-border`, `text-foreground`,
+  `bg-muted`, `bg-background`, `bg-card`. Liste complète des
+  fichiers ci-dessous (Modules impactés).
 - **Classes Tailwind `--ykp-*`** (Value Object) — exposées par
-  UI-018a dans `tailwind.config.js` (~15-20 classes :
+  UI-018a dans `tailwind.config.js` (**~30 classes** :
   `bg-ykp-bg-page`, `text-ykp-text-primary`,
-  `border-ykp-line`, `bg-ykp-danger-soft`, …).
-- **`docs/palette.md`** (Reference) — créé par UI-018a, à
-  enrichir par cette story avec la table de correspondance
-  shadcn → ykp.
+  `border-ykp-line`, `bg-ykp-danger-soft`, `text-ykp-success-fg`,
+  `ring-ykp-ring`, `bg-ykp-code-key`, …). **Confirmé
+  disponible sur main au commit `cc2acc2`**.
+- **`docs/palette.md`** (Reference) — **livré par UI-018a** avec
+  la table de correspondance shadcn → ykp déjà rédigée. UI-018b
+  utilise cette table comme spec pour le sed (pas besoin de
+  re-rédiger).
 - **8 primitives shadcn** dans `frontend/src/components/ui/` :
   `button.tsx`, `card.tsx`, `dialog.tsx`, `dropdown-menu.tsx`,
   `sheet.tsx`, `toast.tsx`, `toaster.tsx`, `tooltip.tsx`. **NE
@@ -133,27 +148,35 @@ réversible (le mapping est documenté).*
 > Liste produite par grep (cf. scan B5/B6). 20 fichiers
 > chrome distincts, 130-150 hunks estimés.
 
+> **Liste exhaustive confirmée par grep post-UI-018a sur main**
+> (commit `cc2acc2`). 22 fichiers à migrer.
+
 | Module / fichier | Impact | Nature |
 |---|---|---|
-| `frontend/src/App.tsx` | faible | modify : `bg-background` × 1 |
-| `frontend/src/components/hub/HubList.tsx` | moyen | modify : ~10 occurrences (bg, text, border, hover) |
-| `frontend/src/components/hub/TitleBar.tsx` | moyen | modify : ~8 occurrences |
-| `frontend/src/components/hub/ActivityBar.tsx` | moyen | modify : ~10 occurrences |
-| `frontend/src/components/hub/SidebarPanel.tsx` | moyen | modify : ~7 occurrences |
-| `frontend/src/components/hub/FileMenu.tsx` | faible | modify : ~5 occurrences |
-| `frontend/src/components/hub/TabBar.tsx` | faible | modify : ~6 occurrences |
-| `frontend/src/components/hub/StoryViewer.tsx` | moyen | modify : ~10 occurrences |
-| `frontend/src/components/hub/NewStoryModal.tsx` | moyen | modify : ~8 occurrences |
-| `frontend/src/components/hub/ProjectPicker.tsx` | faible | modify : ~3 occurrences |
-| `frontend/src/components/hub/CodeBlock.tsx` | faible | modify : ~5 occurrences |
-| `frontend/src/components/hub/TemplatedEditor.tsx` | faible | modify : ~5 occurrences |
-| `frontend/src/components/hub/CreateNextStageModal.tsx` | faible | modify : ~4 occurrences |
-| `frontend/src/components/hub/MarkdownComponents.tsx` | moyen | modify : ~6 occurrences |
-| `frontend/src/components/spdd/SpddAcEditor.tsx` etc. | faible | modify : potentielles occurrences `text-muted-foreground` à valider |
-| `frontend/src/components/workflow/WorkflowCard.tsx` + Column + Pipeline | moyen | modify : ~10 occurrences |
-| `frontend/src/lib/statusBadge.ts` (constantes) | faible | modify : map status → classe ykp |
-| `frontend/src/components/ui/*.tsx` (8 fichiers) | aucun | **inchangés** |
-| `docs/palette.md` | faible | modify : ajout table de correspondance shadcn → ykp |
+| `frontend/src/App.tsx` | faible | modify : occurrences `bg-background` |
+| `frontend/src/components/hub/AboutDialog.tsx` | faible | modify : occurrences (livrée récemment par UI-021) |
+| `frontend/src/components/hub/ActivityBar.tsx` | moyen | modify |
+| `frontend/src/components/hub/CodeBlock.tsx` | faible | modify |
+| `frontend/src/components/hub/CollapsibleSection.tsx` | faible | modify *(découvert post-UI-018a — non listé dans l'estimation initiale)* |
+| `frontend/src/components/hub/FileMenu.tsx` | faible | modify |
+| `frontend/src/components/hub/HubList.tsx` | moyen | modify (le plus dense) |
+| `frontend/src/components/hub/NewStoryModal.tsx` | moyen | modify |
+| `frontend/src/components/hub/ProjectPicker.tsx` | faible | modify |
+| `frontend/src/components/hub/SidebarPanel.tsx` | moyen | modify |
+| `frontend/src/components/hub/StoryViewer.tsx` | moyen | modify |
+| `frontend/src/components/hub/TabBar.tsx` | faible | modify |
+| `frontend/src/components/hub/TemplatedEditor.tsx` | faible | modify |
+| `frontend/src/components/hub/TitleBar.tsx` | moyen | modify |
+| `frontend/src/components/workflow/CreateNextStageModal.tsx` | faible | modify |
+| `frontend/src/components/workflow/WorkflowCard.tsx` | moyen | modify |
+| `frontend/src/components/workflow/WorkflowColumn.tsx` | moyen | modify |
+| `frontend/src/components/workflow/WorkflowDrawer.tsx` | moyen | modify *(découvert post-UI-018a — non listé dans l'estimation initiale)* |
+| `frontend/src/components/workflow/WorkflowPipeline.tsx` | moyen | modify |
+| `frontend/src/lib/markdownComponents.tsx` | moyen | modify *(découvert post-UI-018a — non listé dans l'estimation initiale)* |
+| `frontend/src/lib/statusBadge.ts` | faible | modify : map status → classe ykp |
+| `frontend/src/components/ui/*.tsx` (8 fichiers) | aucun | **inchangés** (primitives shadcn intactes) |
+| `frontend/src/styles/globals.css` | aucun | **inchangé** (déjà migré par UI-018a — seul `globals.css` a légitimement des classes shadcn dans son `@apply border-border` au reset Tailwind) |
+| `docs/palette.md` | faible | modify : enrichissement section « Composants tiers tolérés » avec audit post-UI-018b |
 
 ## Dépendances et intégrations
 

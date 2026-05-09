@@ -147,7 +147,7 @@ export function WorkflowPipeline() {
   if (error) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-sm text-destructive">Error: {error}</p>
+        <p className="text-sm text-ykp-danger">Error: {error}</p>
       </div>
     );
   }
@@ -160,7 +160,7 @@ export function WorkflowPipeline() {
   if (loading && totalItems === 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-sm text-muted-foreground">Loading pipeline…</p>
+        <p className="text-sm text-ykp-text-muted">Loading pipeline…</p>
       </div>
     );
   }
@@ -168,7 +168,7 @@ export function WorkflowPipeline() {
   if (totalItems === 0) {
     return (
       <div className="flex flex-1 items-center justify-center p-8">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-ykp-text-muted">
           No SPDD artifacts yet. Run{' '}
           <code className="font-mono">/yukki-story</code> to create one.
         </p>
@@ -181,7 +181,7 @@ export function WorkflowPipeline() {
       aria-label="Workflow Kanban board"
       className="flex flex-1 flex-col overflow-hidden"
     >
-      <header className="flex h-10 shrink-0 items-center justify-end border-b border-border bg-card px-3">
+      <header className="flex h-10 shrink-0 items-center justify-end border-b border-ykp-line bg-ykp-bg-elevated px-3">
         <Button
           variant={showArchived ? 'secondary' : 'ghost'}
           size="icon"
@@ -213,11 +213,11 @@ export function WorkflowPipeline() {
         </div>
         <DragOverlay>
           {activeItem ? (
-            <div className="rounded-md border border-primary bg-card p-2 text-xs shadow-lg shadow-primary/30">
-              <div className="font-mono text-[10px] text-muted-foreground">
+            <div className="rounded-md border border-primary bg-ykp-bg-elevated p-2 text-xs shadow-lg shadow-primary/30">
+              <div className="font-mono text-[10px] text-ykp-text-muted">
                 {activeItem.id}
               </div>
-              <div className="text-foreground line-clamp-1">
+              <div className="text-ykp-text-primary line-clamp-1">
                 {activeItem.active.Title}
               </div>
             </div>

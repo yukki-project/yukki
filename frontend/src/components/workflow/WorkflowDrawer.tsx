@@ -31,7 +31,7 @@ export function WorkflowDrawer() {
         side="right"
         className="w-[600px] max-w-full sm:max-w-[600px] p-0 flex flex-col"
       >
-        <SheetHeader className="px-4 py-3 border-b border-border">
+        <SheetHeader className="px-4 py-3 border-b border-ykp-line">
           <SheetTitle className="font-mono text-sm">{drawerPath}</SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-hidden">
