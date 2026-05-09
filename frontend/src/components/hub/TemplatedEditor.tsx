@@ -34,9 +34,9 @@ function AutoTextarea({ value, placeholder, onChange }: AutoTextareaProps): JSX.
         el.style.height = `${el.scrollHeight}px`;
       }}
       className={cn(
-        'w-full resize-none overflow-hidden rounded-md border border-border bg-background',
-        'px-3 py-2 text-[13.5px] leading-[1.55] text-foreground placeholder:text-muted-foreground',
-        'focus:outline-none focus:ring-1 focus:ring-ring',
+        'w-full resize-none overflow-hidden rounded-md border border-ykp-line bg-ykp-bg-page',
+        'px-3 py-2 text-[13.5px] leading-[1.55] text-ykp-text-primary placeholder:text-ykp-text-muted',
+        'focus:outline-none focus:ring-1 focus:ring-ykp-ring',
       )}
     />
   );
@@ -53,10 +53,10 @@ interface FmFieldProps {
 function FmField({ spec, value, onChange }: FmFieldProps): JSX.Element {
   const strValue = Array.isArray(value) ? value.join(', ') : (value ?? '');
 
-  const labelClass = 'block text-[11px] font-mono text-muted-foreground mb-1 capitalize';
+  const labelClass = 'block text-[11px] font-mono text-ykp-text-muted mb-1 capitalize';
   const inputClass = cn(
-    'w-full rounded-md border border-border bg-background px-3 py-1.5',
-    'text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring',
+    'w-full rounded-md border border-ykp-line bg-ykp-bg-page px-3 py-1.5',
+    'text-[13px] text-ykp-text-primary focus:outline-none focus:ring-1 focus:ring-ykp-ring',
   );
 
   if (spec.widget === 'date') {
@@ -94,7 +94,7 @@ function FmField({ spec, value, onChange }: FmFieldProps): JSX.Element {
     // Render as comma-separated text for now; stores as string[]
     return (
       <div>
-        <label className={labelClass}>{spec.key} <span className="text-[10px] text-muted-foreground">(séparés par virgule)</span></label>
+        <label className={labelClass}>{spec.key} <span className="text-[10px] text-ykp-text-muted">(séparés par virgule)</span></label>
         <input
           type="text"
           value={Array.isArray(value) ? value.join(', ') : strValue}
@@ -133,8 +133,8 @@ interface FrontmatterFormProps {
 function FrontmatterForm({ specs, values, onChange }: FrontmatterFormProps): JSX.Element | null {
   if (specs.length === 0) return null;
   return (
-    <section className="border-b border-border px-6 py-4">
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <section className="border-b border-ykp-line px-6 py-4">
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-ykp-text-muted">
         Front-matter
       </h3>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -160,8 +160,8 @@ interface SectionRendererProps {
 
 function SectionRenderer({ section, onChange }: SectionRendererProps): JSX.Element {
   return (
-    <section className="px-6 py-4 border-b border-border last:border-b-0">
-      <h3 className="mb-2 text-[13px] font-semibold text-foreground">{section.heading}</h3>
+    <section className="px-6 py-4 border-b border-ykp-line last:border-b-0">
+      <h3 className="mb-2 text-[13px] font-semibold text-ykp-text-primary">{section.heading}</h3>
       {section.widget === 'ac-cards' ? (
         <GenericAcEditor
           acs={section.acs}
@@ -197,7 +197,7 @@ export function TemplatedEditor({ editState, template, onChange }: TemplatedEdit
   };
 
   return (
-    <div className="flex flex-col overflow-y-auto bg-background">
+    <div className="flex flex-col overflow-y-auto bg-ykp-bg-page">
       <FrontmatterForm
         specs={template.fmSpecs}
         values={editState.fmValues}

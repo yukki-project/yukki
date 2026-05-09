@@ -104,7 +104,7 @@ function splitIntoSections(body: string): { intro: string; sections: Section[] }
 // ---------------------------------------------------------------------------
 
 const STATUS_BADGE: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
+  draft: 'bg-ykp-bg-subtle text-ykp-text-muted',
   reviewed: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
   accepted: 'bg-purple-500/15 text-purple-700 dark:text-purple-300',
   implemented: 'bg-green-500/15 text-green-700 dark:text-green-300',
@@ -362,7 +362,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
 
   return (
     <section
-      className={cn('flex-1 overflow-y-auto bg-background relative', className)}
+      className={cn('flex-1 overflow-y-auto bg-ykp-bg-page relative', className)}
       aria-label="Artefact viewer"
     >
       {/* Toolbar */}
@@ -407,15 +407,15 @@ export function StoryViewer({ className }: StoryViewerProps) {
 
       {/* Empty state */}
       {!path && (
-        <p className="p-6 text-sm text-muted-foreground">
+        <p className="p-6 text-sm text-ykp-text-muted">
           Select an artefact in the list to preview it here.
         </p>
       )}
 
-      {loading && <p className="p-6 text-sm text-muted-foreground">Loading…</p>}
+      {loading && <p className="p-6 text-sm text-ykp-text-muted">Loading…</p>}
 
       {error && (
-        <div className="m-6 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="m-6 rounded-md border border-destructive/40 bg-ykp-danger/10 p-4 text-sm text-ykp-danger">
           {error}
         </div>
       )}
@@ -423,7 +423,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
       {/* Edit mode */}
       {!loading && !error && content && mode === 'edit' && (
         templateLoading ? (
-          <p className="p-6 text-sm text-muted-foreground">Chargement du template…</p>
+          <p className="p-6 text-sm text-ykp-text-muted">Chargement du template…</p>
         ) : parsedTemplate !== null && editState !== null ? (
           <TemplatedEditor
             editState={editState}
@@ -433,11 +433,11 @@ export function StoryViewer({ className }: StoryViewerProps) {
         ) : (
           <>
             {/* Fallback: raw textarea + notice */}
-            <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-6 py-2 text-[12px] text-muted-foreground">
+            <div className="flex items-center gap-2 border-b border-ykp-line bg-ykp-bg-subtle/30 px-6 py-2 text-[12px] text-ykp-text-muted">
               Template inconnu — édition en mode brut
             </div>
             <textarea
-              className="w-full h-full min-h-[calc(100vh-6rem)] font-mono text-sm bg-background p-6 resize-none focus:outline-none"
+              className="w-full h-full min-h-[calc(100vh-6rem)] font-mono text-sm bg-ykp-bg-page p-6 resize-none focus:outline-none"
               value={dirtyContent}
               onChange={(e) => setDirtyContent(e.target.value)}
               aria-label="Éditeur d'artefact"
@@ -500,7 +500,7 @@ export function StoryViewer({ className }: StoryViewerProps) {
           <DialogHeader>
             <DialogTitle>Modifications non enregistrées</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-ykp-text-muted">
             Vous avez des modifications non enregistrées. Que souhaitez-vous faire ?
           </p>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -534,7 +534,7 @@ function FrontmatterHeader({ meta, title }: { meta: Frontmatter; title?: string 
     .sort();
 
   return (
-    <header className="border-b bg-muted/20 px-6 py-4 space-y-3">
+    <header className="border-b bg-ykp-bg-subtle/20 px-6 py-4 space-y-3">
       {title && <h1 className="text-xl font-semibold leading-tight">{title}</h1>}
       {(orderedScalars.length > 0 || otherScalars.length > 0) && (
         <div className="flex flex-wrap gap-2">
@@ -546,12 +546,12 @@ function FrontmatterHeader({ meta, title }: { meta: Frontmatter; title?: string 
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-xs">
           {Object.entries(lists).map(([key, values]) => (
             <Fragment key={key}>
-              <dt className="text-muted-foreground capitalize">{key.replace(/-/g, ' ')}</dt>
+              <dt className="text-ykp-text-muted capitalize">{key.replace(/-/g, ' ')}</dt>
               <dd className="flex flex-wrap gap-1">
                 {values.map((v) => (
                   <span
                     key={v}
-                    className="inline-block rounded bg-secondary px-2 py-0.5 font-mono"
+                    className="inline-block rounded bg-ykp-bg-subtle px-2 py-0.5 font-mono"
                   >
                     {v}
                   </span>
@@ -572,7 +572,7 @@ function renderScalarPill(key: string, value: string) {
         key={key}
         className={cn(
           'inline-block rounded-md px-2 py-0.5 text-xs font-medium',
-          STATUS_BADGE[value] ?? 'bg-muted text-muted-foreground',
+          STATUS_BADGE[value] ?? 'bg-ykp-bg-subtle text-ykp-text-muted',
         )}
       >
         {value}
@@ -582,9 +582,9 @@ function renderScalarPill(key: string, value: string) {
   return (
     <span
       key={key}
-      className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs"
+      className="inline-flex items-center gap-1 rounded-md bg-ykp-bg-subtle px-2 py-0.5 text-xs"
     >
-      <span className="text-muted-foreground">{key}:</span>
+      <span className="text-ykp-text-muted">{key}:</span>
       <span className="font-mono">{value}</span>
     </span>
   );

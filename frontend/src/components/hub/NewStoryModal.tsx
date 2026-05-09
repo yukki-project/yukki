@@ -167,11 +167,11 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
 
         {phase === 'running' && (
           <div className="flex flex-col items-center gap-3 py-6">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-ykp-text-muted" />
+            <p className="text-sm text-ykp-text-muted">
               {currentLabel || 'Working…'}
             </p>            {liveText && (
-              <pre className="w-full max-h-60 overflow-y-auto rounded-md border border-input bg-muted p-2 text-xs font-mono text-muted-foreground whitespace-pre-wrap break-words">
+              <pre className="w-full max-h-60 overflow-y-auto rounded-md border border-ykp-line bg-ykp-bg-subtle p-2 text-xs font-mono text-ykp-text-muted whitespace-pre-wrap break-words">
                 {liveText}
               </pre>
             )}            <Button variant="outline" size="sm" onClick={handleAbort}>
@@ -183,7 +183,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
         {phase !== 'running' && (
           <>
             {phase === 'error' && generationError && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="rounded-md border border-destructive/40 bg-ykp-danger/10 p-3 text-sm text-ykp-danger">
                 {generationError}
               </div>
             )}
@@ -205,9 +205,9 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
                 maxLength={MAX_DESCRIPTION}
                 rows={6}
                 placeholder="ex. Permettre l'export Excel des rapports Trivy filtrés par namespace…"
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex w-full rounded-md border border-ykp-line bg-ykp-bg-page px-3 py-2 text-sm ring-offset-ykp-bg-page placeholder:text-ykp-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ykp-ring focus-visible:ring-offset-2"
               />
-              <div className="text-right text-xs text-muted-foreground">
+              <div className="text-right text-xs text-ykp-text-muted">
                 {description.length} / {MAX_DESCRIPTION}
               </div>
             </div>
@@ -221,7 +221,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
                   id="prefix"
                   value={prefix}
                   onChange={(e) => setPrefix(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex h-10 w-full rounded-md border border-ykp-line bg-ykp-bg-page px-3 py-2 text-sm ring-offset-ykp-bg-page focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ykp-ring"
                 >
                   {prefixes.map((p) => (
                     <option key={p} value={p}>
@@ -236,7 +236,7 @@ export function NewStoryModal({ open, onOpenChange }: NewStoryModalProps) {
                     value={customPrefix}
                     onChange={(e) => setCustomPrefix(e.target.value.toUpperCase())}
                     placeholder="ABC"
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm uppercase"
+                    className="flex h-9 w-full rounded-md border border-ykp-line bg-ykp-bg-page px-3 py-1 text-sm uppercase"
                   />
                 )}
               </div>

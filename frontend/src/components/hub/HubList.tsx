@@ -87,10 +87,10 @@ export function HubList({ className }: HubListProps) {
 
   return (
     <section className={cn('flex flex-col overflow-y-auto', className)} aria-label="Artefact list">
-      <header className="sticky top-0 z-10 flex items-center justify-between bg-background border-b px-4 py-2">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-ykp-bg-page border-b px-4 py-2">
         <div className="text-sm font-semibold capitalize">
           {kind}
-          <span className="ml-2 text-xs text-muted-foreground">{visible.length} item(s)</span>
+          <span className="ml-2 text-xs text-ykp-text-muted">{visible.length} item(s)</span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -110,11 +110,11 @@ export function HubList({ className }: HubListProps) {
           menu d'actions extensible (pour l'instant Export PDF, plus tard
           d'autres actions de masse — archiver, supprimer, déplacer…). */}
       {selectionMode && (
-        <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/40 px-4 py-1.5">
-          <span className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">{selection.size}</span> sélectionné(s)
+        <div className="flex items-center justify-between gap-2 border-b border-ykp-line bg-ykp-bg-subtle/40 px-4 py-1.5">
+          <span className="text-xs text-ykp-text-muted">
+            <span className="font-semibold text-ykp-text-primary">{selection.size}</span> sélectionné(s)
             {hiddenSelectedCount > 0 && (
-              <span className="ml-1 text-muted-foreground/70">
+              <span className="ml-1 text-ykp-text-muted/70">
                 ({hiddenSelectedCount} hors du mode courant)
               </span>
             )}
@@ -160,13 +160,13 @@ export function HubList({ className }: HubListProps) {
       )}
 
       {error && (
-        <div className="m-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="m-4 rounded-md border border-destructive/40 bg-ykp-danger/10 p-3 text-sm text-ykp-danger">
           <AlertCircle className="inline h-4 w-4 mr-1" />
           {error}
         </div>
       )}
       {!error && visible.length === 0 && (
-        <p className="p-4 text-sm text-muted-foreground">No {kind} yet.</p>
+        <p className="p-4 text-sm text-ykp-text-muted">No {kind} yet.</p>
       )}
       {visible.length > 0 && (
         <ul className="w-full">
@@ -183,8 +183,8 @@ export function HubList({ className }: HubListProps) {
                 key={m.Path}
                 onClick={() => setSelectedPath(m.Path)}
                 className={cn(
-                  'group flex items-start gap-1.5 px-3 py-2 cursor-pointer border-b hover:bg-accent/40',
-                  active && 'bg-accent/60',
+                  'group flex items-start gap-1.5 px-3 py-2 cursor-pointer border-b hover:bg-ykp-line/40',
+                  active && 'bg-ykp-line/60',
                   archived && 'opacity-40',
                 )}
               >
@@ -208,7 +208,7 @@ export function HubList({ className }: HubListProps) {
                   <span className="font-mono text-[11px] leading-tight truncate">{m.ID || '?'}</span>
                   {broken ? (
                     <span
-                      className="inline-flex items-center gap-1 rounded-md bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive w-fit"
+                      className="inline-flex items-center gap-1 rounded-md bg-ykp-danger/15 px-1.5 py-0.5 text-[10px] text-ykp-danger w-fit"
                       title={m.Error}
                     >
                       <AlertCircle className="h-2.5 w-2.5" /> err
@@ -217,7 +217,7 @@ export function HubList({ className }: HubListProps) {
                     <span
                       className={cn(
                         'inline-block rounded-md px-1.5 py-0.5 text-[10px] w-fit',
-                        STATUS_BADGE[m.Status] ?? 'bg-muted text-muted-foreground',
+                        STATUS_BADGE[m.Status] ?? 'bg-ykp-bg-subtle text-ykp-text-muted',
                       )}
                     >
                       {m.Status || '?'}

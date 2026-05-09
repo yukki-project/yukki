@@ -20,11 +20,11 @@ export function WorkflowColumn({ state, items }: WorkflowColumnProps) {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <div className="sticky top-0 z-10 flex h-10 items-center border-b border-border bg-card px-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="sticky top-0 z-10 flex h-10 items-center border-b border-ykp-line bg-ykp-bg-elevated px-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ykp-text-muted">
           {COLUMN_LABELS[state]}
         </span>
-        <span className="ml-2 text-xs text-muted-foreground/50">
+        <span className="ml-2 text-xs text-ykp-text-muted/50">
           {items.length}
         </span>
       </div>
@@ -32,7 +32,7 @@ export function WorkflowColumn({ state, items }: WorkflowColumnProps) {
         ref={setNodeRef}
         className={cn(
           'flex flex-1 flex-col gap-2 p-2 transition-colors',
-          isOver && 'bg-primary/5',
+          isOver && 'bg-ykp-primary/5',
         )}
         aria-label={`${COLUMN_LABELS[state]} column`}
       >
@@ -44,7 +44,7 @@ export function WorkflowColumn({ state, items }: WorkflowColumnProps) {
           />
         ))}
         {items.length === 0 && (
-          <div className="text-center text-xs text-muted-foreground/30 py-4">
+          <div className="text-center text-xs text-ykp-text-muted/30 py-4">
             —
           </div>
         )}

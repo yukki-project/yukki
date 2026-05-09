@@ -45,14 +45,14 @@ export function CodeBlock({ language, children }: CodeBlockProps) {
           dangerouslySetInnerHTML={{ __html: highlightedHtml }}
         />
       ) : (
-        <pre className="overflow-x-auto rounded-md bg-muted p-4 text-sm">
+        <pre className="overflow-x-auto rounded-md bg-ykp-bg-subtle p-4 text-sm">
           <code>{children}</code>
         </pre>
       )}
       <button
         aria-label="Copier le code"
         onClick={handleCopy}
-        className="absolute top-2 right-2 rounded px-2 py-0.5 text-xs bg-muted/80 border border-border opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 rounded px-2 py-0.5 text-xs bg-ykp-bg-subtle/80 border border-ykp-line opacity-0 group-hover:opacity-100 transition-opacity"
       >
         {copied ? 'Copié\u00a0!' : 'Copier'}
       </button>

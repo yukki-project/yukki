@@ -73,7 +73,7 @@ export function FileMenu(): JSX.Element {
         <Button
           variant="ghost"
           size="sm"
-          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+          className="h-6 px-2 text-xs text-ykp-text-muted hover:text-ykp-text-primary"
         >
           File
         </Button>
@@ -83,7 +83,7 @@ export function FileMenu(): JSX.Element {
         <DropdownMenuItem onClick={() => handleOpenProject('')}>
           <FolderOpen className="mr-2 h-4 w-4" />
           Open Project…
-          <span className="ml-auto text-xs text-muted-foreground">Ctrl+O</span>
+          <span className="ml-auto text-xs text-ykp-text-muted">Ctrl+O</span>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -96,14 +96,14 @@ export function FileMenu(): JSX.Element {
           <DropdownMenuSubContent className="w-64">
             {recentProjects.length === 0 ? (
               <DropdownMenuItem disabled>
-                <span className="text-muted-foreground">No recent projects</span>
+                <span className="text-ykp-text-muted">No recent projects</span>
               </DropdownMenuItem>
             ) : (
               recentProjects.map((r) => (
                 <DropdownMenuItem key={r.path} onClick={() => handleOpenRecent(r.path)}>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="truncate font-medium">{r.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{r.path}</span>
+                    <span className="truncate text-xs text-ykp-text-muted">{r.path}</span>
                   </div>
                 </DropdownMenuItem>
               ))

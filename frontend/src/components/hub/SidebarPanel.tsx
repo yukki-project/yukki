@@ -56,12 +56,12 @@ export function SidebarPanel(): JSX.Element {
     <aside
       aria-label="Mode panel"
       className={cn(
-        'relative flex flex-col border-r border-border bg-card overflow-hidden shrink-0',
+        'relative flex flex-col border-r border-ykp-line bg-ykp-bg-elevated overflow-hidden shrink-0',
         'max-md:fixed max-md:inset-y-0 max-md:left-13 max-md:z-40 max-md:shadow-xl',
       )}
       style={{ width: sidebarOpen ? width : 0 }}
     >
-      <header className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3">
+      <header className="flex h-10 shrink-0 items-center justify-between border-b border-ykp-line px-3">
         <h2 className="text-sm font-semibold">{TITLES[activeMode]}</h2>
         <Button
           variant="ghost"
@@ -74,7 +74,7 @@ export function SidebarPanel(): JSX.Element {
         </Button>
       </header>
       {activeMode === 'settings' ? (
-        <div className="p-4 text-sm text-muted-foreground">
+        <div className="p-4 text-sm text-ykp-text-muted">
           Settings panel — UI-007 (à venir).
         </div>
       ) : (
@@ -82,7 +82,7 @@ export function SidebarPanel(): JSX.Element {
       )}
       {sidebarOpen && (
         <div
-          className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 z-10"
+          className="absolute right-0 top-0 h-full w-1 cursor-col-resize hover:bg-ykp-primary/40 active:bg-ykp-primary/60 z-10"
           onMouseDown={onDragStart}
           aria-label="Resize sidebar"
         />

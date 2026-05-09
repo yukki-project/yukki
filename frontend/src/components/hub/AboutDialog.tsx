@@ -108,7 +108,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps): JSX.Eleme
             <DialogTitle className="flex items-center gap-2 text-2xl">
               yukki
               {isDev ? (
-                <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
+                <span className="inline-flex items-center rounded-md bg-ykp-bg-subtle px-2 py-0.5 font-mono text-[10px] uppercase text-ykp-text-muted">
                   build de développement
                 </span>
               ) : null}
@@ -121,20 +121,20 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps): JSX.Eleme
 
         <div className="space-y-3 text-sm">
           <dl className="grid grid-cols-[7rem_1fr] gap-y-1.5">
-            <dt className="font-mono text-xs text-muted-foreground">version</dt>
+            <dt className="font-mono text-xs text-ykp-text-muted">version</dt>
             <dd className="font-mono text-xs">{displayedVersion}</dd>
 
-            <dt className="font-mono text-xs text-muted-foreground">commit</dt>
+            <dt className="font-mono text-xs text-ykp-text-muted">commit</dt>
             <dd className="font-mono text-xs">
               {info?.CommitSHA ? info.CommitSHA : '—'}
             </dd>
 
-            <dt className="font-mono text-xs text-muted-foreground">built</dt>
+            <dt className="font-mono text-xs text-ykp-text-muted">built</dt>
             <dd className="font-mono text-xs">
               {info?.BuildDate ? info.BuildDate : '—'}
             </dd>
 
-            <dt className="font-mono text-xs text-muted-foreground">license</dt>
+            <dt className="font-mono text-xs text-ykp-text-muted">license</dt>
             <dd>
               <button
                 type="button"
@@ -145,7 +145,7 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps): JSX.Eleme
               </button>
             </dd>
 
-            <dt className="font-mono text-xs text-muted-foreground">repo</dt>
+            <dt className="font-mono text-xs text-ykp-text-muted">repo</dt>
             <dd>
               <button
                 type="button"
@@ -159,15 +159,15 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps): JSX.Eleme
           </dl>
 
           <div className="space-y-1.5 border-t pt-3">
-            <h3 className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            <h3 className="font-mono text-[11px] uppercase tracking-wider text-ykp-text-muted">
               Briques majeures
             </h3>
             <ul className="space-y-0.5 text-xs">
               {KEY_DEPENDENCIES.map((dep) => (
                 <li key={dep.name} className="flex items-baseline gap-2">
-                  <Check className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  <Check className="h-3 w-3 shrink-0 text-ykp-text-muted" />
                   <span className="font-medium">{dep.name}</span>
-                  <span className="text-muted-foreground">{dep.role}</span>
+                  <span className="text-ykp-text-muted">{dep.role}</span>
                 </li>
               ))}
             </ul>

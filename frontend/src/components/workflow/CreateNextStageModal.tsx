@@ -54,18 +54,18 @@ export function CreateNextStageModal({
           <DialogTitle>Create next stage</DialogTitle>
           <DialogDescription>
             Run this command in Claude Code to advance{' '}
-            <span className="font-mono text-foreground">
+            <span className="font-mono text-ykp-text-primary">
               {sourceArtifact?.ID ?? '?'}
             </span>{' '}
             to the next SPDD stage.
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-md border border-border bg-muted/40 p-3">
-          <code className="block break-all font-mono text-sm text-foreground">
+        <div className="rounded-md border border-ykp-line bg-ykp-bg-subtle/40 p-3">
+          <code className="block break-all font-mono text-sm text-ykp-text-primary">
             {command}
           </code>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-ykp-text-muted">
           Coming in a future version: this will run automatically.
         </p>
         <DialogFooter>

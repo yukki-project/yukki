@@ -19,7 +19,7 @@ export function TitleBar(): JSX.Element {
   return (
     <header
       aria-label="Title bar"
-      className="flex h-8 shrink-0 items-center justify-between border-b border-border bg-card select-none"
+      className="flex h-8 shrink-0 items-center justify-between border-b border-ykp-line bg-ykp-bg-elevated select-none"
     >
       <div className="flex items-center gap-2 pl-3">
         <img
@@ -59,7 +59,7 @@ export function TitleBar(): JSX.Element {
           aria-label="Close"
           className={cn(
             'h-8 w-12 rounded-none',
-            'hover:bg-destructive hover:text-destructive-foreground',
+            'hover:bg-ykp-danger hover:text-ykp-danger-fg',
           )}
           onClick={() => Quit()}
         >

@@ -15,7 +15,7 @@ export const mdComponents: Components = {
   // ─── Code ────────────────────────────────────────────────────────────
   // - bloc multi-ligne (triple backticks) : délègue à CodeBlock (shiki)
   // - inline (single backtick) : badge contrasté pour ressortir clairement
-  //   sur fond sombre (le `bg-muted` par défaut se confondait avec le
+  //   sur fond sombre (le `bg-ykp-bg-subtle` par défaut se confondait avec le
   //   fond yk-bg-page).
   code({ className, children }: { className?: string; children?: ReactNode }) {
     const lang = className?.replace(/^language-/, '');
@@ -159,7 +159,7 @@ export const mdComponents: Components = {
   // ─── Pre (rare en markdown via remark, mais safe-guard) ──────────────
   pre({ children, ...props }) {
     return (
-      <pre {...props} className="my-2 overflow-x-auto rounded bg-muted p-3 text-[12.5px]">
+      <pre {...props} className="my-2 overflow-x-auto rounded bg-ykp-bg-subtle p-3 text-[12.5px]">
         {children}
       </pre>
     );

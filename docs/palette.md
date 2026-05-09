@@ -167,5 +167,39 @@ toléré sauf cas signalé par l'utilisateur :
   ([`pdfTokens.ts`](../frontend/src/components/spdd/pdf/pdfTokens.ts)),
   indépendante.
 
-Si un tiers est observé visuellement hors palette après UI-018b,
-ouvrir une story de suivi (UI-018c) pour l'override CSS dédié.
+## Audit tiers post-UI-018b
+
+Audit confirmé après la migration mécanique des classes shadcn
+vers `bg-ykp-*` (PR UI-018b, 2026-05-09).
+
+| Tiers | Imports principaux | Source des couleurs | Verdict |
+|---|---|---|---|
+| `lucide-react` | 20+ icones (Inbox, Stories, Map, Sparkles, …) | hérite de `text-*` du parent | ✅ aucun override nécessaire (auto-rewire via `text-ykp-*` du parent) |
+| `@radix-ui` (via shadcn primitives) | `Dialog`, `DropdownMenu`, `Sheet`, `Tooltip`, `Toast` | classes `bg-*`, `text-*` qui consomment `var(--background)` etc. (aliasées sur ykp depuis UI-018a) | ✅ aucun override nécessaire (variables CSS résolues via le rewire) |
+| `react-hook-form` | éditeurs AC + champs front-matter | aucune couleur (logique form pure) | ✅ neutre |
+| `react-hot-toast` (équivalent custom Toaster) | `Toaster` shadcn | classes `bg-*` désormais migrées par UI-018b | ✅ couvert par la migration |
+| `@react-pdf/renderer` | export PDF | `pdfTokens.ts` light mode dédié | ✅ hors périmètre desktop |
+| Scrollbar OS / WebKit | scrollbar custom | `var(--ykp-line)` / `var(--ykp-text-muted)` direct dans `globals.css` | ✅ déjà aligné |
+
+**Aucun composant tiers observé hors palette post-migration.**
+Pas de UI-018c nécessaire à ce stade. Si un cas remonte plus
+tard (régression visuelle signalée par l'utilisateur), ouvrir
+une story de suivi pour l'override CSS dédié.
+
+## Notes de migration UI-018b
+
+- **Périmètre couvert** : 22 fichiers chrome
+  (`frontend/src/components/` hors `ui/`, `frontend/src/lib/`,
+  `frontend/src/App.tsx`).
+- **Périmètre exclu** : 8 primitives shadcn dans
+  `frontend/src/components/ui/*.tsx` — leur source vient de la
+  lib shadcn, intactes par convention. Elles consomment les
+  variables CSS aliasées par UI-018a → rendu correct sans
+  modification.
+- **Variantes Tailwind préservées** : opacity (`/40`), pseudo-
+  classes (`hover:`, `focus:`, `active:`,
+  `data-[state=open]:`) — sed `\b` boundary-aware respecte les
+  préfixes / suffixes.
+- **Idempotence** : un rerun du script de migration ne produit
+  aucun diff (les classes ykp ne matchent plus le pattern
+  shadcn).

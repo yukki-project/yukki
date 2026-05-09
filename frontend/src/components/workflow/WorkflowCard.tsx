@@ -89,7 +89,7 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
       role="article"
       aria-roledescription="card"
       className={cn(
-        'group relative flex flex-col gap-1 rounded-md border border-border bg-card p-2 text-xs',
+        'group relative flex flex-col gap-1 rounded-md border border-ykp-line bg-ykp-bg-elevated p-2 text-xs',
         'hover:border-primary/40 transition-colors',
         isDragging && 'opacity-30',
         isPending && 'opacity-60 cursor-wait',
@@ -103,23 +103,23 @@ export function WorkflowCard({ artifact, kind }: WorkflowCardProps) {
         {...attributes}
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-[10px] text-muted-foreground">
+          <span className="font-mono text-[10px] text-ykp-text-muted">
             {artifact.ID}
           </span>
           <span
             className={cn(
               'inline-block rounded px-1.5 py-0.5 text-[10px]',
-              STATUS_BADGE[status] ?? 'bg-muted text-muted-foreground',
+              STATUS_BADGE[status] ?? 'bg-ykp-bg-subtle text-ykp-text-muted',
             )}
           >
             {status}
           </span>
         </div>
-        <div className="line-clamp-1 text-foreground" title={artifact.Title}>
+        <div className="line-clamp-1 text-ykp-text-primary" title={artifact.Title}>
           {artifact.Title || artifact.Slug || '—'}
         </div>
         {artifact.Updated && (
-          <time className="text-[10px] text-muted-foreground">
+          <time className="text-[10px] text-ykp-text-muted">
             {artifact.Updated}
           </time>
         )}
