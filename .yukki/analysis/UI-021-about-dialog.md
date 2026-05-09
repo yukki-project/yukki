@@ -2,9 +2,9 @@
 id: UI-021
 slug: about-dialog
 story: .yukki/stories/UI-021-about-dialog.md
-status: draft
+status: implemented
 created: 2026-05-08
-updated: 2026-05-08
+updated: 2026-05-09
 ---
 
 # Analyse — Dialog "À propos" (version, GitHub, license, crédits)

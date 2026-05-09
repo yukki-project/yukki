@@ -2,9 +2,9 @@
 id: UI-021
 slug: about-dialog
 title: Dialog "À propos" (version, GitHub, license, crédits)
-status: reviewed
+status: implemented
 created: 2026-05-08
-updated: 2026-05-08
+updated: 2026-05-09
 owner: Thibaut Sannier
 modules:
   - frontend
