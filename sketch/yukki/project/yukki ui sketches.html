@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>yukki ui · sketches</title>
+<link rel="stylesheet" href="sketches.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="sketches.jsx"></script>
+<script type="text/babel">
+const { DesignCanvas, DCSection, DCArtboard } = window;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="intro" title="yukki ui · wireframe sketches" subtitle="early-stage layout exploration before committing to the hi-fi · sketches sit on a paper grid · pan + zoom · click any board to focus">
+        <DCArtboard id="readme" label="00 · brief" width={620} height={680}>
+          <div className="paper" style={{ height: "100%", padding: "32px 36px", position: "relative" }}>
+            <div style={{ fontFamily: "var(--hand-2)", fontSize: 34, fontWeight: 600 }}>yukki ui</div>
+            <div style={{ fontFamily: "var(--hand-3)", color: "var(--ink-3)", marginTop: 4 }}>wireframes · before pixels</div>
+            <div style={{ height: 18 }} />
+            <p style={{ fontFamily: "var(--hand)", fontSize: 14.5, lineHeight: 1.7, color: "var(--ink-2)" }}>
+              Le hi-fi (3-pane VS-Code-like) est <em>une</em> piste. Avant de figer ça, on explore d'autres
+              façons de servir le même but : <strong>donner un mode visuel à la CLI yukki</strong> pour que
+              dev / tech-lead / vibe-coder puissent piloter les 7 commandes (story → analysis → reasons-canvas
+              → generate → api-test → prompt-update → sync) sans ouvrir un terminal.
+            </p>
+            <div style={{ height: 14 }} />
+            <div style={{ fontFamily: "var(--hand-2)", fontSize: 18 }}>les axes que je teste</div>
+            <ul style={{ fontFamily: "var(--hand)", fontSize: 13.5, lineHeight: 1.85, paddingLeft: 22, color: "var(--ink-2)" }}>
+              <li><strong>structure</strong> — 3-pane editor, notebook scroll, pipeline graph, kanban, post-it wall, split markdown</li>
+              <li><strong>moments</strong> — accueil projet, run en cours, diff de canvas, palette ⌘K, lecture méthodo, mobile triage</li>
+              <li><strong>identité</strong> — variations de mark "lapin" pour le wordmark</li>
+            </ul>
+            <div style={{ height: 14 }} />
+            <div style={{ fontFamily: "var(--hand-2)", fontSize: 18 }}>comment lire ça</div>
+            <p style={{ fontFamily: "var(--hand)", fontSize: 13.5, lineHeight: 1.7, color: "var(--ink-2)" }}>
+              Chaque board est volontairement <em>moche</em> (papier + griffonnage) — le but n'est pas de juger
+              le visuel, mais la <strong>structure</strong>. Mark des cases, on combine ensuite en hi-fi.
+            </p>
+            <div style={{ position: "absolute", bottom: 30, right: 36, fontFamily: "var(--hand-2)", color: "var(--accent)", fontSize: 16 }}>
+              → drag, zoom, focus
+            </div>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="layouts" title="A · structures de page" subtitle="comment l'app est-elle agencée à l'écran ? une ardoise, un document, un graphe…">
+        <DCArtboard id="a1" label="A1 · 3-pane editor (current hi-fi)" width={1100} height={620}>
+          <S_3Pane />
+        </DCArtboard>
+        <DCArtboard id="a2" label="A2 · notebook / scroll" width={900} height={620}>
+          <S_Notebook />
+        </DCArtboard>
+        <DCArtboard id="a3" label="A3 · pipeline graph" width={900} height={680}>
+          <S_Pipeline />
+        </DCArtboard>
+        <DCArtboard id="a4" label="A4 · kanban / lifecycle" width={1100} height={560}>
+          <S_Kanban />
+        </DCArtboard>
+        <DCArtboard id="a5" label="A5 · REASONS post-it wall" width={1100} height={620}>
+          <S_Postit />
+        </DCArtboard>
+        <DCArtboard id="a6" label="A6 · split markdown editor" width={1000} height={580}>
+          <S_Split />
+        </DCArtboard>
+        <DCArtboard id="a7" label="A7 · run console (live generate)" width={1000} height={620}>
+          <S_RunConsole />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="moments" title="B · moments clés" subtitle="ce que tu vois à des instants précis du workflow — au-delà du shell">
+        <DCArtboard id="b1" label="B1 · project home" width={1000} height={620}>
+          <S_Dashboard />
+        </DCArtboard>
+        <DCArtboard id="b2" label="B2 · methodology browser" width={900} height={580}>
+          <S_Methodology />
+        </DCArtboard>
+        <DCArtboard id="b3" label="B3 · canvas diff" width={1000} height={580}>
+          <S_Diff />
+        </DCArtboard>
+        <DCArtboard id="b4" label="B4 · ⌘K palette" width={900} height={560}>
+          <S_Palette />
+        </DCArtboard>
+        <DCArtboard id="b5" label="B5 · mobile triage" width={700} height={620}>
+          <S_Mobile />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="brand" title="C · identité" subtitle="petits essais de mark — le lapin sous différentes formes">
+        <DCArtboard id="c1" label="C1 · wordmark + rabbit" width={1100} height={520}>
+          <S_Logos />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>yuki — éditeur SPDD · wireframes low-fi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Caveat:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="wireframes-styles.css">
+
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #efeadc;
+    color: #1f1d18;
+  }
+
+  /* Cover / intro card */
+  .intro-wrap {
+    padding: 32px 28px 28px;
+    border-bottom: 1.5px solid #2a2820;
+    background: #f6f2e8;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    align-items: start;
+  }
+  .intro-wrap h1 {
+    font-family: 'Kalam', cursive;
+    font-size: 38px;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .intro-wrap h1 small {
+    display: block;
+    font-size: 14px;
+    color: #4a4639;
+    font-weight: 400;
+    margin-top: 6px;
+  }
+  .intro-wrap p {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #2a2820;
+    max-width: 640px;
+    margin: 0 0 10px;
+  }
+  .intro-wrap .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .intro-wrap .meta span {
+    border: 1.5px solid #2a2820;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #f6f2e8;
+  }
+
+  .doc-link {
+    border: 2px solid #2a2820;
+    background: #fff;
+    padding: 14px 16px;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.1s;
+  }
+  .doc-link:hover { transform: translate(-1px, -1px); box-shadow: 3px 4px 0 rgba(0,0,0,0.15); }
+  .doc-link .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6a3d8a;
+    margin-bottom: 4px;
+  }
+  .doc-link .title {
+    font-family: 'Kalam', cursive;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .doc-link .desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #4a4639;
+  }
+  .doc-link .arrow {
+    margin-top: 8px;
+    font-family: 'Kalam', cursive;
+    font-size: 14px;
+    color: #2d4f8a;
+  }
+
+  /* Section explainer above artboards */
+  .canvas-host { padding: 24px 0 80px; }
+
+  /* Tighten artboard label area to feel like a sketch caption */
+  .dc-label, dc-label, [data-dc-label] {
+    font-family: 'Kalam', cursive !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="intro-wrap">
+  <div>
+    <h1>
+      yuki — éditeur guidé SPDD
+      <small>FRONT-002 · wireframes low-fi · v1 · 2026-05-07</small>
+    </h1>
+    <p>
+      Conception UX d'un éditeur structuré qui force le format SPDD sans freiner la rédaction,
+      avec une assistance IA contextuelle qui propose mais ne décide jamais. Posture choisie : <em>bon stagiaire</em>.
+    </p>
+    <p>
+      Cibles primaires : Product Owners qui apprennent SPDD, leads techniques qui finalisent, devs qui rédigent
+      des stories de dette. Le doc markdown ci-contre détaille les principes, l'IA, les microcopies et les tokens.
+      Les 6 artboards ci-dessous sont les états visuels critiques.
+    </p>
+    <div class="meta">
+      <span>3 zones</span>
+      <span>WYSIWYG ↔ MD round-trip</span>
+      <span>4 actions IA</span>
+      <span>diff avant/après</span>
+      <span>autosave 2s</span>
+      <span>WCAG AA</span>
+    </div>
+  </div>
+
+  <a class="doc-link" href="SPDD Editor — UX.md" target="_blank" rel="noopener">
+    <div class="kicker">📄 livrable principal</div>
+    <div class="title">Doc UX complet</div>
+    <div class="desc">
+      Principes, IA, wireframes ASCII, microcopies, tokens, patterns
+      d'interaction, risques, open questions. ~8 pages markdown.
+    </div>
+    <div class="arrow">→ ouvrir SPDD Editor — UX.md</div>
+  </a>
+</div>
+
+<div class="canvas-host" id="canvas-root"></div>
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- Design canvas component -->
+<script type="text/babel" src="design-canvas.jsx"></script>
+
+<!-- Shared wireframe primitives -->
+<script type="text/babel" src="wireframes-shared.jsx"></script>
+
+<!-- Six wireframe screens -->
+<script type="text/babel" src="wireframe-1-ac.jsx"></script>
+<script type="text/babel" src="wireframe-2-markdown.jsx"></script>
+<script type="text/babel" src="wireframe-3-ai-popover.jsx"></script>
+<script type="text/babel" src="wireframe-4-diff.jsx"></script>
+<script type="text/babel" src="wireframe-5-frontmatter.jsx"></script>
+<script type="text/babel" src="wireframe-6-export.jsx"></script>
+
+<script type="text/babel">
+  const { DesignCanvas, DCSection, DCArtboard } = window;
+
+  function App() {
+    return (
+      <DesignCanvas
+        title="Wireframes low-fi"
+        subtitle="6 états critiques de l'éditeur · style sketch / papier"
+      >
+        <DCSection
+          id="core"
+          title="Flow d'édition"
+          subtitle="Les écrans qu'un PO voit 90% du temps"
+        >
+          <DCArtboard id="ac" label="01 — Édition d'AC (section active)" width={1200} height={760}>
+            <Wireframe_AC />
+          </DCArtboard>
+
+          <DCArtboard id="md" label="02 — Mode markdown brut (⌘/)" width={1200} height={760}>
+            <Wireframe_Markdown />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="ai"
+          title="Assistance IA"
+          subtitle="Sélection → menu → diff → accept/reject"
+        >
+          <DCArtboard id="popover" label="03 — Menu contextuel sur sélection" width={1200} height={760}>
+            <Wireframe_AIPopover />
+          </DCArtboard>
+
+          <DCArtboard id="diff" label="04 — Panneau diff Avant/Après" width={1200} height={760}>
+            <Wireframe_Diff />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="bonus"
+          title="Validation & export"
+          subtitle="Erreurs front-matter et blocage d'export"
+        >
+          <DCArtboard id="fm" label="05 — Front-matter avec erreurs" width={1200} height={760}>
+            <Wireframe_FrontMatter />
+          </DCArtboard>
+
+          <DCArtboard id="export" label="06 — Export bloqué + checklist" width={1200} height={760}>
+            <Wireframe_Export />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('canvas-root')).render(<App />);
+</script>
+
+</body>
+</html>

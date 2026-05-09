@@ -1,0 +1,179 @@
+/* yukki ui — wireframe sketch system */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Architects+Daughter&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --paper:  #f5f1e8;
+  --paper-shade: #ebe5d4;
+  --ink:    #1a1815;
+  --ink-2:  #4a463e;
+  --ink-3:  #8a857a;
+  --ink-4:  #b8b1a0;
+  --grid:   #d8d1bd;
+  --accent: #d8693e;     /* rabbit-warm marker */
+  --accent-2: #4d8a8a;   /* teal pencil */
+  --highlight: #f5d76e80; /* yellow highlighter */
+  --highlight-2: #f0a55980;
+
+  --hand: 'Kalam', 'Caveat', sans-serif;
+  --hand-2: 'Caveat', cursive;
+  --hand-3: 'Architects Daughter', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--hand);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* ── Sketchy primitives ─────────────────────────────────────────────── */
+.box {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  border-radius: 6px 8px 7px 9px / 8px 6px 9px 7px;
+  position: relative;
+}
+.box.dashed { border-style: dashed; }
+.box.thick  { border-width: 2.5px; }
+.box.thin   { border-width: 1px; border-color: var(--ink-2); }
+
+.box.shaded::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(135deg,
+      transparent 0px, transparent 4px,
+      var(--ink-3) 4px, var(--ink-3) 4.5px);
+  opacity: 0.18;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.box.filled-accent { background: var(--highlight); border-color: var(--accent); }
+.box.filled-accent2 { background: var(--highlight-2); border-color: var(--accent); }
+.box.filled-cool   { background: #c5d8d840; border-color: var(--accent-2); }
+
+.lbl-hand { font-family: var(--hand); }
+.lbl-mono { font-family: var(--mono); font-size: 11px; color: var(--ink-2); }
+.lbl-tiny { font-size: 11px; color: var(--ink-3); font-family: var(--hand-3); }
+
+.scribble {
+  height: 8px;
+  background:
+    repeating-linear-gradient(110deg,
+      var(--ink-3) 0 1px, transparent 1px 5px);
+  opacity: 0.5;
+  border-radius: 4px;
+}
+.scribble.short { width: 60%; }
+.scribble.med   { width: 80%; }
+.scribble.lg    { width: 95%; }
+
+.line-h { height: 1px; background: var(--ink-3); opacity: 0.5; }
+.line-h.dotted { background: none; border-top: 1.5px dashed var(--ink-3); height: 0; }
+
+.callout {
+  font-family: var(--hand-2);
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 600;
+  position: absolute;
+  white-space: nowrap;
+}
+.callout::before {
+  content: "";
+  position: absolute;
+  width: 30px; height: 16px;
+  border-left: 1.5px solid var(--accent);
+  border-bottom: 1.5px solid var(--accent);
+  border-radius: 0 0 0 12px;
+}
+.callout.top-left::before { top: -10px; left: -28px; transform: rotate(-30deg); }
+.callout.top-right::before { top: -10px; right: -28px; transform: rotate(30deg) scaleX(-1); }
+.callout.bot-left::before { bottom: -10px; left: -28px; transform: rotate(30deg); }
+
+.arrow { stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.arrow-ink { stroke: var(--ink); stroke-width: 1.5; }
+.arrow-cool { stroke: var(--accent-2); stroke-width: 1.5; }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--hand-3); font-size: 11px;
+  padding: 2px 8px;
+  border: 1.2px solid var(--ink-2);
+  border-radius: 12px;
+  background: var(--paper-shade);
+}
+.tag.accent { border-color: var(--accent); color: var(--accent); background: var(--highlight); }
+.tag.cool { border-color: var(--accent-2); color: var(--accent-2); background: #c5d8d850; }
+
+.btn-wf {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: var(--hand); font-weight: 700; font-size: 14px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px 8px 7px 9px / 8px 6px 9px 7px;
+  background: var(--paper);
+}
+.btn-wf.primary { background: var(--accent); color: var(--paper); border-color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+.btn-wf.ghost { background: var(--paper-shade); }
+
+/* ── Artboard inner layout helpers ──────────────────────────────────── */
+.ab-pad { padding: 24px 28px; height: 100%; display: flex; flex-direction: column; gap: 16px; }
+.row { display: flex; gap: 12px; align-items: stretch; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+
+.ab-title-card {
+  position: absolute;
+  top: 14px; left: 18px;
+  font-family: var(--hand-2);
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 22px;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  background: var(--paper);
+  padding: 0 6px;
+}
+.ab-subtitle {
+  position: absolute;
+  top: 44px; left: 24px;
+  font-family: var(--hand-3);
+  color: var(--ink-3);
+  font-size: 12.5px;
+  pointer-events: none;
+}
+
+.section-divider {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--hand-2);
+  font-size: 18px;
+  color: var(--ink-2);
+}
+.section-divider .line { flex: 1; height: 0; border-top: 1.5px dashed var(--ink-3); }
+
+/* paper background — subtle grid */
+.paper {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(0,0,0,0.02) 0, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(0,0,0,0.02) 0, transparent 50%),
+    var(--paper);
+}
+.paper-grid {
+  background-image:
+    linear-gradient(var(--grid) 0.5px, transparent 0.5px),
+    linear-gradient(90deg, var(--grid) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  background-color: var(--paper);
+}
+.paper-dots {
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--ink-4) 0.8px, transparent 0.8px);
+  background-size: 18px 18px;
+}
+
+/* override DC artboard chrome to feel paper-y */
+.dc-artboard { background: var(--paper) !important; }

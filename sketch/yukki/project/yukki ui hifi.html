@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>yukki ui — hi-fi exploration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="hifi-frames.css?v=2" />
+<link rel="stylesheet" href="hifi-frames-v2.css?v=3" />
+<style>
+  html, body { margin: 0; height: 100%; background: oklch(0.10 0.008 75); font-family: 'Geist', system-ui, sans-serif; color: oklch(0.97 0.012 75); }
+  #root { height: 100%; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="data.js"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="hifi-frames.jsx"></script>
+  <script type="text/babel" src="hifi-frames-v2.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard } = window;
+
+    function App() {
+      return (
+        <DesignCanvas
+          title="yukki ui"
+          subtitle="exploration hi-fi · accent vert sur neutres bleu-gris"
+        >
+          <DCSection id="V2" title="V2 · Sobre — Inter + JetBrains Mono">
+            <DCArtboard id="V2A" label="éditeur · A1 refait sobre" width={1440} height={900}>
+              <F_EditorV2 />
+            </DCArtboard>
+            <DCArtboard id="V2L" label="éditeur sobre · light" width={1440} height={900}>
+              <F_EditorV2_Light />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="A" title="A · Dark — workspace principal">
+            <DCArtboard id="A1" label="éditeur 3-pane (canvas REASONS)" width={1440} height={900}>
+              <F_Editor />
+            </DCArtboard>
+            <DCArtboard id="A2" label="page d'accueil projet" width={1440} height={900}>
+              <F_Home />
+            </DCArtboard>
+            <DCArtboard id="A3" label="run console (generate live)" width={1440} height={900}>
+              <F_Run />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="B" title="B · Dark — moments forts">
+            <DCArtboard id="B1" label="⌘K palette" width={1440} height={900}>
+              <F_Palette />
+            </DCArtboard>
+            <DCArtboard id="B2" label="diff de canvas (review humaine)" width={1440} height={900}>
+              <F_Diff />
+            </DCArtboard>
+            <DCArtboard id="B3" label="REASONS — vue post-it (alternative)" width={1440} height={900}>
+              <F_Postit />
+            </DCArtboard>
+            <DCArtboard id="B4" label="methodology browser" width={1440} height={900}>
+              <F_Method />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="L" title="L · Light — même système, fond clair">
+            <DCArtboard id="L1" label="éditeur 3-pane · light" width={1440} height={900}>
+              <F_Editor_Light />
+            </DCArtboard>
+            <DCArtboard id="L2" label="page d'accueil projet · light" width={1440} height={900}>
+              <F_Home_Light />
+            </DCArtboard>
+            <DCArtboard id="L3" label="run console · light" width={1440} height={900}>
+              <F_Run_Light />
+            </DCArtboard>
+            <DCArtboard id="L4" label="REASONS post-it · light" width={1440} height={900}>
+              <F_Postit_Light />
+            </DCArtboard>
+            <DCArtboard id="L5" label="methodology browser · light" width={1440} height={900}>
+              <F_Method_Light />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="C" title="C · Identité">
+            <DCArtboard id="C1" label="brand sheet (logo, type, palette)" width={1280} height={900}>
+              <F_Brand />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+/* yukki ui — hi-fi frames on a Figma-style canvas */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:        oklch(0.145 0.012 75);
+  --bg-1:      oklch(0.175 0.013 75);
+  --bg-2:      oklch(0.21 0.014 75);
+  --bg-3:      oklch(0.26 0.016 75);
+  --bg-4:      oklch(0.30 0.018 75);
+  --line:      oklch(0.30 0.014 75);
+  --line-soft: oklch(0.255 0.012 75);
+  --line-strong: oklch(0.40 0.016 75);
+  --fg:        oklch(0.97 0.012 75);
+  --fg-1:      oklch(0.84 0.012 75);
+  --fg-2:      oklch(0.66 0.011 75);
+  --fg-3:      oklch(0.50 0.010 75);
+  --fg-4:      oklch(0.38 0.010 75);
+  --accent:    oklch(0.82 0.155 65);
+  --accent-2:  oklch(0.72 0.155 65);
+  --accent-soft: oklch(0.82 0.155 65 / 0.14);
+  --accent-line: oklch(0.82 0.155 65 / 0.40);
+  --accent-fg: oklch(0.18 0.02 75);
+  --teal:  oklch(0.78 0.10 200);
+  --green: oklch(0.80 0.13 150);
+  --rose:  oklch(0.75 0.15 18);
+  --plum:  oklch(0.72 0.15 320);
+  --blue:  oklch(0.78 0.10 240);
+  --ui:    'Geist', ui-sans-serif, system-ui, sans-serif;
+  --mono:  'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', ui-serif, Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body {
+  font-family: var(--ui);
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* canvas frame primitives */
+.frame {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui);
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.frame.light { background: oklch(0.985 0.005 75); color: oklch(0.20 0.012 75); }
+.frame.light { --bg: oklch(0.985 0.005 75); --bg-1: oklch(0.965 0.006 75); --bg-2: oklch(1 0 0); --bg-3: oklch(0.94 0.008 75); --line: oklch(0.88 0.008 75); --line-soft: oklch(0.93 0.006 75); --fg: oklch(0.20 0.012 75); --fg-1: oklch(0.36 0.011 75); --fg-2: oklch(0.50 0.010 75); --fg-3: oklch(0.66 0.010 75); --fg-4: oklch(0.78 0.008 75); --accent-fg: oklch(0.99 0 0); }
+
+.r { display: flex; align-items: center; }
+.c { display: flex; flex-direction: column; }
+.mono { font-family: var(--mono); }
+.serif { font-family: var(--serif); }
+
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot.amber  { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.dot.blue   { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+.dot.rose   { background: var(--rose); box-shadow: 0 0 6px var(--rose); }
+.dot.dim    { background: var(--fg-4); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 9px; border-radius: 999px;
+  font-size: 11px; color: var(--fg-1);
+  background: var(--bg-2); border: 1px solid var(--line);
+}
+.chip.accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.chip.dim { color: var(--fg-3); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 12px; border-radius: 8px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--fg-1); font-size: 12px; font-weight: 500;
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+
+/* tiny status */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: 10.5px; color: var(--fg-2);
+  background: var(--bg-2); border: 1px solid var(--line);
+  font-family: var(--mono);
+}
+.status-pill.accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.status-pill.green  { background: oklch(0.80 0.13 150 / 0.15); border-color: oklch(0.80 0.13 150 / 0.4); color: var(--green); }
+
+/* generic card */
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+/* dotted bg behind editor area */
+.dotted {
+  background-image: radial-gradient(oklch(1 0 0 / 0.025) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.frame.light .dotted { background-image: radial-gradient(oklch(0 0 0 / 0.04) 1px, transparent 1px); }
+
+/* override DC chrome */
+.dc-artboard { background: var(--bg) !important; }
+
+/* small scrollbar style for inside frames so they feel real */
+.frame ::-webkit-scrollbar { width: 6px; height: 6px; }
+.frame ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+
+/* the brand mark */
+.mark-tile {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 1px var(--accent-line), 0 4px 12px oklch(0.82 0.155 65 / 0.25);
+}
+
+/* row hover state used in many places */
+.hov { padding: 4px 8px; border-radius: 6px; }
+.hov:hover { background: var(--bg-2); }
+
+/* keyboard kbd */
+kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* live pulse */
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 oklch(0.80 0.13 150 / 0.6); }
+  100% { box-shadow: 0 0 0 8px oklch(0.80 0.13 150 / 0); }
+}
+.pulse { animation: pulse 1.6s ease-out infinite; }

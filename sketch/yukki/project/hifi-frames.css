@@ -1,0 +1,180 @@
+/* hifi-frames.css — shared chrome for hi-fi frames */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* dark — bleu-gris froid type GitHub dark / Linear */
+  --bg:        oklch(0.155 0.014 250);
+  --bg-1:      oklch(0.185 0.015 250);
+  --bg-2:      oklch(0.22 0.016 250);
+  --bg-3:      oklch(0.265 0.018 250);
+
+  --line:      oklch(0.31 0.018 250);
+  --line-soft: oklch(0.26 0.015 250);
+  --line-strong: oklch(0.41 0.020 250);
+
+  --fg:        oklch(0.97 0.012 250);
+  --fg-1:      oklch(0.84 0.014 250);
+  --fg-2:      oklch(0.66 0.014 250);
+  --fg-3:      oklch(0.52 0.014 250);
+  --fg-4:      oklch(0.40 0.014 250);
+
+  /* accent vert frais */
+  --accent:    oklch(0.80 0.16 150);
+  --accent-2:  oklch(0.70 0.16 150);
+  --accent-soft: oklch(0.80 0.16 150 / 0.14);
+  --accent-line: oklch(0.80 0.16 150 / 0.40);
+  --accent-fg: oklch(0.16 0.02 250);
+
+  --teal:  oklch(0.78 0.10 200);
+  --green: oklch(0.80 0.16 150);
+  --rose:  oklch(0.74 0.15 18);
+  --plum:  oklch(0.74 0.15 305);
+  --blue:  oklch(0.78 0.13 235);
+
+  --ui:    'Geist', ui-sans-serif, system-ui, sans-serif;
+  --mono:  'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --serif: 'Instrument Serif', ui-serif, Georgia, serif;
+}
+
+.frame.light {
+  --bg:        oklch(0.985 0.005 250);
+  --bg-1:      oklch(0.965 0.006 250);
+  --bg-2:      oklch(1 0 0);
+  --bg-3:      oklch(0.94 0.008 250);
+  --line:      oklch(0.88 0.010 250);
+  --line-soft: oklch(0.93 0.008 250);
+  --line-strong: oklch(0.78 0.012 250);
+  --fg:        oklch(0.20 0.015 250);
+  --fg-1:      oklch(0.36 0.014 250);
+  --fg-2:      oklch(0.50 0.012 250);
+  --fg-3:      oklch(0.66 0.012 250);
+  --fg-4:      oklch(0.78 0.010 250);
+  --accent:    oklch(0.62 0.17 150);
+  --accent-2:  oklch(0.55 0.17 150);
+  --accent-fg: oklch(0.99 0 0);
+  --accent-soft: oklch(0.62 0.17 150 / 0.12);
+  --accent-line: oklch(0.62 0.17 150 / 0.40);
+}
+
+* { box-sizing: border-box; }
+
+.frame {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui);
+  font-size: 13px;
+  font-feature-settings: "ss01", "ss02", "cv11";
+  overflow: hidden;
+  position: relative;
+}
+
+.frame .serif { font-family: var(--serif); }
+.frame .mono { font-family: var(--mono); }
+.frame em { font-style: italic; }
+
+.frame .mark-tile {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 1px var(--accent-line), 0 6px 18px oklch(0.80 0.16 150 / 0.25);
+}
+
+.frame kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+.frame .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--fg-3);
+  flex-shrink: 0;
+}
+.frame .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.frame .dot.amber { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.frame .dot.blue  { background: var(--blue);  box-shadow: 0 0 6px var(--blue); }
+.frame .dot.rose  { background: var(--rose);  box-shadow: 0 0 6px var(--rose); }
+.frame .dot.dim   { background: var(--fg-4); }
+.frame .dot.pulse { animation: hf-pulse 1.6s ease-out infinite; }
+
+@keyframes hf-pulse {
+  0%   { box-shadow: 0 0 0 0 oklch(0.80 0.16 150 / 0.6); }
+  100% { box-shadow: 0 0 0 8px oklch(0.80 0.16 150 / 0); }
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.frame .chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  color: var(--fg-1);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+.frame .chip.accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.frame .chip.dim { color: var(--fg-3); }
+
+.frame .status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--fg-1);
+  font-family: var(--ui);
+}
+
+.frame .card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.frame .btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--fg-1);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.frame .btn:hover { background: var(--bg-3); color: var(--fg); }
+.frame .btn.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.frame .btn.ghost { background: transparent; }
+
+.frame .dotted {
+  background-image: radial-gradient(oklch(1 0 0 / 0.025) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.frame.light .dotted {
+  background-image: radial-gradient(oklch(0 0 0 / 0.04) 1px, transparent 1px);
+}
+
+.frame ::-webkit-scrollbar { width: 8px; height: 8px; }
+.frame ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
+.frame ::-webkit-scrollbar-track { background: transparent; }
