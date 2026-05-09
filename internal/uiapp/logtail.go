@@ -130,7 +130,8 @@ func (a *App) EmitLogEventListener() func([]byte) {
 // stay attached to the message field (the drawer renders them as-is).
 //
 // Example match:
-//   time=2026-05-09T18:32:14Z level=WARN source=frontend msg="HubList refresh failed" err="no project"
+//
+//	time=2026-05-09T18:32:14Z level=WARN source=frontend msg="HubList refresh failed" err="no project"
 var slogLineRegex = regexp.MustCompile(`^time=(\S+)\s+level=(\S+)\s+(?:source=(\S+)\s+)?msg=(.+)$`)
 
 // parseSlogLine extracts Timestamp / Level / Source / Msg from the

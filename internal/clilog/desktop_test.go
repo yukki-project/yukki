@@ -160,7 +160,7 @@ func TestPurgeOldLogs_RemovesAgedFiles(t *testing.T) {
 	now := time.Now()
 
 	files := map[string]time.Time{
-		"yukki-fresh.log": now,
+		"yukki-fresh.log":  now,
 		"yukki-recent.log": now.Add(-3 * 24 * time.Hour),
 		"yukki-stale.log":  now.Add(-10 * 24 * time.Hour),
 		"unrelated.txt":    now.Add(-30 * 24 * time.Hour), // ignored
