@@ -132,6 +132,13 @@ type App struct {
 	// UI-021 O2 — about.go).
 	buildInfo BuildInfo
 
+	// restructureSessions tracks active UI-019 restructuration
+	// goroutines, keyed by sessionID. Mirror of `sessions` for the
+	// SpddSuggest pipeline but kept separate so the two semantic
+	// flows don't commingle (a session restructure is a
+	// document-wide LLM call, not a per-section action).
+	restructureSessions sync.Map
+
 	// settingsStore persists UI preferences (debug-mode toggle).
 	// Wired by ui.go via SetSettingsStore. nil-safe — bindings
 	// guard against a nil store and return zero Settings.

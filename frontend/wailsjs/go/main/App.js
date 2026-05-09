@@ -177,3 +177,12 @@ export function IsDevBuild() {
 export function TailLogs(maxLines) {
   return window['go']['uiapp']['App']['TailLogs'](maxLines);
 }
+
+// UI-019 — restructuration IA d'un artefact mal formé
+export function RestructureStart(req) {
+  return window['go']['uiapp']['App']['RestructureStart'](req);
+}
+
+export function RestructureCancel(sessionID) {
+  return window['go']['uiapp']['App']['RestructureCancel'](sessionID);
+}

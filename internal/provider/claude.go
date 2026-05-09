@@ -81,6 +81,7 @@ func (p *ClaudeProvider) CheckVersion(ctx context.Context) error {
 	}
 
 	cmd := exec.CommandContext(ctx, p.Binary, "--version")
+	hideConsole(cmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%w: %s --version: %v", ErrVersionIncompatible, p.Binary, err)
@@ -102,6 +103,7 @@ func (p *ClaudeProvider) Version(ctx context.Context) (string, error) {
 	}
 
 	cmd := exec.CommandContext(ctx, p.Binary, "--version")
+	hideConsole(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("%w: %s --version: %v", ErrVersionIncompatible, p.Binary, err)
@@ -138,6 +140,7 @@ func (p *ClaudeProvider) Generate(ctx context.Context, prompt string) (string, e
 	}
 
 	cmd := exec.CommandContext(ctx, p.Binary, args...)
+	hideConsole(cmd)
 	cmd.Stdin = strings.NewReader(prompt)
 
 	var stdout, stderr bytes.Buffer
@@ -199,6 +202,7 @@ func (p *ClaudeProvider) generateStreaming(ctx context.Context, prompt string, b
 	streamArgs = append(streamArgs, baseArgs...)
 
 	cmd := exec.CommandContext(ctx, p.Binary, streamArgs...)
+	hideConsole(cmd)
 	cmd.Stdin = strings.NewReader(prompt)
 
 	stdout, err := cmd.StdoutPipe()

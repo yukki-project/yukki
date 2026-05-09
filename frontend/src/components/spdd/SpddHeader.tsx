@@ -54,6 +54,7 @@ export function SpddHeader({
   const viewMode = useSpddEditorStore((s) => s.viewMode);
   const setViewMode = useSpddEditorStore((s) => s.setViewMode);
   const setActiveSection = useSpddEditorStore((s) => s.setActiveSection);
+  const isDirty = useSpddEditorStore((s) => s.isDirty);
   const setMode = useShellStore((s) => s.setActiveMode);
   const state = useSpddEditorStore();
   const tmpl = parsedTemplate ?? null;
@@ -171,6 +172,14 @@ export function SpddHeader({
       <span className="font-inter text-[14px] font-medium text-yk-text-primary">
         {editState ? (String(editState.fmValues['title'] ?? '')) : draft.title}
       </span>
+      {/* UI-019 D1 — badge "modifications non sauvegardées" généralisé. */}
+      {isDirty && (
+        <span
+          aria-label="Modifications non sauvegardées"
+          title="Modifications non sauvegardées (Ctrl+S pour enregistrer)"
+          className="inline-block h-2 w-2 shrink-0 rounded-full bg-ykp-warning"
+        />
+      )}
       <span
         className={cn(
           'rounded-yk-sm px-2 py-0.5 font-jbmono text-[9.5px] uppercase tracking-wider',

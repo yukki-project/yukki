@@ -39,6 +39,11 @@ export interface SpddEditorState {
   aiAction: AiActionType | null;
   aiSuggestion: string | null;
   popoverPosition: PopoverPosition | null;
+  // UI-019 D1 — flag généralisé "modifications non sauvegardées" lu par
+  // SpddHeader pour afficher le badge orange. set à true dans chaque
+  // mutation du draft, reset à false uniquement sur succès de WriteArtifact.
+  isDirty: boolean;
+  setDirty: (next: boolean) => void;
 
   setActiveSection: (key: SectionKey) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -87,6 +92,9 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
   aiAction: null,
   aiSuggestion: null,
   popoverPosition: null,
+  // UI-019 D1
+  isDirty: false,
+  setDirty: (next) => set({ isDirty: next }),
 
   setActiveSection: (key) =>
     set((s) => ({
@@ -100,7 +108,14 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
     else get().switchToWysiwyg();
   },
 
-  resetDraft: (draft) => set({ draft, activeSection: 'bg', markdownSource: '', markdownWarnings: [] }),
+  resetDraft: (draft) => set({
+    draft,
+    activeSection: 'bg',
+    markdownSource: '',
+    markdownWarnings: [],
+    // Loading a fresh draft from disk = clean slate.
+    isDirty: false,
+  }),
 
   switchToMarkdown: () =>
     set((s) => ({
@@ -127,6 +142,7 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
   setFmField: (field, value) =>
     set((s) => ({
       draft: { ...s.draft, [field]: value },
+      isDirty: true,
     })),
 
   setSection: (key, value) =>
@@ -135,6 +151,7 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
         ...s.draft,
         sections: { ...s.draft.sections, [key]: value },
       },
+      isDirty: true,
     })),
 
   addAc: () =>
@@ -146,13 +163,13 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
         when: '',
         then: '',
       };
-      return { draft: { ...s.draft, ac: [...s.draft.ac, newAc] } };
+      return { draft: { ...s.draft, ac: [...s.draft.ac, newAc] }, isDirty: true };
     }),
 
   removeAc: (id) =>
     set((s) => {
       const filtered = s.draft.ac.filter((a) => a.id !== id);
-      return { draft: { ...s.draft, ac: renumberAcs(filtered) } };
+      return { draft: { ...s.draft, ac: renumberAcs(filtered) }, isDirty: true };
     }),
 
   updateAc: (id, field, value) =>
@@ -161,6 +178,7 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
         ...s.draft,
         ac: s.draft.ac.map((a) => (a.id === id ? { ...a, [field]: value } : a)),
       },
+      isDirty: true,
     })),
 
   duplicateAc: (id) =>
@@ -168,7 +186,7 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
       const src = s.draft.ac.find((a) => a.id === id);
       if (!src) return s;
       const copy: MockAcceptanceCriterion = { ...src, id: nextAcId(s.draft.ac) };
-      return { draft: { ...s.draft, ac: [...s.draft.ac, copy] } };
+      return { draft: { ...s.draft, ac: [...s.draft.ac, copy] }, isDirty: true };
     }),
 
   // ─── AI actions (UI-014d) ──────────────────────────────────────────────
@@ -201,6 +219,7 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
           ...s.draft,
           sections: { ...s.draft.sections, [sectionKey]: updated },
         },
+        isDirty: true,
       };
     }),
 
