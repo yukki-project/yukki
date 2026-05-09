@@ -2,7 +2,7 @@
 id: UI-018a
 slug: canonical-palette-and-rewire
 story: .yukki/stories/UI-018a-canonical-palette-and-rewire.md
-status: draft
+status: reviewed
 created: 2026-05-09
 updated: 2026-05-09
 ---
@@ -221,25 +221,34 @@ UI-018b.*
 > Les 5 OQ de la story sont tranchées. Voici les décisions
 > résiduelles soulevées par l'analyse.
 
-- [ ] **Localisation du fichier palette** : `frontend/src/styles/
-      palette.css` (proche de globals + spdd-tokens) ou
-      `frontend/src/styles/tokens/palette.css` (sous-dossier
-      tokens pour préparer plus de tokens — typo, espacement,
-      …) ? → recommandation : fichier plat pour cette story,
-      structurer plus tard si besoin.
-- [ ] **Dépréciation de `--yk-*`** : aliasés sur `--ykp-*`
-      maintenant (rétro-compat) puis dépréciés en suivi, ou
-      supprimés directement (refacto SpddEditor inclus dans
-      la story) ? → recommandation : aliaser maintenant, plan
-      de dépréciation à part.
-- [ ] **Variantes hover / focus / active** : exposer
-      explicitement (`--ykp-primary-hover`, `--ykp-primary-active`)
-      ou utiliser Tailwind `hover:bg-ykp-primary/90` ?
-      → recommandation : utiliser opacity Tailwind pour
-      hover / active simples, exposer explicitement seulement
-      si la nuance est non triviale.
-- [ ] **Snapshot visuel pré-livraison** : outil ? Storybook,
-      Playwright capture d'écran, simple capture manuelle ?
-      → recommandation : capture manuelle de la chrome +
-      du SpddEditor en read-only / édition pour l'AC3 (pas
-      besoin d'outil dédié pour une story).
+- [x] ~~**Localisation du fichier palette**~~ → **résolu
+      2026-05-09** : `frontend/src/styles/palette.css` (fichier
+      plat à côté de `globals.css` et `spdd-tokens.css`). Si
+      plus tard on ajoute d'autres tokens (typo, spacing,
+      shadows), on bougera vers une structure `tokens/` à ce
+      moment-là. Pas d'anticipation prématurée.
+- [x] ~~**Dépréciation de `--yk-*`**~~ → **résolu 2026-05-09** :
+      aliaser maintenant. Dans `spdd-tokens.css`, chaque
+      `--yk-*` devient `var(--ykp-*)` quand il y a équivalence
+      (par exemple `--yk-primary: var(--ykp-primary)`). Zéro
+      régression visuelle sur le SpddEditor existant
+      (préserve l'AC3). La migration des classes consommatrices
+      (`bg-yk-*` → `bg-ykp-*`) viendra en suivi quand pertinent
+      (probablement avec UI-018b ou un UI-018c dédié).
+- [x] ~~**Variantes hover / focus / active**~~ → **résolu
+      2026-05-09** : approche **mixte**. Par défaut, opacity
+      Tailwind (`hover:bg-ykp-primary/90`,
+      `active:bg-ykp-primary/80`) — léger et standard. Variables
+      dédiées (`--ykp-primary-disabled`, …) uniquement quand
+      l'opacity ne donne pas le rendu attendu, typiquement pour
+      `disabled` qui mérite souvent une vraie nuance grise
+      plutôt qu'un primary à 50 % d'opacité. Le focus utilise
+      `--ykp-ring` (déjà prévu dans la palette riche, Q3 story).
+- [x] ~~**Snapshot visuel pré-livraison**~~ → **résolu
+      2026-05-09** : capture manuelle + **checklist structurée
+      dans la PR description** (`HubList / SpddEditor read-only
+      / SpddEditor édition / modale / About dialog`, chacun avec
+      lien capture pré-livraison + post-livraison). Pas
+      d'outillage dédié (Storybook / Playwright) pour cette
+      story. Discipline minimale tracée dans la PR plutôt que
+      dans le repo.

@@ -1,0 +1,65 @@
+/*
+ * UI-018a — Palette canonique yukki app-wide.
+ *
+ * Source de vérité unique des couleurs : `globals.css` et
+ * `spdd-tokens.css` aliasent leurs variables sur celles-ci.
+ * Toutes les classes Tailwind `bg-ykp-*` / `text-ykp-*` /
+ * `border-ykp-*` exposées dans `tailwind.config.js`
+ * référencent ces variables.
+ *
+ * Convention :
+ *   --ykp-<groupe>-<nuance>
+ * Exemples : --ykp-bg-page, --ykp-text-muted, --ykp-primary-soft.
+ *
+ * Mode light prévu pour plus tard via un sélecteur
+ * `[data-theme="light"]` qui surcharge ce bloc — pas implémenté
+ * dans cette story.
+ *
+ * Pour l'export PDF (UI-015), une palette light dédiée vit dans
+ * `frontend/src/components/spdd/pdf/pdfTokens.ts` et reste
+ * indépendante de ce fichier.
+ */
+
+:root {
+  /* ─── Surfaces ─────────────────────────────────────── */
+  --ykp-bg-page:     #0c0d12;
+  --ykp-bg-elevated: #181a21;
+  --ykp-bg-subtle:   #131419;
+  --ykp-bg-input:    #16171d;
+  --ykp-bg-overlay:  rgba(0, 0, 0, 0.65);
+
+  /* ─── Lines ────────────────────────────────────────── */
+  --ykp-line:         #23252e;
+  --ykp-line-subtle:  #1c1e25;
+  --ykp-line-strong:  #2e3140;
+
+  /* ─── Text ─────────────────────────────────────────── */
+  --ykp-text-primary:   #e6e7ee;
+  --ykp-text-secondary: #9ea1b3;
+  --ykp-text-muted:     #6b6e80;
+  --ykp-text-faint:     #4b4d5a;
+
+  /* ─── Accent ───────────────────────────────────────── */
+  --ykp-primary:            #8b6cff;
+  --ykp-primary-fg:         #ffffff;
+  --ykp-primary-soft:       rgba(139, 108, 255, 0.14);
+  --ykp-primary-soft-solid: #efeaff;   /* I5 — pour borders */
+  --ykp-ring:               rgba(139, 108, 255, 0.32);
+
+  /* ─── Sémantiques ──────────────────────────────────── */
+  --ykp-success:      #4ec38a;
+  --ykp-success-soft: rgba(78, 195, 138, 0.13);
+  --ykp-success-fg:   #052414;
+  --ykp-warning:      #e8a657;
+  --ykp-warning-soft: rgba(232, 166, 87, 0.13);
+  --ykp-warning-fg:   #2a1a0a;
+  --ykp-danger:       #e76d6d;
+  --ykp-danger-soft:  rgba(231, 109, 109, 0.13);
+  --ykp-danger-fg:    #2a0a0a;
+
+  /* ─── Code (markdown view) ─────────────────────────── */
+  --ykp-code-key:        #c8b6ff;
+  --ykp-code-string:     #9be3a8;
+  --ykp-code-heading:    #ffd089;
+  --ykp-code-subheading: #ffb3c1;
+}

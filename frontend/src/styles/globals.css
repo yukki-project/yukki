@@ -1,3 +1,4 @@
+@import './palette.css';
 @import './spdd-tokens.css';
 
 @tailwind base;
@@ -37,35 +38,47 @@
     --radius: 0.5rem;
   }
 
-  /* UI-006 — palette yukki dark (dark forced V1, D-D3) */
+  /*
+   * UI-018a — Alias des sémantiques shadcn vers la palette
+   * canonique `--ykp-*`. Les valeurs ne sont plus en HSL en
+   * dur ; elles pointent sur la palette qui est la source de
+   * vérité unique. Conséquence : les classes Tailwind
+   * `bg-background`, `text-foreground`, etc. consomment
+   * désormais les couleurs ykp via cette indirection.
+   *
+   * Les classes Tailwind correspondantes (`tailwind.config.js`)
+   * passent de `hsl(var(--xxx))` à `var(--xxx)` brut puisque la
+   * palette est en hex/rgba (cf. caveat documenté dans le
+   * canvas O2/O4).
+   */
   .dark {
-    --background: 240 10% 11%;        /* ~#1A1A1F */
-    --foreground: 240 5% 95%;         /* ~#F0F0F2 */
+    --background: var(--ykp-bg-page);
+    --foreground: var(--ykp-text-primary);
 
-    --card: 240 10% 13%;              /* ~#1F1F26 surface */
-    --card-foreground: 240 5% 95%;
+    --card:               var(--ykp-bg-elevated);
+    --card-foreground:    var(--ykp-text-primary);
 
-    --popover: 240 10% 13%;
-    --popover-foreground: 240 5% 95%;
+    --popover:            var(--ykp-bg-elevated);
+    --popover-foreground: var(--ykp-text-primary);
 
-    --primary: 263 70% 65%;           /* ~#8B5CF6 violet */
-    --primary-foreground: 0 0% 100%;
+    --primary:            var(--ykp-primary);
+    --primary-foreground: var(--ykp-primary-fg);
 
-    --secondary: 240 8% 18%;          /* surface élevée */
-    --secondary-foreground: 240 5% 95%;
+    --secondary:            var(--ykp-bg-subtle);
+    --secondary-foreground: var(--ykp-text-primary);
 
-    --muted: 240 8% 18%;
-    --muted-foreground: 240 5% 65%;   /* ~#9CA3AF */
+    --muted:            var(--ykp-bg-subtle);
+    --muted-foreground: var(--ykp-text-muted);
 
-    --accent: 240 8% 22%;
-    --accent-foreground: 240 5% 95%;
+    --accent:            var(--ykp-line);
+    --accent-foreground: var(--ykp-text-primary);
 
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive:            var(--ykp-danger);
+    --destructive-foreground: var(--ykp-danger-fg);
 
-    --border: 240 8% 22%;             /* ~#2E2E36 */
-    --input: 240 8% 22%;
-    --ring: 263 70% 65%;              /* violet ring focus */
+    --border: var(--ykp-line);
+    --input:  var(--ykp-line);
+    --ring:   var(--ykp-primary);
   }
 }
 
@@ -87,9 +100,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--ykp-line);
   border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
+  background: var(--ykp-text-muted);
 }
