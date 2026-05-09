@@ -151,3 +151,29 @@ export function ResolveCanvasChain(canvasPath) {
 export function GetBuildInfo() {
   return window['go']['uiapp']['App']['GetBuildInfo']();
 }
+
+// OPS-001 — settings + logging
+export function LoadSettings() {
+  return window['go']['uiapp']['App']['LoadSettings']();
+}
+
+export function SaveSettings(settings) {
+  return window['go']['uiapp']['App']['SaveSettings'](settings);
+}
+
+export function LogToBackend(payload) {
+  return window['go']['uiapp']['App']['LogToBackend'](payload);
+}
+
+export function OpenLogsFolder() {
+  return window['go']['uiapp']['App']['OpenLogsFolder']();
+}
+
+// OPS-001 prompt-update — build-time gating + logs drawer
+export function IsDevBuild() {
+  return window['go']['uiapp']['App']['IsDevBuild']();
+}
+
+export function TailLogs(maxLines) {
+  return window['go']['uiapp']['App']['TailLogs'](maxLines);
+}

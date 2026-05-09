@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/yukki-project/yukki/internal/configdir"
 )
 
 // ErrPathTraversal is returned when a caller-supplied id would escape the
@@ -31,11 +33,11 @@ type DraftStore struct {
 //	<os.UserConfigDir()>/yukki/drafts
 func NewDraftStore(baseDir string) (*DraftStore, error) {
 	if baseDir == "" {
-		cfg, err := os.UserConfigDir()
+		base, err := configdir.BaseDir()
 		if err != nil {
 			return nil, fmt.Errorf("draft: resolve config dir: %w", err)
 		}
-		baseDir = filepath.Join(cfg, "yukki", "drafts")
+		baseDir = filepath.Join(base, "drafts")
 	}
 	return &DraftStore{baseDir: baseDir}, nil
 }

@@ -63,12 +63,12 @@ yukki_date="$(date -u +%FT%TZ 2>/dev/null || echo '')"
 ldflags="-X main.version=${yukki_version} -X main.commitSHA=${yukki_commit} -X main.buildDate=${yukki_date}"
 
 echo ">> ldflags: ${ldflags}"
-echo ">> wails build -tags mock -skipbindings -platform ${platform:-auto} ${extra_args[*]}"
+echo ">> wails build -tags mock,devbuild -skipbindings -platform ${platform:-auto} ${extra_args[*]}"
 
 if [ -n "$platform" ]; then
-    wails build -tags mock -skipbindings -ldflags "${ldflags}" -platform "$platform" "${extra_args[@]}"
+    wails build -tags mock,devbuild -skipbindings -ldflags "${ldflags}" -platform "$platform" "${extra_args[@]}"
 else
-    wails build -tags mock -skipbindings -ldflags "${ldflags}" "${extra_args[@]}"
+    wails build -tags mock,devbuild -skipbindings -ldflags "${ldflags}" "${extra_args[@]}"
 fi
 
 echo ""

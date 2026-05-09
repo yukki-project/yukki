@@ -4,7 +4,11 @@ import yukkiLogo from '@/assets/yukki-logo.png';
 import { Button } from '@/components/ui/button';
 import { FileMenu } from '@/components/hub/FileMenu';
 import { HelpMenu } from '@/components/hub/HelpMenu';
+import { DeveloperMenu } from '@/components/hub/DeveloperMenu';
 import { cn } from '@/lib/utils';
+import { isDevBuild } from '@/lib/buildFlags';
+import { useSettingsStore } from '@/stores/settings';
+import { useDevToolsStore } from '@/stores/devTools';
 import {
   Quit,
   WindowMinimise,
@@ -16,6 +20,15 @@ const DRAG_REGION: CSSProperties = {
 };
 
 export function TitleBar(): JSX.Element {
+  const debugMode = useSettingsStore((s) => s.debugMode);
+  const toggleDrawer = useDevToolsStore((s) => s.toggleDrawer);
+
+  // Badge clickable when in dev build — toggles the LogsDrawer.
+  // In a release build, isDevBuild() is false and the badge is
+  // hidden anyway (via the debugMode gate which can never be true
+  // there).
+  const showBadge = debugMode && isDevBuild();
+
   return (
     <header
       aria-label="Title bar"
@@ -30,6 +43,17 @@ export function TitleBar(): JSX.Element {
         />
         <FileMenu />
         <HelpMenu />
+        <DeveloperMenu />
+        {showBadge && (
+          <button
+            type="button"
+            aria-label="Debug mode is ON — click to toggle logs drawer"
+            onClick={() => void toggleDrawer()}
+            className="ml-2 rounded-sm bg-ykp-warning px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ykp-warning-fg hover:opacity-90"
+          >
+            DEBUG ON
+          </button>
+        )}
       </div>
 
       <div className="flex-1 self-stretch" style={DRAG_REGION} onDoubleClick={() => WindowToggleMaximise()} />

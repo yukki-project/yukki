@@ -21,9 +21,12 @@ if not exist "%GOTMPDIR%" mkdir "%GOTMPDIR%"
 echo ^>^> GOCACHE=%GOCACHE%
 echo ^>^> GOTMPDIR=%GOTMPDIR%
 echo ^>^> TMP=%TMP%
-echo ^>^> wails build -tags mock -skipbindings -platform windows/amd64 %*
+rem OPS-001 prompt-update Q4 — `devbuild` tag exposes the Developer
+rem menu, the LogsDrawer, the DEBUG ON badge, and the `--debug` CLI
+rem flag. Release builds will not pass this tag.
+echo ^>^> wails build -tags mock,devbuild -skipbindings -platform windows/amd64 %*
 
-wails build -tags mock -skipbindings -platform windows/amd64 %*
+wails build -tags mock,devbuild -skipbindings -platform windows/amd64 %*
 
 set EXITCODE=%ERRORLEVEL%
 echo.

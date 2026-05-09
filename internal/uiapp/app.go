@@ -37,6 +37,7 @@ import (
 	"github.com/yukki-project/yukki/internal/draft"
 	"github.com/yukki-project/yukki/internal/promptbuilder"
 	"github.com/yukki-project/yukki/internal/provider"
+	"github.com/yukki-project/yukki/internal/settings"
 	"github.com/yukki-project/yukki/internal/skills"
 	"github.com/yukki-project/yukki/internal/templates"
 	"github.com/yukki-project/yukki/internal/workflow"
@@ -130,6 +131,18 @@ type App struct {
 	// at startup. Returned to the frontend by GetBuildInfo (cf.
 	// UI-021 O2 — about.go).
 	buildInfo BuildInfo
+
+	// settingsStore persists UI preferences (debug-mode toggle).
+	// Wired by ui.go via SetSettingsStore. nil-safe — bindings
+	// guard against a nil store and return zero Settings.
+	// Cf. OPS-001 O5.
+	settingsStore *settings.Store
+
+	// logLevel is the live handle backing the desktop logger's
+	// level. Wired by ui.go via SetLogLevel alongside the logger.
+	// SaveSettings flips it WARN ↔ DEBUG without recreating the
+	// log file (OPS-001 invariant I2).
+	logLevel *slog.LevelVar
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.
@@ -150,6 +163,7 @@ func (a *App) OnStartup(ctx context.Context) {
 	if a.logger != nil {
 		a.logger.Info("ui startup", "provider", a.provider.Name())
 	}
+	a.traceBinding("OnStartup", slog.String("provider", a.provider.Name()))
 	a.restoreRegistry()
 
 	// Initialise the draft store with the platform config directory.
@@ -233,6 +247,7 @@ func (a *App) AllowedKinds() []string {
 // Returns an explicit error if no project is selected; propagates
 // ErrInvalidKind / OS errors from the underlying call.
 func (a *App) ListArtifacts(kind string) ([]artifacts.Meta, error) {
+	a.traceBinding("ListArtifacts", slog.String("kind", kind))
 	p, err := a.activeProject()
 	if err != nil {
 		return nil, err
@@ -346,6 +361,7 @@ func (a *App) InitializeYukki(dir string) error {
 // currently opened projects (Invariant I1 extended — path-traversal guard
 // over N projects).  Returns an error if no project is open.
 func (a *App) ReadArtifact(path string) (string, error) {
+	a.traceBinding("ReadArtifact", slog.String("path", path))
 	a.mu.RLock()
 	projs := make([]*OpenedProject, len(a.openedProjects))
 	copy(projs, a.openedProjects)
@@ -374,6 +390,7 @@ func (a *App) ReadArtifact(path string) (string, error) {
 // already exist (modification only — no silent creation). Content is limited
 // to 1 MB. No ctx parameter (Wails 2.12 D-B5b).
 func (a *App) WriteArtifact(path, content string) error {
+	a.traceBinding("WriteArtifact", slog.String("path", path), slog.Int("bytes", len(content)))
 	a.mu.RLock()
 	projs := make([]*OpenedProject, len(a.openedProjects))
 	copy(projs, a.openedProjects)
@@ -492,6 +509,7 @@ func (a *App) SuggestedPrefixes() []string {
 // untouched (yaml.Node round-trip preserves key order + comments).
 // UI-008 binding.
 func (a *App) UpdateArtifactStatus(path, newStatus string) error {
+	a.traceBinding("UpdateArtifactStatus", slog.String("path", path), slog.String("newStatus", newStatus))
 	if !strings.HasSuffix(path, ".md") {
 		return fmt.Errorf("not a markdown file: %s", path)
 	}
@@ -606,6 +624,7 @@ func (a *App) AllowedTransitions(currentStatus string) []string {
 // date. Other front-matter fields and the body are preserved
 // (yaml.Node round-trip). UI-008 binding (post-implem update).
 func (a *App) UpdateArtifactPriority(path string, priority int) error {
+	a.traceBinding("UpdateArtifactPriority", slog.String("path", path), slog.Int("priority", priority))
 	if priority < 0 {
 		return fmt.Errorf("priority must be >= 0, got %d", priority)
 	}

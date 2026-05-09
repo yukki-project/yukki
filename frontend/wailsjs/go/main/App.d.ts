@@ -70,6 +70,35 @@ export interface BuildInfo {
   BuildDate: string;
 }
 
+// OPS-001 — settings + logging
+export function LoadSettings(): Promise<Settings>;
+export function SaveSettings(settings: Settings): Promise<void>;
+export function LogToBackend(payload: LogPayload): Promise<void>;
+export function OpenLogsFolder(): Promise<void>;
+
+// OPS-001 prompt-update — build-time gating + logs drawer
+export function IsDevBuild(): Promise<boolean>;
+export function TailLogs(maxLines: number): Promise<LogLine[]>;
+
+export interface Settings {
+  DebugMode: boolean;
+}
+
+export interface LogPayload {
+  Level: string;
+  Source: string;
+  Msg: string;
+  Stack: string;
+}
+
+export interface LogLine {
+  Timestamp: string;
+  Level: string;
+  Source: string;
+  Msg: string;
+  Raw: string;
+}
+
 export interface DraftSummary {
   id: string;
   title: string;
