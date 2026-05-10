@@ -23,12 +23,18 @@ import { useSpddSuggest } from '@/hooks/useSpddSuggest';
 import { useRestructureSession } from '@/hooks/useRestructureSession';
 import { markdownToDraft } from './parser';
 import { draftToMarkdown } from './serializer';
-import { ReadArtifact, WriteArtifact } from '../../../wailsjs/go/main/App';
+import {
+  AcquireEditLock,
+  ReadArtifact,
+  ReleaseEditLock,
+  WriteArtifact,
+} from '../../../wailsjs/go/main/App';
 import { parseTemplate, detectArtifactTypeFromPath, templatePathFor } from '@/lib/templateParser';
 import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
 import { computeDivergence, divergenceWarnings } from '@/lib/templateDivergence';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type { SectionKey } from './types';
 import type { SuggestionRequest } from '@/hooks/useSpddSuggest';
 import type { EditState } from '@/lib/genericSerializer';
@@ -38,6 +44,83 @@ import type { ParsedTemplate } from '@/lib/templateParser';
 
 // Limite défensive UI-019 D2 (alignée avec uiapp.MaxRestructureBytes côté Go).
 const RESTRUCTURE_MAX_BYTES = 30_000;
+
+// UI-023 — banner affiché quand le watcher détecte une modification
+// disque sur l'artefact ouvert pendant que l'utilisateur l'édite
+// (isDirty=true). Choix explicite reload / keep-mine.
+function ConflictWarningBanner({
+  onReload,
+  onKeepLocal,
+}: {
+  onReload: () => void;
+  onKeepLocal: () => void;
+}): JSX.Element {
+  return (
+    <div
+      role="alert"
+      className={cn(
+        'col-span-3 flex items-start gap-3 border-b border-yk-warning bg-[color:var(--yk-warning-soft)]',
+        'px-4 py-2',
+      )}
+    >
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yk-warning" />
+      <div className="flex-1 text-[13px] text-yk-text-primary">
+        <p className="font-medium">
+          Modifications externes détectées sur disque
+        </p>
+        <p className="mt-1 text-[12px] text-yk-text-secondary">
+          Ce fichier a été modifié hors de yukki alors que tu as des
+          modifications locales non sauvegardées.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onReload}
+        title="Recharger depuis le disque (perdre mes modifs locales)"
+        className="flex shrink-0 items-center gap-1.5 self-start rounded-yk-sm border border-yk-primary px-3 py-1 font-inter text-[12px] text-yk-primary hover:bg-[color:var(--yk-primary-soft)]"
+      >
+        Recharger depuis le disque
+      </button>
+      <button
+        type="button"
+        onClick={onKeepLocal}
+        title="Garder mes modifs (le prochain Save écrasera le disque)"
+        className="flex shrink-0 items-center gap-1.5 self-start rounded-yk-sm border border-yk-line px-3 py-1 font-inter text-[12px] text-yk-text-secondary hover:bg-yk-bg-2"
+      >
+        Garder mes modifs
+      </button>
+    </div>
+  );
+}
+
+// UI-023 — état affiché à la place du SpddDocument quand le fichier
+// ouvert a été supprimé hors de yukki. L'utilisateur peut Fermer
+// pour décrocher la sélection.
+function DeletedArtifactState({ onClose }: { onClose: () => void }): JSX.Element {
+  return (
+    <div
+      role="alert"
+      className="flex flex-1 flex-col items-center justify-center gap-3 bg-yk-bg-1 px-6 text-center"
+    >
+      <AlertTriangle className="h-8 w-8 text-yk-warning" />
+      <p className="font-inter text-[14px] font-medium text-yk-text-primary">
+        Cet artefact n'existe plus
+      </p>
+      <p className="max-w-md font-inter text-[12.5px] text-yk-text-secondary">
+        Le fichier a été supprimé hors de yukki (commande externe, git
+        checkout, etc.). Le contenu chargé en mémoire ne reflète plus
+        rien sur disque.
+      </p>
+      <button
+        type="button"
+        onClick={onClose}
+        className="rounded-yk-sm border border-yk-line bg-yk-bg-2 px-4 py-1.5 font-inter text-[12px] text-yk-text-primary hover:bg-yk-bg-3"
+      >
+        Fermer
+      </button>
+    </div>
+  );
+}
 
 function WarningsBanner({
   warnings,
@@ -256,6 +339,64 @@ export function SpddEditor(): JSX.Element {
     }
     setIsEditMode((v) => !v);
   }, [isEditMode, saveCurrentEditState]);
+
+  // UI-023 — edit-lock lifecycle. Acquire le lock côté Go quand on
+  // entre en édition sur un path donné, release quand on en sort
+  // (toggle, navigation, unmount). Sans ça, le watcher fsnotify
+  // re-firerait un event sur chaque WriteArtifact (Ctrl+S, Accept
+  // restructure, Terminer) → reset de l'editState, perte de saisie.
+  useEffect(() => {
+    if (!isEditMode || !selectedPath) return;
+    void AcquireEditLock(selectedPath).catch((err: unknown) => {
+      logger.warn('AcquireEditLock failed', {
+        path: selectedPath,
+        err: err instanceof Error ? err.message : String(err),
+      });
+    });
+    return () => {
+      void ReleaseEditLock(selectedPath).catch(() => {});
+    };
+  }, [isEditMode, selectedPath]);
+
+  // UI-023 — reset des états réactifs au changement d'artefact :
+  // le banner conflit et l'état "supprimé" sont liés au path
+  // courant, donc invalidés dès qu'on passe à un autre fichier.
+  const clearConflictWarning = useSpddEditorStore((s) => s.clearConflictWarning);
+  const setDeleted = useSpddEditorStore((s) => s.setDeleted);
+  useEffect(() => {
+    clearConflictWarning();
+    setDeleted(false);
+  }, [selectedPath, clearConflictWarning, setDeleted]);
+
+  // UI-023 — re-load live quand le watcher signale une modif disque
+  // sur le fichier ouvert (sans modifs locales). Le hook
+  // useFsWatchSubscriber bump le counter, on observe et relit
+  // l'artefact pour refléter le contenu disque sans intervention
+  // utilisateur. Pas de toast — le refresh est silencieux par
+  // contrat (cf. story Scope Out).
+  const externalReloadCounter = useSpddEditorStore((s) => s.externalReloadCounter);
+  useEffect(() => {
+    if (externalReloadCounter === 0) return;
+    if (!selectedPath || !parsedTemplate) return;
+    let aborted = false;
+    void ReadArtifact(selectedPath)
+      .then((raw) => {
+        if (aborted) return;
+        const reparsed = parseArtifactContent(raw, parsedTemplate);
+        setEditState(reparsed);
+        // Reload externe = état clean côté disque.
+        useSpddEditorStore.getState().setDirty(false);
+      })
+      .catch((err: unknown) => {
+        logger.warn('external reload failed', {
+          path: selectedPath,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
+    return () => {
+      aborted = true;
+    };
+  }, [externalReloadCounter, selectedPath, parsedTemplate]);
 
   // CORE-007: auto-save to backend every 2s of inactivity.
   // Désactivé quand editState est non-null (évite conflit DraftSave vs WriteArtifact).
@@ -516,6 +657,39 @@ export function SpddEditor(): JSX.Element {
     ? 'grid-cols-[240px_1fr]'
     : 'grid-cols-[240px_1fr_360px]';
 
+  // UI-023 — états réactifs au watcher disque
+  const conflictWarning = useSpddEditorStore((s) => s.conflictWarning);
+  const deleted = useSpddEditorStore((s) => s.deleted);
+
+  const handleReloadFromDisk = useCallback((): void => {
+    if (!selectedPath || !parsedTemplate) return;
+    void ReadArtifact(selectedPath)
+      .then((raw) => {
+        const reparsed = parseArtifactContent(raw, parsedTemplate);
+        setEditState(reparsed);
+        setDirty(false);
+        clearConflictWarning();
+        toast({ title: 'Rechargé depuis le disque ✓', duration: 3000 });
+      })
+      .catch((err: unknown) => {
+        toast({
+          title: 'Erreur de rechargement',
+          description: String(err),
+          duration: 5000,
+          variant: 'destructive',
+        });
+      });
+  }, [selectedPath, parsedTemplate, setDirty, clearConflictWarning, toast]);
+
+  const handleKeepLocal = useCallback((): void => {
+    clearConflictWarning();
+  }, [clearConflictWarning]);
+
+  const handleCloseDeleted = useCallback((): void => {
+    setDeleted(false);
+    useArtifactsStore.setState({ selectedPath: '' });
+  }, [setDeleted]);
+
   return (
     <div
       className="yk grid h-full w-full min-h-0 grid-rows-[40px_1fr_28px] bg-yk-bg-page font-inter text-yk-text-primary"
@@ -532,6 +706,14 @@ export function SpddEditor(): JSX.Element {
       <div
         className={cn('grid min-h-0 overflow-hidden', gridCols)}
       >
+        {/* UI-023 — conflit disque détecté pendant l'édition */}
+        {conflictWarning && (
+          <ConflictWarningBanner
+            onReload={handleReloadFromDisk}
+            onKeepLocal={handleKeepLocal}
+          />
+        )}
+
         {/* Warnings banner spans all columns — UI-014h O13: divergence template ou markdown */}
         {warningsToShow.length > 0 && (
           <WarningsBanner
@@ -557,8 +739,10 @@ export function SpddEditor(): JSX.Element {
           />
         </aside>
 
-        {/* Center: Markdown or WYSIWYG */}
-        {isMarkdown ? (
+        {/* Center: Markdown ou WYSIWYG ou empty state si artefact supprimé */}
+        {deleted ? (
+          <DeletedArtifactState onClose={handleCloseDeleted} />
+        ) : isMarkdown ? (
           <SpddMarkdownView
             source={markdownSource}
             onChange={setMarkdownSource}

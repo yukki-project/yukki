@@ -95,6 +95,15 @@ export function WriteArtifact(path, content) {
   return window['go']['uiapp']['App']['WriteArtifact'](path, content);
 }
 
+// UI-023 — fs watcher edit-lock bindings
+export function AcquireEditLock(path) {
+  return window['go']['uiapp']['App']['AcquireEditLock'](path);
+}
+
+export function ReleaseEditLock(path) {
+  return window['go']['uiapp']['App']['ReleaseEditLock'](path);
+}
+
 // CORE-007 — draft persistence
 export function DraftSave(draft) {
   return window['go']['uiapp']['App']['DraftSave'](draft);

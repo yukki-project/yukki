@@ -18,6 +18,7 @@ import { useArtifactsStore } from '@/stores/artifacts';
 import { useSettingsStore } from '@/stores/settings';
 import { useDevToolsStore } from '@/stores/devTools';
 import { useNavGuardStore } from '@/stores/navGuard';
+import { useFsWatchSubscriber } from '@/hooks/useFsWatchSubscriber';
 import { hydrateBuildFlags } from '@/lib/buildFlags';
 import { LogsDrawer } from '@/components/hub/LogsDrawer';
 import { NavGuardModal } from '@/components/hub/NavGuardModal';
@@ -25,6 +26,10 @@ import type { LogLine } from '../wailsjs/go/main/App';
 import type { ProjectOpenedPayload, ProjectClosedPayload, ProjectSwitchedPayload } from '@/lib/wails-events';
 
 export default function App() {
+  // UI-023 — single subscriber instance at the app root. Forwards
+  // `yukki:fs:changed` Wails events to the impacted Zustand stores.
+  useFsWatchSubscriber();
+
   const openedProjects = useTabsStore((s) => s.openedProjects);
   const activeIndex = useTabsStore((s) => s.activeIndex);
   const recentProjects = useTabsStore((s) => s.recentProjects);

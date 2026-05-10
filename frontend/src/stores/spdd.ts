@@ -45,6 +45,25 @@ export interface SpddEditorState {
   isDirty: boolean;
   setDirty: (next: boolean) => void;
 
+  // UI-023 — état de réaction aux events disque externes.
+  // - `conflictWarning` non-null = le fichier ouvert a été modifié sur
+  //   disque alors qu'on l'éditait localement (isDirty). SpddEditor
+  //   affiche un banner avec choix « Recharger » / « Garder mes modifs ».
+  // - `deleted` true = le fichier ouvert a été supprimé hors yukki.
+  //   SpddEditor affiche un état explicite « Cet artefact n'existe plus ».
+  // - `externalReloadCounter` est incrémenté à chaque event de modif
+  //   externe sur le fichier ouvert quand on n'a PAS de modif locale
+  //   (path read-only ou édition à zéro). SpddEditor le watche et
+  //   relit `selectedPath` à chaque tick — refresh live du texte.
+  // Reset au changement de selectedPath (artefact différent → état neuf).
+  conflictWarning: { path: string; diskMtime: number } | null;
+  setConflictWarning: (next: { path: string; diskMtime: number } | null) => void;
+  clearConflictWarning: () => void;
+  deleted: boolean;
+  setDeleted: (next: boolean) => void;
+  externalReloadCounter: number;
+  bumpExternalReloadCounter: () => void;
+
   setActiveSection: (key: SectionKey) => void;
   setViewMode: (mode: ViewMode) => void;
   resetDraft: (draft: StoryDraft) => void;
@@ -95,6 +114,15 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
   // UI-019 D1
   isDirty: false,
   setDirty: (next) => set({ isDirty: next }),
+
+  // UI-023 — fs-watch driven state
+  conflictWarning: null,
+  setConflictWarning: (next) => set({ conflictWarning: next }),
+  clearConflictWarning: () => set({ conflictWarning: null }),
+  deleted: false,
+  setDeleted: (next) => set({ deleted: next }),
+  externalReloadCounter: 0,
+  bumpExternalReloadCounter: () => set((s) => ({ externalReloadCounter: s.externalReloadCounter + 1 })),
 
   setActiveSection: (key) =>
     set((s) => ({
