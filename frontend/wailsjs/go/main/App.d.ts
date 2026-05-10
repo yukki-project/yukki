@@ -80,6 +80,27 @@ export function OpenLogsFolder(): Promise<void>;
 export function IsDevBuild(): Promise<boolean>;
 export function TailLogs(maxLines: number): Promise<LogLine[]>;
 
+// UI-019 — restructuration IA d'un artefact mal formé
+export function RestructureStart(req: RestructureRequest): Promise<string>;
+export function RestructureCancel(sessionID: string): Promise<void>;
+
+export interface RestructureRequest {
+  fullMarkdown: string;
+  templateName: string;
+  divergence: DivergenceSnapshot;
+  history: RestructureTurn[];
+}
+
+export interface DivergenceSnapshot {
+  missingRequired: string[];
+  orphanSections: string[];
+}
+
+export interface RestructureTurn {
+  question: string;
+  answer: string;
+}
+
 export interface Settings {
   DebugMode: boolean;
 }

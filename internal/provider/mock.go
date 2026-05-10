@@ -49,12 +49,26 @@ func (m *MockProvider) Version(ctx context.Context) (string, error) {
 // Generate records the prompt and returns Response, Err. If BlockUntil
 // is non-nil, blocks until the channel is closed/received-from or the
 // context is cancelled, whichever comes first.
+//
+// Cancellation est prioritaire : si ctx.Done() est ready au moment où
+// la select se débloque, on renvoie ctx.Err() même si BlockUntil est
+// aussi ready (Go select pickerait sinon aléatoirement et le test
+// CancelMidStream voyait parfois le success path emit `done`).
 func (m *MockProvider) Generate(ctx context.Context, prompt string) (string, error) {
 	m.Calls = append(m.Calls, prompt)
 	if m.BlockUntil != nil {
 		select {
 		case <-m.BlockUntil:
-			// released by test, proceed to return Response/Err
+			// Race-safe : avant de retourner la réponse, on vérifie
+			// une dernière fois ctx.Done(). Le test CancelMidStream
+			// fait `cancel(); close(block)` ; sans cette double
+			// vérification, la select peut élire BlockUntil même si
+			// ctx était cancelled juste avant.
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			default:
+			}
 		case <-ctx.Done():
 			return "", ctx.Err()
 		}

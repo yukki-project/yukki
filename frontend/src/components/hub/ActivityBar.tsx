@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useShellStore, type ShellMode } from '@/stores/shell';
+import { useNavGuardStore } from '@/stores/navGuard';
 
 interface ActivityItem {
   mode: ShellMode;
@@ -79,6 +80,14 @@ function BarButton({ item, activeMode, onSelect }: BarButtonProps): JSX.Element 
 export function ActivityBar(): JSX.Element {
   const activeMode = useShellStore((s) => s.activeMode);
   const setActiveMode = useShellStore((s) => s.setActiveMode);
+  const guard = useNavGuardStore((s) => s.guard);
+
+  // Wrap le switch de mode : le guard lit lui-même `isDirty` +
+  // `restructureOpen` et bloque si l'un des deux est actif.
+  const guardedSetActiveMode = (mode: ShellMode) => {
+    guard(() => setActiveMode(mode));
+  };
+
   return (
     <TooltipProvider delayDuration={300}>
       <aside
@@ -90,14 +99,14 @@ export function ActivityBar(): JSX.Element {
             key={item.mode}
             item={item}
             activeMode={activeMode}
-            onSelect={setActiveMode}
+            onSelect={guardedSetActiveMode}
           />
         ))}
         <div className="flex-1" />
         <BarButton
           item={SETTINGS_ITEM}
           activeMode={activeMode}
-          onSelect={setActiveMode}
+          onSelect={guardedSetActiveMode}
         />
       </aside>
     </TooltipProvider>

@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTabsStore } from '@/stores/tabs';
+import { useNavGuardStore } from '@/stores/navGuard';
 import { logger } from '@/lib/logger';
 import { useState, useCallback } from 'react';
 
@@ -28,20 +29,25 @@ export function FileMenu(): JSX.Element {
   const recentProjects = useTabsStore((s) => s.recentProjects);
   const addProject = useTabsStore((s) => s.addProject);
   const setRecentProjects = useTabsStore((s) => s.setRecentProjects);
+  const guard = useNavGuardStore((s) => s.guard);
 
   const [open, setOpen] = useState(false);
 
   const handleOpenProject = useCallback(async (path = '') => {
     setOpen(false);
-    try {
-      const meta = await OpenProject(path);
-      if (meta && meta.Path) {
-        addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+    // Le guard lit lui-même les flags des stores (isDirty +
+    // restructure open) et bloque si nécessaire.
+    guard(async () => {
+      try {
+        const meta = await OpenProject(path);
+        if (meta && meta.Path) {
+          addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+        }
+      } catch (e) {
+        console.error('OpenProject failed', e);
       }
-    } catch (e) {
-      console.error('OpenProject failed', e);
-    }
-  }, [addProject]);
+    });
+  }, [addProject, guard]);
 
   const handleOpenRecent = useCallback(async (path: string) => {
     setOpen(false);
@@ -61,6 +67,12 @@ export function FileMenu(): JSX.Element {
 
   const handleInitialize = useCallback(async () => {
     setOpen(false);
+    // Initialize ouvre un picker OS puis ajoute un nouveau projet —
+    // même cas que Open. handleOpenProject est déjà gardé en
+    // interne, donc on appelle SelectDirectory + InitializeYukki
+    // hors guard (pas de navigation tant que pas d'OpenProject)
+    // puis l'OpenProject final passe par le guard de
+    // handleOpenProject.
     try {
       const path = await SelectDirectory();
       if (!path) return; // user cancelled

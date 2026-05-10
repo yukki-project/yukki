@@ -3,7 +3,7 @@
 // UI-014f — O6: Instancie useSpddSuggest, passe en props AiDiffPanel/AiPopover.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, Sparkles, X } from 'lucide-react';
 import { SpddHeader } from './SpddHeader';
 import { SpddFooter } from './SpddFooter';
 import { SpddTOC } from './SpddTOC';
@@ -13,11 +13,16 @@ import { GenericInspector } from './GenericInspector';
 import { SpddMarkdownView } from './SpddMarkdownView';
 import { AiPopover } from './AiPopover';
 import { AiDiffPanel } from './AiDiffPanel';
+import { RestructureInspector } from './RestructureInspector';
 import { useSpddEditorStore } from '@/stores/spdd';
 import { useArtifactsStore } from '@/stores/artifacts';
+import { useClaudeStore } from '@/stores/claude';
+import { useRestructureStore } from '@/stores/restructure';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useSpddSuggest } from '@/hooks/useSpddSuggest';
+import { useRestructureSession } from '@/hooks/useRestructureSession';
 import { markdownToDraft } from './parser';
+import { draftToMarkdown } from './serializer';
 import { ReadArtifact, WriteArtifact } from '../../../wailsjs/go/main/App';
 import { parseTemplate, detectArtifactTypeFromPath, templatePathFor } from '@/lib/templateParser';
 import { parseArtifactContent, serializeArtifact } from '@/lib/genericSerializer';
@@ -31,12 +36,23 @@ import type { ParsedTemplate } from '@/lib/templateParser';
 
 // ─── Warnings banner ──────────────────────────────────────────────────────
 
+// Limite défensive UI-019 D2 (alignée avec uiapp.MaxRestructureBytes côté Go).
+const RESTRUCTURE_MAX_BYTES = 30_000;
+
 function WarningsBanner({
   warnings,
   onDismiss,
+  onRestructure,
+  restructureDisabledReason,
 }: {
   warnings: string[];
   onDismiss: () => void;
+  /** Click handler du bouton « Restructurer avec l'IA ». null →
+   * bouton non rendu (pas de désync template, AC5). */
+  onRestructure: (() => void) | null;
+  /** Quand non-null, le bouton est rendu mais désactivé avec ce
+   * tooltip (AC4 Claude indispo, D2 trop volumineux). */
+  restructureDisabledReason: string | null;
 }): JSX.Element | null {
   if (warnings.length === 0) return null;
   return (
@@ -56,6 +72,23 @@ function WarningsBanner({
           {warnings.map((w, i) => <li key={i}>{w}</li>)}
         </ul>
       </div>
+      {onRestructure && (
+        <button
+          type="button"
+          onClick={onRestructure}
+          disabled={restructureDisabledReason !== null}
+          title={restructureDisabledReason ?? 'Demander à l\'IA de remapper le contenu vers la structure attendue'}
+          className={cn(
+            'flex shrink-0 items-center gap-1.5 self-start rounded-yk-sm px-3 py-1 font-inter text-[12px]',
+            restructureDisabledReason
+              ? 'cursor-not-allowed border border-yk-line bg-yk-bg-2 text-yk-text-muted opacity-60'
+              : 'border border-yk-primary text-yk-primary hover:bg-[color:var(--yk-primary-soft)]',
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Restructurer avec l'IA
+        </button>
+      )}
       <button
         type="button"
         aria-label="Fermer l'avertissement"
@@ -83,11 +116,20 @@ export function SpddEditor(): JSX.Element {
   const resetDraft = useSpddEditorStore((s) => s.resetDraft);
   const aiPhase = useSpddEditorStore((s) => s.aiPhase);
   const aiSelection = useSpddEditorStore((s) => s.aiSelection);
+  const setDirty = useSpddEditorStore((s) => s.setDirty);
 
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
 
   // UI-014h: state local pour le rendu piloté par template
   const [editState, setEditState] = useState<EditState | null>(null);
+  // UI-019 D1 — wrapper qui marque le draft dirty quand SpddDocument
+  // remonte une modification user. Le chemin de chargement initial
+  // utilise setEditState() directement (pas via ce wrapper) pour ne
+  // pas marquer dirty à l'ouverture d'un fichier.
+  const setEditStateDirty = useCallback((next: EditState | null) => {
+    setEditState(next);
+    setDirty(true);
+  }, [setDirty]);
   const [parsedTemplate, setParsedTemplate] = useState<ParsedTemplate | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   // UI-014h O12: section active dans le chemin générique (pour TOC + Inspector)
@@ -103,6 +145,14 @@ export function SpddEditor(): JSX.Element {
     if (!selectedPath) return;
     let aborted = false;
     const currentDraft = useSpddEditorStore.getState().draft;
+
+    // Reset propre de l'overlay restructure IA + de la session
+    // streaming en cours quand l'utilisateur change d'artefact.
+    // Sans ce reset, l'Inspector du nouvel artefact garderait la
+    // bulle "RESTRUCTURATION IA" de la session précédente
+    // (useRestructureStore.open est sticky par défaut).
+    useRestructureStore.getState().closeOverlay();
+    void restructureSession.cancel();
 
     ReadArtifact(selectedPath)
       .then(async (raw) => {
@@ -157,31 +207,55 @@ export function SpddEditor(): JSX.Element {
     return () => { aborted = true; };
   }, [selectedPath, resetDraft]);
 
-  // UI-014h: sauvegarde via WriteArtifact + serializeArtifact (Ctrl+S)
+  // UI-014h: sauvegarde via WriteArtifact + serializeArtifact.
+  // Helper utilisé par Ctrl+S et par le bouton « Terminer » (toggle
+  // isEditMode → false). Sans cette écriture, basculer en view-only
+  // ne persiste rien sur disque et l'utilisateur perd ses modifs au
+  // prochain démarrage de yukki.
+  const saveCurrentEditState = useCallback((): Promise<void> => {
+    if (!editState || !parsedTemplate) return Promise.resolve();
+    const path = selectedPath;
+    if (!path) return Promise.resolve();
+    const content = serializeArtifact(editState, parsedTemplate);
+    return WriteArtifact(path, content)
+      .then(() => {
+        setGenericSavedAt(new Date().toISOString());
+        useSpddEditorStore.getState().setDirty(false);
+        toast({ title: 'Sauvegardé ✓', duration: 3000 });
+      })
+      .catch((err: unknown) => {
+        toast({
+          title: "Erreur d'enregistrement",
+          description: String(err),
+          duration: 5000,
+          variant: 'destructive',
+        });
+      });
+  }, [editState, parsedTemplate, selectedPath, toast]);
+
   useEffect(() => {
     if (!editState || !parsedTemplate) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        const path = selectedPath;
-        if (!path) return;
-        const content = serializeArtifact(editState, parsedTemplate);
-        WriteArtifact(path, content)
-          .then(() => {
-            setGenericSavedAt(new Date().toISOString());
-            toast({ title: 'Sauvegardé ✓', duration: 3000 });
-          })
-          .catch((err: unknown) => toast({
-            title: "Erreur d'enregistrement",
-            description: String(err),
-            duration: 5000,
-            variant: 'destructive',
-          }));
+        void saveCurrentEditState();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [editState, parsedTemplate, selectedPath, toast]);
+  }, [editState, parsedTemplate, saveCurrentEditState]);
+
+  // « Terminer » (passage edit → view-only) sauvegarde implicitement.
+  // L'utilisateur a vécu ce bouton comme un commit (cf. retour user
+  // « entre deux redémarrages je perds ce qui a été fait ») ; le
+  // forcer à Ctrl+S après chaque session d'édition est une friction
+  // sans valeur. « Modifier » (view-only → edit) reste un toggle pur.
+  const handleToggleEditMode = useCallback(() => {
+    if (isEditMode) {
+      void saveCurrentEditState();
+    }
+    setIsEditMode((v) => !v);
+  }, [isEditMode, saveCurrentEditState]);
 
   // CORE-007: auto-save to backend every 2s of inactivity.
   // Désactivé quand editState est non-null (évite conflit DraftSave vs WriteArtifact).
@@ -222,6 +296,170 @@ export function SpddEditor(): JSX.Element {
       return divergenceWarnings(computeDivergence(editState, parsedTemplate));
     }
     return markdownWarnings;
+  })();
+
+  // UI-019 — restructuration IA + overlay Inspector.
+  const restructureSession = useRestructureSession();
+  const restructureOpen = useRestructureStore((s) => s.open);
+  const claudeAvailable = useClaudeStore((s) => s.status.Available);
+  // Le bouton « Restructurer avec l'IA » s'enclenche dans deux cas :
+  //   - chemin générique (editState !== null) → on lit directement
+  //     editState + parsedTemplate.
+  //   - chemin story-legacy (editState === null) → on sérialise le
+  //     draft courant ou le markdownSource selon viewMode, puis on
+  //     re-parse via parseArtifactContent pour calculer la divergence
+  //     comme si on était en générique. Le `restructureCurrentMarkdown`
+  //     représente l'état utilisateur courant dans les deux cas.
+  const restructureCurrentMarkdown: string | null = (() => {
+    if (editState && parsedTemplate) {
+      return serializeArtifact(editState, parsedTemplate);
+    }
+    if (parsedTemplate) {
+      return viewMode === 'markdown' ? markdownSource : draftToMarkdown(draft);
+    }
+    return null;
+  })();
+  const restructureDivergence = (() => {
+    if (!parsedTemplate || !restructureCurrentMarkdown) return null;
+    if (editState) return computeDivergence(editState, parsedTemplate);
+    // Story-legacy : reconstruire un EditState éphémère ne suffit pas
+    // (`draftToMarkdown` re-émet les headings même quand les sections
+    // sont vides — divergence calculée à 0). On bascule sur les
+    // `markdownWarnings` produits par le parser story qui ont déjà la
+    // bonne sémantique « section absente ». On extrait le heading
+    // depuis le format de chaîne `La section X est absente.`.
+    if (markdownWarnings.length === 0) return null;
+    const missingRequired = markdownWarnings
+      .map((w) => {
+        const m = w.match(/^La section (.+?) est absente\./);
+        return m ? `## ${m[1]}` : null;
+      })
+      .filter((s): s is string => s !== null);
+    return { missingRequired, orphanSections: [] };
+  })();
+  const restructureEligible =
+    parsedTemplate !== null
+    && restructureCurrentMarkdown !== null
+    && restructureDivergence !== null
+    && (restructureDivergence.missingRequired.length > 0
+        || restructureDivergence.orphanSections.length > 0);
+  const restructureDisabledReason: string | null = (() => {
+    if (!claudeAvailable) return 'Claude CLI indisponible';
+    if (restructureCurrentMarkdown && restructureCurrentMarkdown.length > RESTRUCTURE_MAX_BYTES) {
+      const kb = Math.round(restructureCurrentMarkdown.length / 1000);
+      return `Document trop volumineux (${kb} KB / 30 KB max)`;
+    }
+    return null;
+  })();
+  const handleRestructureClick = useCallback(() => {
+    if (!restructureEligible || !restructureCurrentMarkdown || !restructureDivergence) return;
+    if (restructureDisabledReason) return;
+    const templateName = selectedPath ? detectArtifactTypeFromPath(selectedPath) : 'story';
+    // Bascule l'éditeur en mode édition au moment du clic — la
+    // restructuration produit un diff que l'utilisateur acceptera ;
+    // sans ce switch il atterrirait en read-only et devrait
+    // re-cliquer Modifier pour toucher au résultat. Le bouton
+    // Modifier/Terminer du header reste l'override manuel après.
+    setIsEditMode(true);
+    useRestructureStore.getState().openOverlay(restructureCurrentMarkdown);
+    void restructureSession.start({
+      fullMarkdown: restructureCurrentMarkdown,
+      templateName,
+      divergence: {
+        missingRequired: restructureDivergence.missingRequired,
+        orphanSections: restructureDivergence.orphanSections,
+      },
+    });
+  }, [
+    restructureEligible,
+    restructureCurrentMarkdown,
+    restructureDivergence,
+    restructureDisabledReason,
+    restructureSession,
+    selectedPath,
+  ]);
+  const handleRestructureAccept = useCallback((after: string, before: string) => {
+    // Réinjecter le front-matter intact (si présent) ; le LLM n'a vu
+    // que le body (cf. uiapp.splitFrontMatter). On reconstitue
+    // frontMatter + after avant d'appliquer.
+    // `before` est passé en argument par RestructureInspector parce
+    // que le store a été reset synchroniquement par accept() avant
+    // que ce callback ne s'exécute (lire le store ici renverrait null).
+    if (!parsedTemplate || !selectedPath) return;
+    const fmEnd = findFrontMatterEnd(before);
+    const frontMatter = fmEnd > 0 ? before.slice(0, fmEnd) : '';
+    const reassembled = frontMatter + after;
+
+    if (editState) {
+      // Generic path : re-parser puis serialize → écriture disque
+      // immédiate. UX : Accept = "j'ai vu le diff, applique +
+      // sauvegarde". Sans cet auto-save, isDirty reste true et le
+      // navGuard re-déclenche la pop-up à chaque clic dans la
+      // sidebar — vécu comme un bug.
+      const reparsed = parseArtifactContent(reassembled, parsedTemplate);
+      setEditState(reparsed);
+      const content = serializeArtifact(reparsed, parsedTemplate);
+      WriteArtifact(selectedPath, content)
+        .then(() => {
+          setGenericSavedAt(new Date().toISOString());
+          useSpddEditorStore.getState().setDirty(false);
+          toast({ title: 'Restructuration sauvegardée ✓', duration: 3000 });
+        })
+        .catch((err: unknown) => {
+          // Échec disque → on garde dirty=true pour que l'utilisateur
+          // puisse retenter via Ctrl+S.
+          setDirty(true);
+          toast({
+            title: "Erreur d'enregistrement après restructuration",
+            description: String(err),
+            duration: 5000,
+            variant: 'destructive',
+          });
+        });
+    } else {
+      // Story-legacy path : forcer le mode markdown avec le résultat
+      // puis sauvegarder. L'auto-save backend pickup le markdownSource
+      // au prochain tick (cf. useAutoSave + DraftSave côté Go).
+      useSpddEditorStore.setState({
+        markdownSource: reassembled,
+        viewMode: 'markdown',
+        isDirty: true,
+      });
+      WriteArtifact(selectedPath, reassembled)
+        .then(() => {
+          useSpddEditorStore.getState().setDirty(false);
+          toast({ title: 'Restructuration sauvegardée ✓', duration: 3000 });
+        })
+        .catch((err: unknown) => toast({
+          title: "Erreur d'enregistrement après restructuration",
+          description: String(err),
+          duration: 5000,
+          variant: 'destructive',
+        }));
+    }
+  }, [editState, parsedTemplate, selectedPath, setDirty, toast]);
+
+  // UI-019 — validation Accept : on lit le markdown `after` calculé par
+  // l'IA et on vérifie que toutes les sections obligatoires du template
+  // sont présentes (et non vides). Si elles manquent, le bouton
+  // Accepter du Inspector est désactivé avec la liste en tooltip et
+  // banner d'avertissement. Dérivation pure → pas de useMemo nécessaire.
+  const restructureAfter = useRestructureStore((s) => s.after);
+  const restructureAcceptValidation: { allowed: boolean; reason: string } | null = (() => {
+    if (!restructureAfter || !parsedTemplate) return null;
+    const before = useRestructureStore.getState().before ?? '';
+    const fmEnd = findFrontMatterEnd(before);
+    const frontMatter = fmEnd > 0 ? before.slice(0, fmEnd) : '';
+    const reassembled = frontMatter + restructureAfter;
+    const ephemeral = parseArtifactContent(reassembled, parsedTemplate);
+    const div = computeDivergence(ephemeral, parsedTemplate);
+    if (div.missingRequired.length === 0) {
+      return { allowed: true, reason: '' };
+    }
+    return {
+      allowed: false,
+      reason: `Sections obligatoires encore manquantes : ${div.missingRequired.join(', ')}. Refuse pour relancer ou modifie le résultat avant d'accepter.`,
+    };
   })();
 
   // Debounce IntersectionObserver-driven activeSection updates so they don't
@@ -286,7 +524,7 @@ export function SpddEditor(): JSX.Element {
       <SpddHeader
         editState={editState}
         isEditMode={isEditMode}
-        onToggleEditMode={() => setIsEditMode((v) => !v)}
+        onToggleEditMode={handleToggleEditMode}
         genericSavedAt={genericSavedAt}
         parsedTemplate={parsedTemplate}
       />
@@ -296,7 +534,12 @@ export function SpddEditor(): JSX.Element {
       >
         {/* Warnings banner spans all columns — UI-014h O13: divergence template ou markdown */}
         {warningsToShow.length > 0 && (
-          <WarningsBanner warnings={warningsToShow} onDismiss={dismissWarnings} />
+          <WarningsBanner
+            warnings={warningsToShow}
+            onDismiss={dismissWarnings}
+            onRestructure={restructureEligible ? handleRestructureClick : null}
+            restructureDisabledReason={restructureEligible ? restructureDisabledReason : null}
+          />
         )}
 
         {/* TOC — always visible */}
@@ -328,7 +571,7 @@ export function SpddEditor(): JSX.Element {
             onActiveSectionFromScroll={handleScrollSection}
             editState={editState}
             parsedTemplate={parsedTemplate}
-            onEditStateChange={setEditState}
+            onEditStateChange={setEditStateDirty}
             readOnly={!isEditMode}
           />
         )}
@@ -336,20 +579,30 @@ export function SpddEditor(): JSX.Element {
         {/* Inspector — story ou générique selon le mode */}
         {showInspector && (
           <aside
-            aria-label={showDiffPanel ? 'Panneau de diff IA' : 'Inspector'}
+            aria-label={showDiffPanel
+              ? 'Panneau de diff IA'
+              : restructureOpen
+                ? 'Restructuration IA'
+                : 'Inspector'}
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
           >
-            {showDiffPanel
-              ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} />
-              : hasEditState
-                ? (
-                  <GenericInspector
-                    editState={editState!}
-                    parsedTemplate={parsedTemplate}
-                    activeIndex={activeGenericIndex}
-                  />
-                )
-                : <SpddInspector />}
+            {restructureOpen
+              ? <RestructureInspector
+                  session={restructureSession}
+                  onAccept={handleRestructureAccept}
+                  acceptValidation={restructureAcceptValidation}
+                />
+              : showDiffPanel
+                ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} />
+                : hasEditState
+                  ? (
+                    <GenericInspector
+                      editState={editState!}
+                      parsedTemplate={parsedTemplate}
+                      activeIndex={activeGenericIndex}
+                    />
+                  )
+                  : <SpddInspector />}
           </aside>
         )}
       </div>
@@ -360,4 +613,20 @@ export function SpddEditor(): JSX.Element {
       <AiPopover suggestResult={suggestResult} />
     </div>
   );
+}
+
+// findFrontMatterEnd retourne l'index byte juste après le `\n---\n`
+// fermant du front-matter, ou 0 si l'artefact n'a pas de front-matter.
+// Tolère CRLF (cohérent avec parseArtifactContent + uiapp.splitFrontMatter).
+function findFrontMatterEnd(content: string): number {
+  if (!content.startsWith('---\n') && !content.startsWith('---\r\n')) {
+    return 0;
+  }
+  const skip = content.startsWith('---\r\n') ? 5 : 4;
+  const rest = content.slice(skip);
+  const close1 = rest.indexOf('\n---\n');
+  if (close1 >= 0) return skip + close1 + 5;
+  const close2 = rest.indexOf('\r\n---\r\n');
+  if (close2 >= 0) return skip + close2 + 7;
+  return 0;
 }
