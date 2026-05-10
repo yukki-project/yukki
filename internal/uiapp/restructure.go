@@ -270,9 +270,18 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 // RestructureCancel cancels an active session by sessionID. Returns
 // nil when the session is unknown (idempotent — the goroutine may
 // have already terminated).
+//
+// Important : on **ne supprime pas** l'entrée du map ici — la goroutine
+// le fait dans son `defer a.restructureSessions.Delete(sessionID)`
+// après avoir fini d'émettre tous ses events. Pré-supprimer ici
+// rend `hasActiveRestructure()` immédiatement faux et libère
+// `waitForSessionEnd` (en test) AVANT la fin de la goroutine — la
+// goroutine émet alors un event sur l'emitEvent de l'itération
+// suivante, ce qui logue « cannot call EventsEmit » et fait
+// occasionnellement échouer la suite Go sous race.
 func (a *App) RestructureCancel(sessionID string) error {
 	a.traceBinding("RestructureCancel", slog.String("sessionID", sessionID))
-	val, loaded := a.restructureSessions.LoadAndDelete(sessionID)
+	val, loaded := a.restructureSessions.Load(sessionID)
 	if !loaded {
 		return nil
 	}
