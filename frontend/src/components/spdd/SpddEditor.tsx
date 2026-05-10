@@ -146,6 +146,14 @@ export function SpddEditor(): JSX.Element {
     let aborted = false;
     const currentDraft = useSpddEditorStore.getState().draft;
 
+    // Reset propre de l'overlay restructure IA + de la session
+    // streaming en cours quand l'utilisateur change d'artefact.
+    // Sans ce reset, l'Inspector du nouvel artefact garderait la
+    // bulle "RESTRUCTURATION IA" de la session précédente
+    // (useRestructureStore.open est sticky par défaut).
+    useRestructureStore.getState().closeOverlay();
+    void restructureSession.cancel();
+
     ReadArtifact(selectedPath)
       .then(async (raw) => {
         if (aborted) return;
@@ -199,32 +207,55 @@ export function SpddEditor(): JSX.Element {
     return () => { aborted = true; };
   }, [selectedPath, resetDraft]);
 
-  // UI-014h: sauvegarde via WriteArtifact + serializeArtifact (Ctrl+S)
+  // UI-014h: sauvegarde via WriteArtifact + serializeArtifact.
+  // Helper utilisé par Ctrl+S et par le bouton « Terminer » (toggle
+  // isEditMode → false). Sans cette écriture, basculer en view-only
+  // ne persiste rien sur disque et l'utilisateur perd ses modifs au
+  // prochain démarrage de yukki.
+  const saveCurrentEditState = useCallback((): Promise<void> => {
+    if (!editState || !parsedTemplate) return Promise.resolve();
+    const path = selectedPath;
+    if (!path) return Promise.resolve();
+    const content = serializeArtifact(editState, parsedTemplate);
+    return WriteArtifact(path, content)
+      .then(() => {
+        setGenericSavedAt(new Date().toISOString());
+        useSpddEditorStore.getState().setDirty(false);
+        toast({ title: 'Sauvegardé ✓', duration: 3000 });
+      })
+      .catch((err: unknown) => {
+        toast({
+          title: "Erreur d'enregistrement",
+          description: String(err),
+          duration: 5000,
+          variant: 'destructive',
+        });
+      });
+  }, [editState, parsedTemplate, selectedPath, toast]);
+
   useEffect(() => {
     if (!editState || !parsedTemplate) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        const path = selectedPath;
-        if (!path) return;
-        const content = serializeArtifact(editState, parsedTemplate);
-        WriteArtifact(path, content)
-          .then(() => {
-            setGenericSavedAt(new Date().toISOString());
-            useSpddEditorStore.getState().setDirty(false);
-            toast({ title: 'Sauvegardé ✓', duration: 3000 });
-          })
-          .catch((err: unknown) => toast({
-            title: "Erreur d'enregistrement",
-            description: String(err),
-            duration: 5000,
-            variant: 'destructive',
-          }));
+        void saveCurrentEditState();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [editState, parsedTemplate, selectedPath, toast]);
+  }, [editState, parsedTemplate, saveCurrentEditState]);
+
+  // « Terminer » (passage edit → view-only) sauvegarde implicitement.
+  // L'utilisateur a vécu ce bouton comme un commit (cf. retour user
+  // « entre deux redémarrages je perds ce qui a été fait ») ; le
+  // forcer à Ctrl+S après chaque session d'édition est une friction
+  // sans valeur. « Modifier » (view-only → edit) reste un toggle pur.
+  const handleToggleEditMode = useCallback(() => {
+    if (isEditMode) {
+      void saveCurrentEditState();
+    }
+    setIsEditMode((v) => !v);
+  }, [isEditMode, saveCurrentEditState]);
 
   // CORE-007: auto-save to backend every 2s of inactivity.
   // Désactivé quand editState est non-null (évite conflit DraftSave vs WriteArtifact).
@@ -324,6 +355,12 @@ export function SpddEditor(): JSX.Element {
     if (!restructureEligible || !restructureCurrentMarkdown || !restructureDivergence) return;
     if (restructureDisabledReason) return;
     const templateName = selectedPath ? detectArtifactTypeFromPath(selectedPath) : 'story';
+    // Bascule l'éditeur en mode édition au moment du clic — la
+    // restructuration produit un diff que l'utilisateur acceptera ;
+    // sans ce switch il atterrirait en read-only et devrait
+    // re-cliquer Modifier pour toucher au résultat. Le bouton
+    // Modifier/Terminer du header reste l'override manuel après.
+    setIsEditMode(true);
     useRestructureStore.getState().openOverlay(restructureCurrentMarkdown);
     void restructureSession.start({
       fullMarkdown: restructureCurrentMarkdown,
@@ -341,32 +378,89 @@ export function SpddEditor(): JSX.Element {
     restructureSession,
     selectedPath,
   ]);
-  const handleRestructureAccept = useCallback((after: string) => {
+  const handleRestructureAccept = useCallback((after: string, before: string) => {
     // Réinjecter le front-matter intact (si présent) ; le LLM n'a vu
     // que le body (cf. uiapp.splitFrontMatter). On reconstitue
     // frontMatter + after avant d'appliquer.
+    // `before` est passé en argument par RestructureInspector parce
+    // que le store a été reset synchroniquement par accept() avant
+    // que ce callback ne s'exécute (lire le store ici renverrait null).
     if (!parsedTemplate || !selectedPath) return;
-    const before = useRestructureStore.getState().before ?? '';
     const fmEnd = findFrontMatterEnd(before);
     const frontMatter = fmEnd > 0 ? before.slice(0, fmEnd) : '';
     const reassembled = frontMatter + after;
 
     if (editState) {
-      // Generic path : re-parser dans l'editState rendu.
+      // Generic path : re-parser puis serialize → écriture disque
+      // immédiate. UX : Accept = "j'ai vu le diff, applique +
+      // sauvegarde". Sans cet auto-save, isDirty reste true et le
+      // navGuard re-déclenche la pop-up à chaque clic dans la
+      // sidebar — vécu comme un bug.
       const reparsed = parseArtifactContent(reassembled, parsedTemplate);
-      setEditStateDirty(reparsed);
+      setEditState(reparsed);
+      const content = serializeArtifact(reparsed, parsedTemplate);
+      WriteArtifact(selectedPath, content)
+        .then(() => {
+          setGenericSavedAt(new Date().toISOString());
+          useSpddEditorStore.getState().setDirty(false);
+          toast({ title: 'Restructuration sauvegardée ✓', duration: 3000 });
+        })
+        .catch((err: unknown) => {
+          // Échec disque → on garde dirty=true pour que l'utilisateur
+          // puisse retenter via Ctrl+S.
+          setDirty(true);
+          toast({
+            title: "Erreur d'enregistrement après restructuration",
+            description: String(err),
+            duration: 5000,
+            variant: 'destructive',
+          });
+        });
     } else {
       // Story-legacy path : forcer le mode markdown avec le résultat
-      // pour que l'utilisateur voie le markdown restructuré dans
-      // l'éditeur. setDirty manuel car on ne passe pas par
-      // setEditStateDirty.
+      // puis sauvegarder. L'auto-save backend pickup le markdownSource
+      // au prochain tick (cf. useAutoSave + DraftSave côté Go).
       useSpddEditorStore.setState({
         markdownSource: reassembled,
         viewMode: 'markdown',
         isDirty: true,
       });
+      WriteArtifact(selectedPath, reassembled)
+        .then(() => {
+          useSpddEditorStore.getState().setDirty(false);
+          toast({ title: 'Restructuration sauvegardée ✓', duration: 3000 });
+        })
+        .catch((err: unknown) => toast({
+          title: "Erreur d'enregistrement après restructuration",
+          description: String(err),
+          duration: 5000,
+          variant: 'destructive',
+        }));
     }
-  }, [editState, parsedTemplate, selectedPath, setEditStateDirty]);
+  }, [editState, parsedTemplate, selectedPath, setDirty, toast]);
+
+  // UI-019 — validation Accept : on lit le markdown `after` calculé par
+  // l'IA et on vérifie que toutes les sections obligatoires du template
+  // sont présentes (et non vides). Si elles manquent, le bouton
+  // Accepter du Inspector est désactivé avec la liste en tooltip et
+  // banner d'avertissement. Dérivation pure → pas de useMemo nécessaire.
+  const restructureAfter = useRestructureStore((s) => s.after);
+  const restructureAcceptValidation: { allowed: boolean; reason: string } | null = (() => {
+    if (!restructureAfter || !parsedTemplate) return null;
+    const before = useRestructureStore.getState().before ?? '';
+    const fmEnd = findFrontMatterEnd(before);
+    const frontMatter = fmEnd > 0 ? before.slice(0, fmEnd) : '';
+    const reassembled = frontMatter + restructureAfter;
+    const ephemeral = parseArtifactContent(reassembled, parsedTemplate);
+    const div = computeDivergence(ephemeral, parsedTemplate);
+    if (div.missingRequired.length === 0) {
+      return { allowed: true, reason: '' };
+    }
+    return {
+      allowed: false,
+      reason: `Sections obligatoires encore manquantes : ${div.missingRequired.join(', ')}. Refuse pour relancer ou modifie le résultat avant d'accepter.`,
+    };
+  })();
 
   // Debounce IntersectionObserver-driven activeSection updates so they don't
   // jitter while a smooth-scroll is still resolving.
@@ -430,7 +524,7 @@ export function SpddEditor(): JSX.Element {
       <SpddHeader
         editState={editState}
         isEditMode={isEditMode}
-        onToggleEditMode={() => setIsEditMode((v) => !v)}
+        onToggleEditMode={handleToggleEditMode}
         genericSavedAt={genericSavedAt}
         parsedTemplate={parsedTemplate}
       />
@@ -493,7 +587,11 @@ export function SpddEditor(): JSX.Element {
             className="overflow-y-auto border-l border-yk-line bg-yk-bg-1"
           >
             {restructureOpen
-              ? <RestructureInspector session={restructureSession} onAccept={handleRestructureAccept} />
+              ? <RestructureInspector
+                  session={restructureSession}
+                  onAccept={handleRestructureAccept}
+                  acceptValidation={restructureAcceptValidation}
+                />
               : showDiffPanel
                 ? <AiDiffPanel suggestResult={suggestResult} currentRequest={currentRequest} />
                 : hasEditState

@@ -20,13 +20,25 @@ import (
 	"strings"
 )
 
-// restructureTmpl is the system prompt template embedded at compile
-// time. It uses a homemade {{Var}} substitution syntax (no
-// text/template — the template's own braces would conflict) plus
-// {{#if X}} ... {{/if}} blocks for optional sections.
+// restructureTmpl is the legacy combined template (system + user
+// concatenated). Kept for backward-compat / tests.
 //
 //go:embed restructure.tmpl
 var restructureTmpl string
+
+// restructureSystemTmpl is the static system prompt — règles
+// non-négociables, indépendant du contenu de l'artefact. Passé via
+// `claude --system-prompt` pour bénéficier du prompt cache et
+// renforcer le respect des règles.
+//
+//go:embed restructure_system.tmpl
+var restructureSystemTmpl string
+
+// restructureUserTmpl est la partie dynamique : template cible,
+// divergence, historique, contenu de l'artefact. Passé sur stdin.
+//
+//go:embed restructure_user.tmpl
+var restructureUserTmpl string
 
 // RestructurePromptInput carries the fields BuildRestructure needs.
 // Decoupled from provider.SuggestionRequest by design (cf. UI-019
@@ -66,29 +78,55 @@ type RestructureTurn struct {
 	Answer   string `json:"answer"`
 }
 
-// BuildRestructure renders the system prompt for a restructuration
-// request. Returns an error when:
-//   - input.FullMarkdown is empty
-//   - input.TemplateName is empty
-//   - defs is nil (the section catalogue is required to compose
-//     the "expected sections" block)
+// BuildRestructure renders the legacy combined prompt (system + user
+// in a single string, sent via stdin). Kept for backward-compat with
+// tests written before the system/user split.
 func BuildRestructure(input RestructurePromptInput, defs SectionDefinitions) (string, error) {
+	if err := validateRestructureInput(input, defs); err != nil {
+		return "", err
+	}
+	return renderRestructureTemplate(restructureTmpl, input, defs), nil
+}
+
+// BuildRestructureSystem returns the static system prompt — the
+// rules of engagement that don't depend on the artefact content.
+// Passed to `claude --system-prompt` so the model receives them as
+// system role (cached + higher priority than user content).
+func BuildRestructureSystem() string {
+	// No substitution — the system template is fully static.
+	return restructureSystemTmpl
+}
+
+// BuildRestructureUser renders the dynamic user prompt : target
+// template name, divergence, chat history, full artefact body.
+// Sent to claude over stdin.
+func BuildRestructureUser(input RestructurePromptInput, defs SectionDefinitions) (string, error) {
+	if err := validateRestructureInput(input, defs); err != nil {
+		return "", err
+	}
+	return renderRestructureTemplate(restructureUserTmpl, input, defs), nil
+}
+
+func validateRestructureInput(input RestructurePromptInput, defs SectionDefinitions) error {
 	if strings.TrimSpace(input.FullMarkdown) == "" {
-		return "", fmt.Errorf("promptbuilder: FullMarkdown must not be empty")
+		return fmt.Errorf("promptbuilder: FullMarkdown must not be empty")
 	}
 	if strings.TrimSpace(input.TemplateName) == "" {
-		return "", fmt.Errorf("promptbuilder: TemplateName must not be empty")
+		return fmt.Errorf("promptbuilder: TemplateName must not be empty")
 	}
 	if defs == nil {
-		return "", fmt.Errorf("promptbuilder: SectionDefinitions must not be nil")
+		return fmt.Errorf("promptbuilder: SectionDefinitions must not be nil")
 	}
+	return nil
+}
 
+func renderRestructureTemplate(tmpl string, input RestructurePromptInput, defs SectionDefinitions) string {
 	sectionsBlock := renderSectionsExpected(defs)
 	missingBlock := renderBulletList(input.Divergence.MissingRequired)
 	orphanBlock := renderBulletList(input.Divergence.OrphanSections)
 	historyBlock := renderHistory(input.History)
 
-	out := restructureTmpl
+	out := tmpl
 	out = substituteIfBlock(out, "MissingRequired", missingBlock != "", missingBlock)
 	out = substituteIfBlock(out, "OrphanSections", orphanBlock != "", orphanBlock)
 	out = substituteIfBlock(out, "History", historyBlock != "", historyBlock)
@@ -97,7 +135,7 @@ func BuildRestructure(input RestructurePromptInput, defs SectionDefinitions) (st
 	out = strings.ReplaceAll(out, "{{SectionsExpected}}", sectionsBlock)
 	out = strings.ReplaceAll(out, "{{FullMarkdown}}", input.FullMarkdown)
 
-	return out, nil
+	return out
 }
 
 // renderSectionsExpected returns a sorted bullet list of the

@@ -17,8 +17,10 @@ import { useProjectStore } from '@/stores/project';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useSettingsStore } from '@/stores/settings';
 import { useDevToolsStore } from '@/stores/devTools';
+import { useNavGuardStore } from '@/stores/navGuard';
 import { hydrateBuildFlags } from '@/lib/buildFlags';
 import { LogsDrawer } from '@/components/hub/LogsDrawer';
+import { NavGuardModal } from '@/components/hub/NavGuardModal';
 import type { LogLine } from '../wailsjs/go/main/App';
 import type { ProjectOpenedPayload, ProjectClosedPayload, ProjectSwitchedPayload } from '@/lib/wails-events';
 
@@ -85,16 +87,23 @@ export default function App() {
   }, [addProject, removeProject, setActive, openedProjects]);
 
   // Keyboard shortcuts.
+  // Toutes les actions de navigation projet (Ctrl+O / Ctrl+W /
+  // Ctrl+Tab / Ctrl+1..9) passent par useNavGuardStore.guard
+  // qui lit lui-même `isDirty` + `restructureOpen` et bloque si
+  // nécessaire.
+  const navGuard = useNavGuardStore((s) => s.guard);
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (!e.ctrlKey) return;
 
       if (e.key === 'o' || e.key === 'O') {
         e.preventDefault();
-        void OpenProject('').then((meta) => {
-          if (meta && meta.Path) {
-            addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
-          }
+        navGuard(() => {
+          void OpenProject('').then((meta) => {
+            if (meta && meta.Path) {
+              addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+            }
+          });
         });
         return;
       }
@@ -102,7 +111,9 @@ export default function App() {
       if (e.key === 'w' || e.key === 'W') {
         if (activeIndex >= 0) {
           e.preventDefault();
-          void CloseProject(activeIndex).then(() => removeProject(activeIndex));
+          navGuard(() => {
+            void CloseProject(activeIndex).then(() => removeProject(activeIndex));
+          });
         }
         return;
       }
@@ -114,23 +125,27 @@ export default function App() {
         const next = e.shiftKey
           ? (activeIndex - 1 + len) % len
           : (activeIndex + 1) % len;
-        void SwitchProject(next).then(() => setActive(next));
+        navGuard(() => {
+          void SwitchProject(next).then(() => setActive(next));
+        });
         return;
       }
 
       const digit = parseInt(e.key, 10);
       if (digit >= 1 && digit <= 9) {
         const idx = digit - 1;
-        if (idx < openedProjects.length) {
+        if (idx < openedProjects.length && idx !== activeIndex) {
           e.preventDefault();
-          void SwitchProject(idx).then(() => setActive(idx));
+          navGuard(() => {
+            void SwitchProject(idx).then(() => setActive(idx));
+          });
         }
       }
     }
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activeIndex, openedProjects, addProject, removeProject, setActive]);
+  }, [activeIndex, openedProjects, addProject, removeProject, setActive, navGuard]);
 
   // Sync active project to legacy stores (SidebarPanel, HubList, StoryViewer
   // still read useProjectStore.projectDir and useArtifactsStore).
@@ -215,6 +230,7 @@ export default function App() {
       )}
       <Toaster />
       <LogsDrawer />
+      <NavGuardModal />
     </main>
   );
 }

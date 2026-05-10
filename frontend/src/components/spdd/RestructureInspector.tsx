@@ -14,7 +14,7 @@
 // AiDiffPanel), pas de side-by-side.
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, X, RefreshCw, Send, Sparkles } from 'lucide-react';
+import { Check, X, Sparkles } from 'lucide-react';
 import { useRestructureStore } from '@/stores/restructure';
 import type { RestructureSession } from '@/hooks/useRestructureSession';
 
@@ -22,11 +22,22 @@ interface Props {
   session: RestructureSession;
   /** Called when the user accepts the diff. The parent (SpddEditor)
    * is responsible for applying the markdown to the artefact draft
-   * and flipping isDirty. */
-  onAccept: (after: string) => void;
+   * and flipping isDirty. Receives both `after` (LLM body) and the
+   * `before` snapshot (full markdown incl. front-matter) — needed
+   * because the store is reset synchronously by `accept()` and the
+   * parent loses access to `before` otherwise. */
+  onAccept: (after: string, before: string) => void;
+  /**
+   * Validation du bouton Accepter calculée par le parent à partir
+   * du markdown `after` et de la définition de template. null =
+   * pas de validation (Accept toujours autorisé). Sinon si
+   * `allowed === false`, le bouton est disabled avec `reason` en
+   * tooltip.
+   */
+  acceptValidation?: { allowed: boolean; reason: string } | null;
 }
 
-export function RestructureInspector({ session, onAccept }: Props): JSX.Element {
+export function RestructureInspector({ session, onAccept, acceptValidation }: Props): JSX.Element {
   const before = useRestructureStore((s) => s.before);
   const after = useRestructureStore((s) => s.after);
   const refuse = useRestructureStore((s) => s.refuse);
@@ -34,8 +45,14 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
   const [chatInput, setChatInput] = useState('');
 
   const handleAccept = (): void => {
+    // Snapshot `before` AVANT que `accept()` ne reset le store,
+    // sinon le parent (SpddEditor.handleRestructureAccept) lit
+    // `before === null` et perd le front-matter du document
+    // d'origine — bug observé dans yukki-2026-05-10.log
+    // (`beforeLen=0`) avant ce fix.
+    const beforeSnapshot = useRestructureStore.getState().before ?? '';
     const accepted = useRestructureStore.getState().accept();
-    if (accepted) onAccept(accepted);
+    if (accepted) onAccept(accepted, beforeSnapshot);
     session.reset();
   };
 
@@ -79,6 +96,7 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
           chatTurnCount={session.chatTurnCount}
           history={session.history}
           streamText={session.streamText}
+          thinkingText={session.thinkingText}
           questions={[]}
           onCancel={handleCancel}
           onRefuse={handleRefuse}
@@ -99,7 +117,9 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
             <button
               type="button"
               onClick={handleAccept}
-              className="flex items-center gap-1.5 rounded-yk-sm bg-yk-primary px-3 py-1 font-inter text-[12px] text-white hover:brightness-110"
+              disabled={acceptValidation?.allowed === false}
+              title={acceptValidation?.reason ?? 'Appliquer la restructuration au draft (Ctrl+S pour sauver)'}
+              className="flex items-center gap-1.5 rounded-yk-sm bg-yk-primary px-3 py-1 font-inter text-[12px] text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100"
             >
               <Check className="h-3.5 w-3.5" />
               Accepter
@@ -113,6 +133,11 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
               Refuser
             </button>
           </div>
+          {acceptValidation?.allowed === false && (
+            <p className="rounded-yk-sm border border-yk-warning bg-[color:var(--yk-warning-soft)] px-2 py-1.5 text-[11.5px] text-yk-warning">
+              {acceptValidation.reason}
+            </p>
+          )}
         </div>
       )}
 
@@ -122,6 +147,7 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
           chatTurnCount={session.chatTurnCount}
           history={session.history}
           streamText=""
+          thinkingText={session.thinkingText}
           questions={session.questions}
           onCancel={handleCancel}
           onRefuse={handleRefuse}
@@ -129,24 +155,6 @@ export function RestructureInspector({ session, onAccept }: Props): JSX.Element 
           setChatInput={setChatInput}
           onSend={handleSendChat}
         />
-      )}
-
-      {session.mode === 'exhausted' && (
-        <div className="flex flex-col gap-3">
-          <p className="text-yk-warning">
-            Conversation trop longue (5 tours), abandonnée.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="flex items-center gap-1.5 rounded-yk-sm border border-yk-line px-3 py-1 font-inter text-[12px] text-yk-text-secondary hover:bg-yk-bg-2"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Recommencer
-            </button>
-          </div>
-        </div>
       )}
 
       {session.mode === 'error' && (
@@ -180,6 +188,9 @@ interface ChatLayoutProps {
   chatTurnCount: number;
   history: Array<{ question: string; answer: string }>;
   streamText: string;
+  /** Chain-of-thought de Claude rendu dans une bulle séparée
+   * (italique gris, repliable). Vide pour les modèles sans thinking. */
+  thinkingText: string;
   questions: string[];
   onCancel: () => void;
   onRefuse: () => void;
@@ -193,6 +204,7 @@ function ChatLayout({
   chatTurnCount,
   history,
   streamText,
+  thinkingText,
   questions,
   onCancel,
   onRefuse,
@@ -201,7 +213,6 @@ function ChatLayout({
   onSend,
 }: ChatLayoutProps): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isStreaming = mode === 'streaming' || mode === 'chatStreaming';
 
   // Auto-scroll au dernier message à chaque mise à jour.
   useEffect(() => {
@@ -227,7 +238,7 @@ function ChatLayout({
       {chatTurnCount > 0 && (
         <div className="flex items-center justify-between text-[10.5px] text-yk-text-muted">
           <span className="font-jbmono uppercase tracking-wider">
-            Tour {chatTurnCount}{mode === 'chatAwaitingUser' ? ' (réponse attendue)' : ' / 5'}
+            Tour {chatTurnCount}{mode === 'chatAwaitingUser' ? ' (réponse attendue)' : ''}
           </span>
           <button
             type="button"
@@ -245,6 +256,10 @@ function ChatLayout({
         ref={scrollRef}
         className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-yk-sm bg-yk-bg-2 p-2"
       >
+        {/* Chain-of-thought Claude — bulle italique repliable rendue
+            avant la réponse, mise à jour live pendant le streaming. */}
+        {thinkingText && <ThinkingBubble text={thinkingText} streaming={mode === 'streaming' || mode === 'chatStreaming'} />}
+
         {/* Premier tour streaming sans history : une bulle assistant
             placeholder qui s'écrit. */}
         {mode === 'streaming' && history.length === 0 && (
@@ -274,49 +289,41 @@ function ChatLayout({
         )}
       </div>
 
-      {/* Input bar messenger-style */}
-      <div className="flex items-end gap-2">
-        <textarea
-          value={chatInput}
-          onChange={(e) => setChatInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              if (chatInput.trim() && !isStreaming) onSend();
-            }
-          }}
-          placeholder={isStreaming ? "L'IA répond…" : 'Réponse…'}
-          rows={2}
-          disabled={isStreaming}
-          className="flex-1 resize-none rounded-yk bg-yk-bg-2 px-3 py-2 font-inter text-[12px] text-yk-text-primary placeholder:text-yk-text-muted focus:outline-none focus:ring-2 focus:ring-[color:var(--yk-primary-ring)] disabled:opacity-50"
-        />
-        {isStreaming ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            title="Annuler la requête en cours"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-yk-line bg-yk-bg-2 text-yk-text-secondary hover:bg-yk-bg-3"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={!chatInput.trim()}
-            title="Envoyer (Entrée)"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-yk-primary text-white hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        )}
+      {/* Status footer + cancel — pas d'input chat car l'utilisateur
+          n'intervient pas dans la conversation (yukki dialogue
+          automatiquement avec Claude). */}
+      <div className="flex items-center justify-between gap-2 rounded-yk-sm border border-yk-line-subtle bg-yk-bg-2 px-3 py-2">
+        <span className="flex items-center gap-2 text-[11.5px] text-yk-text-secondary">
+          <span className="inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-yk-primary" aria-hidden />
+          {mode === 'streaming' && history.length === 0
+            ? "Yukki demande à Claude de restructurer…"
+            : `Yukki dialogue avec Claude — tour ${chatTurnCount}`}
+        </span>
+        <button
+          type="button"
+          onClick={onCancel}
+          title="Annuler la requête en cours"
+          className="flex items-center gap-1 rounded-yk-sm border border-yk-line px-2 py-0.5 text-[11px] text-yk-text-secondary hover:bg-yk-bg-3"
+        >
+          <X className="h-3 w-3" />
+          Annuler
+        </button>
       </div>
+      {/* chatInput / onSend / setChatInput conservés en props pour
+          compatibilité de signature mais inutilisés en mode auto. */}
+      <input type="hidden" value={chatInput} readOnly aria-hidden />
+      <span className="hidden" aria-hidden onClick={() => { onSend(); setChatInput(''); }} />
     </div>
   );
 }
 
 // AssistantBubble — bulle gauche avec avatar Sparkles violet.
-// Quand `streaming`, ajoute un curseur clignotant à la fin du texte.
+// Trois états visuels :
+//   - text vide + streaming : indicateur "typing" 3 points qui
+//     rebondissent en décalé (pendant la TTFB Claude, avant le
+//     1er chunk — donne le feedback "il réfléchit")
+//   - text non vide + streaming : texte + curseur clignotant en fin
+//   - text non vide, non streaming : texte seul (état final)
 function AssistantBubble({ text, streaming }: { text: string; streaming?: boolean }): JSX.Element {
   return (
     <div className="flex items-start gap-2">
@@ -324,9 +331,65 @@ function AssistantBubble({ text, streaming }: { text: string; streaming?: boolea
         <Sparkles className="h-3.5 w-3.5 text-yk-primary" />
       </div>
       <div className="max-w-[85%] rounded-yk rounded-tl-none bg-yk-bg-3 px-3 py-2 text-[12.5px] leading-[1.5] text-yk-text-primary whitespace-pre-wrap break-words">
-        {text || (streaming ? '…' : '')}
-        {streaming && <BlinkingCursor />}
+        {text ? (
+          <>
+            {text}
+            {streaming && <BlinkingCursor />}
+          </>
+        ) : streaming ? (
+          <TypingIndicator />
+        ) : null}
       </div>
+    </div>
+  );
+}
+
+// TypingIndicator — 3 points qui rebondissent en décalé pour
+// signaler que Claude réfléchit avant d'avoir envoyé son premier
+// chunk. Pattern UX standard (iMessage, WhatsApp, ChatGPT…).
+// `animate-bounce` est une keyframe Tailwind built-in.
+function TypingIndicator(): JSX.Element {
+  return (
+    <span aria-label="L'IA réfléchit" className="inline-flex items-center gap-1 py-1">
+      <span
+        className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-yk-text-muted"
+        style={{ animationDelay: '0ms' }}
+      />
+      <span
+        className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-yk-text-muted"
+        style={{ animationDelay: '150ms' }}
+      />
+      <span
+        className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-yk-text-muted"
+        style={{ animationDelay: '300ms' }}
+      />
+    </span>
+  );
+}
+
+// ThinkingBubble — bulle « raisonnement » de Claude (extended
+// thinking). Italique gris sur fond très discret, repliable via
+// <details> pour ne pas saturer la vue quand le thinking est long.
+// Rendue avant la bulle de réponse pour suivre l'ordre temporel
+// (Claude pense, puis répond).
+function ThinkingBubble({ text, streaming }: { text: string; streaming?: boolean }): JSX.Element {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yk-bg-3">
+        <Sparkles className="h-3 w-3 text-yk-text-muted" />
+      </div>
+      <details
+        open
+        className="max-w-[85%] rounded-yk rounded-tl-none border border-yk-line-subtle bg-yk-bg-2 px-3 py-2 text-[11.5px] leading-[1.5] text-yk-text-muted"
+      >
+        <summary className="cursor-pointer font-jbmono text-[10px] uppercase tracking-wider">
+          Raisonnement{streaming && ' (en cours…)'}
+        </summary>
+        <pre className="mt-1.5 whitespace-pre-wrap break-words italic">
+          {text}
+          {streaming && <BlinkingCursor />}
+        </pre>
+      </details>
     </div>
   );
 }
@@ -355,8 +418,13 @@ function BlinkingCursor(): JSX.Element {
 // titre `## ` reçoit un bloc avant / après si le contenu diffère.
 // Implémentation minimaliste qui rentre dans la largeur Inspector
 // (~320px) — pas de lib npm (cohérent canvas D1).
+//
+// Le front-matter YAML de `before` est stripé avant comparaison :
+// l'IA ne le voit pas (cf. uiapp.splitFrontMatter côté Go) et il
+// est réinjecté tel quel à l'acceptation, donc l'afficher comme
+// "RETIRÉ" est trompeur.
 function DiffStacked({ before, after }: { before: string; after: string }): JSX.Element {
-  const beforeSections = splitByHeading(before);
+  const beforeSections = splitByHeading(stripFrontMatter(before));
   const afterSections = splitByHeading(after);
   const headings = uniqueOrdered([
     ...beforeSections.map((s) => s.heading),
@@ -421,6 +489,22 @@ function StatusPill({ status }: { status: 'added' | 'removed' | 'modified' | 'un
 interface Section {
   heading: string;
   body: string;
+}
+
+// stripFrontMatter retire le bloc `---\n...\n---\n` en tête s'il
+// existe. Tolère CRLF. Renvoie l'input inchangé sinon (front-matter
+// absent ou malformé).
+function stripFrontMatter(markdown: string): string {
+  if (!markdown.startsWith('---\n') && !markdown.startsWith('---\r\n')) {
+    return markdown;
+  }
+  const skip = markdown.startsWith('---\r\n') ? 5 : 4;
+  const rest = markdown.slice(skip);
+  const close1 = rest.indexOf('\n---\n');
+  if (close1 >= 0) return rest.slice(close1 + 5);
+  const close2 = rest.indexOf('\r\n---\r\n');
+  if (close2 >= 0) return rest.slice(close2 + 7);
+  return markdown;
 }
 
 function splitByHeading(markdown: string): Section[] {

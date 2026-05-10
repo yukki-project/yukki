@@ -135,7 +135,17 @@ export const useSpddEditorStore = create<SpddEditorState>()((set, get) => ({
       };
     }),
 
-  setMarkdownSource: (src) => set({ markdownSource: src }),
+  setMarkdownSource: (src) =>
+    set((state) => ({
+      markdownSource: src,
+      // UI-019b nav-guard fix : éditer en mode markdown était la
+      // seule mutation qui ne flaggait pas dirty → guard inactif
+      // sur ce chemin. On compare au dernier markdown connu pour
+      // éviter de flagger pendant le switch wysiwyg→markdown
+      // (qui appelle setMarkdownSource avec le résultat de
+      // draftToMarkdown sans intervention user).
+      isDirty: state.markdownSource !== '' && src !== state.markdownSource ? true : state.isDirty,
+    })),
 
   clearScrollToSection: () => set({ scrollToSection: null }),
 

@@ -3,9 +3,9 @@ id: UI-019
 slug: ai-restructure-and-chat-fallback
 story: .yukki/stories/UI-019-ai-restructure-and-chat-fallback.md
 analysis: .yukki/analysis/UI-019-ai-restructure-and-chat-fallback.md
-status: implemented
+status: synced
 created: 2026-05-09
-updated: 2026-05-09
+updated: 2026-05-10
 ---
 
 # Canvas REASONS — Restructuration IA d'un artefact mal formé (+ fallback chat)
@@ -829,3 +829,271 @@ suivi via extraction d'un helper `streamGoroutine` partagé).*
   - **Pas de gate `IsDevBuild`** sur UI-019. La feature est
     livrée pour tous les builds (release ET `devbuild`).
     Seul OPS-001 a ce besoin.
+
+---
+
+## Changelog
+
+- **2026-05-09 — initial generation** — 10 Operations livrées
+  (status `draft` → `accepted` → `implemented`). 5 OQ story +
+  4 décisions résiduelles tranchées (Q1-Q5 + D1-D4).
+
+- **2026-05-10 — sync — itération post-revue UX
+  utilisateur** — `status: implemented` → `synced`. Plusieurs
+  amendements significatifs livrés en parallèle après
+  utilisation réelle du flow sur un binaire `wails build
+  -tags devbuild` (sans `mock`, vrai `claude` CLI). Affectent
+  les Operations existantes ET ajoutent du code non couvert
+  par le canvas v1. Tracés ici pour la prochaine génération
+  (et pour `/yukki-prompt-update` si une nouvelle itération
+  modifie la logique). Cf. analyse `Décisions
+  post-implémentation (sync 2026-05-10)` pour D5-D14 détaillées.
+
+  ### Code ajouté hors Operations canvas v1
+
+  - **`internal/provider/hidewindow_{windows,other}.go`** —
+    helper build-tagged qui applique `CREATE_NO_WINDOW` aux
+    `exec.CommandContext` (4 sites). Sans ce flag, lancer
+    `claude` depuis le binaire Wails GUI ouvrait une console
+    Windows. **Ce n'est pas une Operation UI-019 stricto sensu**
+    (c'est un fix infra provider), mais livré dans le même
+    commit pour débloquer le flow.
+  - **`internal/promptbuilder/restructure_system.tmpl`** +
+    **`restructure_user.tmpl`** — split du prompt en 2
+    templates embarqués. Le legacy `restructure.tmpl` est
+    conservé pour les tests existants. Nouvelles fonctions
+    `BuildRestructureSystem()` (statique) et
+    `BuildRestructureUser(input, defs)` (dynamique).
+  - **`ClaudeProvider.SystemPrompt` + `Bare` + `Effort`
+    fields** + flags CLI `--system-prompt`, `--bare`,
+    `--effort`, `--include-partial-messages` câblés dans
+    `generateStreaming` ET le path non-streaming.
+  - **`ClaudeProvider.OnThinking` callback** + parser
+    stream-json étendu pour gérer 3 formes (assistant /
+    stream_event wrapper / content_block_delta flat) +
+    `sawDelta` anti-double-émission.
+  - **`uiapp/restructure.go` `isConversationalResponse()`** +
+    **`stripLeadingFrontMatter()`** helpers. Branche
+    `isConversational` insérée entre marker explicite et
+    heuristique 50% (priorité 2/3).
+  - **`uiapp/restructure.go` `EmitOnThinking`** côté binding
+    Wails : event `spdd:restructure:thinking` émis sur chaque
+    chunk thinking (dormant sans `--effort`).
+  - **`hooks/useRestructureSession.ts`** : ajout `thinkingText`
+    state + buffer + abonnement event thinking + reset.
+  - **`components/spdd/RestructureInspector.tsx`** : composant
+    `ChatLayout` interne avec layout messenger (bulles
+    `AssistantBubble` gauche + `UserBubble` droite +
+    `ThinkingBubble` italique gris repliable +
+    `BlinkingCursor`), input bar avec bouton circulaire
+    d'envoi. `Entrée` envoie, `Maj+Entrée` saute une ligne.
+    Auto-scroll au dernier message. Le mode `exhausted` +
+    bouton « Recommencer » sont retirés (cf. D5 turn-limit).
+
+  ### Operations existantes amendées
+
+  - **O1 BuildRestructure** : split en `BuildRestructureSystem`
+    + `BuildRestructureUser`. Legacy `BuildRestructure` gardée
+    pour backward-compat tests. Cf. décision D7.
+  - **O2 RestructureStart** : `MaxRestructureTurns` +
+    `ErrTooManyTurns` retirés (cf. D5). Goroutine émet
+    `spdd:restructure:thinking` via `OnThinking` quand cablé
+    (D9). Strip frontmatter + détection conversationnelle ajoutées
+    avant les checks marker/heuristique (D10/D11). System
+    prompt passé via `clone.SystemPrompt = systemPrompt`
+    (D7). `clone.Bare` reste `false` (D8). `clone.Effort`
+    reste vide (D9).
+  - **O3 splitFrontMatter** : inchangé.
+  - **O4 bindings TS stub** : inchangé en signature ; les
+    nouvelles bindings `IsDevBuild` / `TailLogs` viennent
+    d'OPS-001, pas de UI-019.
+  - **O5 useRestructureSession hook** : ajout `thinkingText`
+    + abonnement event `spdd:restructure:thinking`. Suppression
+    `MAX_TURNS` + `mode === 'exhausted'`. La conversation est
+    désormais illimitée. `start()` n'a plus de pre-check sur
+    le compteur ; `answerChat()` non plus.
+  - **O6 useRestructureStore** : inchangé.
+  - **O7 isDirty** : inchangé.
+  - **O8 SpddEditor bouton** : path story-legacy supporté
+    (D12) — `restructureCurrentMarkdown` dérivé de
+    `draftToMarkdown(draft)` ou `markdownSource`,
+    `restructureDivergence` dérivé des `markdownWarnings`
+    via regex sur la chaîne « La section X est absente ».
+  - **O9 RestructureInspector** : refonte complète en
+    composant `ChatLayout` messenger (D14). Le mode
+    `exhausted` + bouton « Recommencer » retirés.
+    Header `Tour N` (sans `/ 5`) avec bouton « Abandonner »
+    inline.
+  - **O10 SpddHeader badge** : inchangé.
+
+  ### Tests ajoutés / mis à jour
+
+  - Go : `TestStripLeadingFrontMatter_*` (4 cas unit) +
+    `TestRestructureStartE2E_StripsHallucinatedFrontMatter`
+    (e2e). Tests sur `ErrTooManyTurns` retirés. Total : 30+
+    tests Go verts.
+  - Frontend : test `start rejects when chat already exhausted
+    (5 turns)` retiré (obsolète). Total : 234+ vitest verts.
+
+  ### Bugs corrigés pendant la sync
+
+  - **Streaming non visible** : le parser stream-json
+    cherchait `content_block_delta` au top-level mais le CLI
+    2.x émet l'enveloppe `stream_event`. Tous les deltas
+    étaient ignorés → seul le bloc `assistant` final arrivait
+    en une fois. Fix : parser handle les 3 formes + compteur
+    `sawDelta` anti-double-émission.
+  - **`--effort` cassait le streaming** : extended thinking
+    désactive les StreamEvents (limitation Anthropic SDK
+    documentée). `--effort high` désactivé pour préserver
+    le streaming texte.
+  - **`--bare` cassait l'auth** : OAuth/keychain désactivés
+    par `--bare`, l'utilisateur Claude Code (OAuth via
+    navigateur) ne pouvait plus s'authentifier. `--bare`
+    laissé désactivé par défaut.
+  - **Front-matter halluciné par Claude** : strip défensif
+    côté Go avant émission de `done`/`missing-info`.
+  - **Double front-matter à l'acceptation** : conséquence
+    du bug précédent — le frontend faisait `frontMatter +
+    after` avec `after` contenant déjà un YAML hallucinant.
+    Résolu par le strip Go.
+  - **Pop-up console Windows** : `CREATE_NO_WINDOW` appliqué
+    via helper `hideConsole()` build-tagged.
+
+  ### Suite
+
+  - Aucun comportement utilisateur observable n'est divergent
+    du contrat des AC story. Les amendements raffinent l'UX
+    (chat messenger, conversation libre, streaming réel) et
+    durcissent les défenses (frontmatter strip, tour-limit
+    levé, conversational fallback). La story reste en
+    `implemented`.
+  - Réactiver `clone.Effort = "high"` quand Anthropic livre
+    le fix CLI streaming-pendant-thinking (issue
+    `anthropics/claude-code#30660`). L'infrastructure est
+    prête (callback, event, UI), il suffira de flipper le
+    flag.
+
+- **2026-05-10b — sync — auto-conversation + auto-save +
+  validation accept** — `status: synced` (entrée additionnelle
+  sur le même status). Ces amendements modifient la logique
+  utilisateur observable (sauvegarde implicite, conversation
+  autonome) et seraient idéalement traités par
+  `/yukki-prompt-update` en méthodologie stricte. Capturés ici
+  par décision pragmatique : les comportements réintroduisent
+  la cohérence visée (Accept = commit, Terminer = save) sans
+  sortir du périmètre R/A/Safeguards d'origine ; OQ#3 et OQ#5
+  de la story sont mises à jour en conséquence. Cf. story
+  *Amendements post-implémentation 2 (2026-05-10b)* pour le
+  rationale détaillé.
+
+  ### Operations existantes amendées
+
+  - **O5 useRestructureSession hook** : ajout
+    `MAX_AUTO_TURNS = 10` + constante `AUTO_REPLY` + nouveau
+    `useEffect` qui auto-fire `answerChat(AUTO_REPLY)` quand
+    `mode === 'chatAwaitingUser'`. Au-delà de
+    `MAX_AUTO_TURNS` : `setError(...)` + `setMode('error')`
+    pour éviter une boucle infinie. La conversation devient
+    autonome (yukki dialogue avec Claude, l'utilisateur valide
+    juste le résultat final).
+  - **O9 RestructureInspector** : refonte du `ChatLayout`.
+    Suppression de l'input textarea + bouton d'envoi.
+    Remplacé par un footer status compact :
+    « Yukki dialogue avec Claude — tour N » + bouton
+    « Annuler » (cancel session). Les bulles assistant / user
+    restent rendues pour transparence (les `AUTO_REPLY`
+    apparaissent en bulle utilisateur). Nouvelle prop
+    `acceptValidation: { allowed: boolean; reason: string } |
+    null` reçue du parent : si `allowed === false`, le bouton
+    **Accepter** est `disabled` avec tooltip + banner orange
+    affichant `reason`. Bug fix : snapshot `before` AVANT
+    `useRestructureStore.accept()` (qui reset le store) et
+    passage en argument à `onAccept(after, before)` —
+    nouvelle signature `onAccept: (after: string, before:
+    string) => void`. Helper local `stripFrontMatter()` ajouté
+    pour le rendu `DiffStacked` (le bloc YAML d'origine
+    n'apparaît plus comme « RETIRÉ »).
+  - **O8 SpddEditor bouton + flow Accept** :
+    - Nouveau dérivé `restructureAcceptValidation` qui parse
+      `useRestructureStore.after` (frontmatter ré-injecté) +
+      `computeDivergence` ; passé en prop à
+      `RestructureInspector`.
+    - `handleRestructureAccept(after, before)` réécrit pour
+      écrire sur disque immédiatement (`WriteArtifact` après
+      `serializeArtifact(reparsed, parsedTemplate)`), puis
+      `setDirty(false)` + toast de succès. Sur erreur disque :
+      `setDirty(true)` pour retry Ctrl+S.
+    - Nouveau helper `saveCurrentEditState()` extrait du
+      handler Ctrl+S, partagé avec le toggle edit-mode. Le
+      bouton **Terminer** (`handleToggleEditMode`) appelle
+      ce helper avant de basculer en view-only — UX
+      « Terminer = commit » alignée avec le mental model
+      utilisateur.
+  - **O1 BuildRestructureSystem** : règle 4 du prompt système
+    reformulée. Avant : « Pour TOUTE question utilise
+    EXCLUSIVEMENT `<info-missing>` ». Après : « Tu DOIS
+    produire un markdown complet à chaque tour. Remplis les
+    sections que tu ne peux pas compléter avec le placeholder
+    `<à compléter>`. N'utilise `<info-missing>` qu'en dernier
+    recours absolu. » Aligne le LLM avec la convention
+    auto-conversation (le placeholder devient le path
+    nominal, le marker un fallback exceptionnel).
+  - **O2 RestructureStart fallback heuristique** :
+    `buildHeuristicFallbackQuestions(missingRequired)` rendue
+    dynamique. Avant : chaîne en dur « Plusieurs sections
+    obligatoires restent à compléter ». Après : énumère
+    explicitement les sections manquantes (« Les sections X
+    et Y restent à compléter. Pouvez-vous me donner du
+    contenu… »). Tests Go mis à jour
+    (`TestBuildHeuristicFallbackQuestions_*`).
+
+  ### Invariants amendés
+
+  - **I1 — Pas d'écriture silencieuse** reste vrai : le clic
+    Accepter EST l'écriture explicite. La nouveauté est que
+    ce clic déclenche aussi un `WriteArtifact` immédiat — la
+    « confirmation utilisateur » n'a pas changé, juste le
+    delay disque (sync au lieu de pending Ctrl+S).
+  - **I3 — Limite dure 5 tours** est obsolète : la version 2
+    avait retiré le cap user-driven, la version 2b
+    réintroduit un cap auto-driven `MAX_AUTO_TURNS = 10`.
+    L'invariant devient « cap auto à 10 tours pour éviter
+    boucle infinie LLM, abandon explicite côté utilisateur
+    via Annuler/Refuser à tout moment ».
+  - **I9 — Badge `isDirty` reset uniquement au save** reste
+    vrai : Accept déclenche un save synchrone, donc reset.
+    Pas de divergence sémantique.
+
+  ### Code ajouté hors Operations canvas v1 (suite)
+
+  - **`SpddEditor.tsx`** : helper `saveCurrentEditState()`
+    (Promise<void>) factorisé entre Ctrl+S et toggle Terminer.
+    Helper `handleToggleEditMode()` qui save+toggle au lieu
+    du toggle pur d'origine.
+  - **`RestructureInspector.tsx`** : helper local
+    `stripFrontMatter(markdown)` pour le rendu
+    `DiffStacked` (front-matter masqué côté display, pas
+    côté logique).
+
+  ### Tests
+  - Pas de nouveaux tests vitest pour cette itération
+    (changements de comportement dans des handlers déjà
+    couverts par les tests existants ; la conversation
+    autonome est testable manuellement seulement).
+  - Tests Go `TestBuildHeuristicFallbackQuestions_*` mis à
+    jour pour assert les nouvelles tournures
+    (« restent à compléter ») au lieu de l'ancien wording
+    « périmètre ».
+
+  ### Suite
+  - Le comportement utilisateur observable a changé sur deux
+    axes (auto-conversation, auto-save) — mais aucun AC story
+    n'est cassé : AC1 (Accepter applique + warning disparaît)
+    reste vrai (le save additionnel est cohérent avec
+    « applique »). AC2 (chat) reste vrai (le chat existe
+    toujours, juste avec auto-reply). AC3 (Refuser =
+    inchangé) reste vrai. AC4/AC5 inchangés.
+  - Si une 3ᵉ itération modifie à nouveau la logique
+    chat/save, passer par `/yukki-prompt-update` proprement
+    (capture la décision, ré-évaluation des AC).

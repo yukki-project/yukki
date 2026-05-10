@@ -2,7 +2,7 @@
 //
 // Souscrit aux events Wails `spdd:restructure:*` émis par le backend
 // (`uiapp.RestructureStart`), tient la state machine `idle → streaming
-// → preview / chat / exhausted / error` et expose une API impérative
+// → preview / chat / error` et expose une API impérative
 // (`start`, `answerChat`, `cancel`, `reset`) pour le composant
 // consumer (SpddInspector).
 //
@@ -28,7 +28,6 @@ export type RestructureMode =
   | 'preview'
   | 'chatStreaming'
   | 'chatAwaitingUser'
-  | 'exhausted'
   | 'error';
 
 interface StartInput {
@@ -40,6 +39,11 @@ interface StartInput {
 export interface RestructureSession {
   mode: RestructureMode;
   streamText: string;
+  /** Chain-of-thought de Claude (extended thinking). Accumulé en
+   * parallèle de streamText quand l'événement `spdd:restructure:thinking`
+   * arrive. Vide pour les modèles qui n'émettent pas de blocs
+   * thinking (Claude < 4 ou effort low). */
+  thinkingText: string;
   sessionId: string | null;
   questions: string[];
   history: RestructureTurn[];
@@ -52,7 +56,15 @@ export interface RestructureSession {
   reset: () => void;
 }
 
-const MAX_TURNS = 5;
+// MAX_AUTO_TURNS : nombre maximum de tours auto-répondus par yukki à
+// Claude avant d'abandonner et de basculer en preview avec ce que
+// Claude a produit en dernier. L'utilisateur n'intervient pas dans
+// la conversation — yukki répond à sa place avec une consigne
+// fixe qui pousse Claude à utiliser des placeholders `<à compléter>`
+// plutôt que de redemander.
+const MAX_AUTO_TURNS = 10;
+
+const AUTO_REPLY = "L'utilisateur n'intervient pas. Remplis les sections que tu ne peux pas compléter avec le placeholder `<à compléter>` et produis le markdown final maintenant. Ne pose plus de questions.";
 
 interface MissingInfoPayload {
   sessionID: string;
@@ -87,6 +99,7 @@ interface WailsRuntime {
 export function useRestructureSession(): RestructureSession {
   const [mode, setMode] = useState<RestructureMode>('idle');
   const [streamText, setStreamText] = useState('');
+  const [thinkingText, setThinkingText] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<string[]>([]);
   const [history, setHistory] = useState<RestructureTurn[]>([]);
@@ -96,6 +109,8 @@ export function useRestructureSession(): RestructureSession {
   // Buffer chunks then flush at ~60fps (mirror useSpddSuggest).
   const chunkBufferRef = useRef('');
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thinkingBufferRef = useRef('');
+  const thinkingFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Latest sessionId for the cancel cleanup (avoid stale closure).
   const sessionIdRef = useRef<string | null>(null);
@@ -124,6 +139,18 @@ export function useRestructureSession(): RestructureSession {
         flushTimerRef.current = setTimeout(() => {
           setStreamText(chunkBufferRef.current);
           flushTimerRef.current = null;
+        }, 16);
+      }
+    });
+
+    const offThinking = runtime.EventsOn('spdd:restructure:thinking', (...data: unknown[]) => {
+      const payload = data[0] as ChunkPayload | undefined;
+      if (!payload?.text) return;
+      thinkingBufferRef.current += payload.text;
+      if (!thinkingFlushTimerRef.current) {
+        thinkingFlushTimerRef.current = setTimeout(() => {
+          setThinkingText(thinkingBufferRef.current);
+          thinkingFlushTimerRef.current = null;
         }, 16);
       }
     });
@@ -166,6 +193,7 @@ export function useRestructureSession(): RestructureSession {
 
     return () => {
       offChunk();
+      offThinking();
       offDone();
       offMissing();
       offError();
@@ -187,14 +215,12 @@ export function useRestructureSession(): RestructureSession {
   }, []);
 
   const start = useCallback(async (input: StartInput) => {
-    if (chatTurnCount >= MAX_TURNS) {
-      setMode('exhausted');
-      return;
-    }
     lastStartInputRef.current = input;
     setMode('streaming');
     setStreamText('');
+    setThinkingText('');
     chunkBufferRef.current = '';
+    thinkingBufferRef.current = '';
     setError(null);
     setHistory([]);
     setChatTurnCount(0);
@@ -218,10 +244,6 @@ export function useRestructureSession(): RestructureSession {
       logger.warn('answerChat called before start');
       return;
     }
-    if (chatTurnCount + 1 > MAX_TURNS) {
-      setMode('exhausted');
-      return;
-    }
 
     // Fill the empty answer of the last pushed turn.
     const updatedHistory: RestructureTurn[] = history.length === 0
@@ -231,7 +253,9 @@ export function useRestructureSession(): RestructureSession {
     setChatTurnCount((n) => n + 1);
     setMode('chatStreaming');
     setStreamText('');
+    setThinkingText('');
     chunkBufferRef.current = '';
+    thinkingBufferRef.current = '';
 
     try {
       const sid = await WailsRestructureStart({
@@ -260,25 +284,47 @@ export function useRestructureSession(): RestructureSession {
     }
     setMode('idle');
     setStreamText('');
+    setThinkingText('');
     chunkBufferRef.current = '';
+    thinkingBufferRef.current = '';
     setSessionId(null);
   }, []);
+
+  // Auto-conversation : quand Claude émet `missing-info`, yukki
+  // répond automatiquement à sa place avec AUTO_REPLY (cf. décision
+  // user — l'utilisateur n'intervient pas dans la conversation, il
+  // valide juste le résultat final). Au-delà de MAX_AUTO_TURNS on
+  // bascule en error pour éviter une boucle infinie LLM.
+  useEffect(() => {
+    if (mode !== 'chatAwaitingUser') return;
+    if (chatTurnCount >= MAX_AUTO_TURNS) {
+      setError(
+        `Claude redemande des informations après ${MAX_AUTO_TURNS} tours. Abandon — vérifie le résultat partiel ou refuse pour réessayer.`,
+      );
+      setMode('error');
+      return;
+    }
+    void answerChat(AUTO_REPLY);
+  }, [mode, chatTurnCount, answerChat]);
 
   const reset = useCallback(() => {
     setMode('idle');
     setStreamText('');
+    setThinkingText('');
     setSessionId(null);
     setQuestions([]);
     setHistory([]);
     setChatTurnCount(0);
     setError(null);
     chunkBufferRef.current = '';
+    thinkingBufferRef.current = '';
     lastStartInputRef.current = null;
   }, []);
 
   return {
     mode,
     streamText,
+    thinkingText,
     sessionId,
     questions,
     history,

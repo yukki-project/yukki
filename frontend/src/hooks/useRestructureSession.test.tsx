@@ -157,33 +157,7 @@ describe('useRestructureSession', () => {
     expect(result.current.mode).toBe('idle');
   });
 
-  it('start rejects when chat already exhausted (5 turns)', async () => {
-    const { result } = renderHook(() => useRestructureSession());
-    await act(async () => {
-      await result.current.start(STARTED_INPUT);
-    });
-    // Force the counter to MAX without going through 5 round-trips.
-    for (let i = 0; i < 5; i++) {
-      act(() => {
-        fakeRuntime._emit('spdd:restructure:missing-info', {
-          sessionID: 'restruct-1',
-          questions: [`Q${i}`],
-          rawResponse: '',
-        });
-      });
-      await waitFor(() => expect(result.current.mode).toBe('chatAwaitingUser'));
-      await act(async () => {
-        await result.current.answerChat(`A${i}`);
-      });
-    }
-    expect(result.current.chatTurnCount).toBe(5);
-
-    // 6th attempt → exhausted, no new RestructureStart call.
-    mockStart.mockClear();
-    await act(async () => {
-      await result.current.answerChat('A5');
-    });
-    expect(result.current.mode).toBe('exhausted');
-    expect(mockStart).not.toHaveBeenCalled();
-  });
+  // UI-019 — turn-limit retiré (décision utilisateur post-revue).
+  // La conversation chat est désormais illimitée côté frontend ET
+  // côté Go ; le test "exhausted at 5 turns" devient obsolète.
 });

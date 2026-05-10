@@ -58,6 +58,88 @@ func TestSplitFrontMatter_Malformed_NoClosing(t *testing.T) {
 	}
 }
 
+func TestBuildHeuristicFallbackQuestions_OneSection(t *testing.T) {
+	got := buildHeuristicFallbackQuestions([]string{"## Background"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 question, got %d", len(got))
+	}
+	if !strings.Contains(got[0], "## Background") {
+		t.Errorf("question missing section name: %q", got[0])
+	}
+	if !strings.Contains(got[0], "reste à compléter") {
+		t.Errorf("expected singular wording: %q", got[0])
+	}
+}
+
+func TestBuildHeuristicFallbackQuestions_MultipleSections(t *testing.T) {
+	got := buildHeuristicFallbackQuestions([]string{"## Background", "## Scope In", "## Notes"})
+	if len(got) != 1 {
+		t.Fatalf("expected 1 question, got %d", len(got))
+	}
+	q := got[0]
+	for _, name := range []string{"## Background", "## Scope In", "## Notes"} {
+		if !strings.Contains(q, name) {
+			t.Errorf("question missing %q: %s", name, q)
+		}
+	}
+	if !strings.Contains(q, " et ") {
+		t.Errorf("expected ' et ' before last section: %s", q)
+	}
+	if !strings.Contains(q, "restent à compléter") {
+		t.Errorf("expected plural wording: %s", q)
+	}
+}
+
+func TestBuildHeuristicFallbackQuestions_EmptyFallback(t *testing.T) {
+	got := buildHeuristicFallbackQuestions(nil)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 question, got %d", len(got))
+	}
+	if !strings.Contains(got[0], "périmètre attendu") {
+		t.Errorf("expected generic fallback wording, got: %s", got[0])
+	}
+}
+
+func TestStripLeadingFrontMatter_StripsHallucinatedYAML(t *testing.T) {
+	resp := "---\nid: STORY-001\ntitle: Foo\n---\n\n## Background\n\nReal body."
+	got := stripLeadingFrontMatter(resp)
+	if strings.Contains(got, "STORY-001") {
+		t.Errorf("front-matter not stripped: %q", got)
+	}
+	if !strings.HasPrefix(got, "## Background") {
+		t.Errorf("body should start at ## Background, got %q", got)
+	}
+}
+
+func TestStripLeadingFrontMatter_WithLeadingWhitespace(t *testing.T) {
+	// Claude sometimes adds a blank line before its output.
+	resp := "  \n\n---\nid: x\n---\n\n## Body\n\ncontent"
+	got := stripLeadingFrontMatter(resp)
+	if strings.Contains(got, "id: x") {
+		t.Errorf("leading whitespace + frontmatter should be stripped: %q", got)
+	}
+	if !strings.HasPrefix(got, "## Body") {
+		t.Errorf("body should start clean: %q", got)
+	}
+}
+
+func TestStripLeadingFrontMatter_NoFrontMatter_PassThrough(t *testing.T) {
+	resp := "## Background\n\nClean body without frontmatter."
+	got := stripLeadingFrontMatter(resp)
+	if got != resp {
+		t.Errorf("response without frontmatter must pass through unchanged")
+	}
+}
+
+func TestStripLeadingFrontMatter_MalformedNoCloser_PassThrough(t *testing.T) {
+	// Front-matter open but never closed → don't truncate.
+	resp := "---\nid: x\nbody but no closing"
+	got := stripLeadingFrontMatter(resp)
+	if got != resp {
+		t.Errorf("malformed frontmatter must pass through, got %q", got)
+	}
+}
+
 func TestParseInfoMissing_StandardMarker(t *testing.T) {
 	resp := "Some content\n<info-missing>\nQuestion 1?\nQuestion 2?\n</info-missing>"
 	q := parseInfoMissing(resp)
@@ -140,19 +222,6 @@ func TestRestructureStart_RejectsTooLarge(t *testing.T) {
 	})
 	if err != ErrTooLarge {
 		t.Errorf("expected ErrTooLarge, got %v", err)
-	}
-}
-
-func TestRestructureStart_RejectsTooManyTurns(t *testing.T) {
-	a := &App{}
-	turns := make([]RestructureTurn, MaxRestructureTurns+1)
-	_, err := a.RestructureStart(RestructureRequest{
-		FullMarkdown: "x",
-		TemplateName: "story",
-		History:      turns,
-	})
-	if err != ErrTooManyTurns {
-		t.Errorf("expected ErrTooManyTurns, got %v", err)
 	}
 }
 

@@ -27,9 +27,6 @@ import (
 // reaching us; this is the defense-in-depth gate (cf. canvas D2).
 const MaxRestructureBytes = 30_000
 
-// MaxRestructureTurns is the chat fallback hard limit (cf. story Q3).
-const MaxRestructureTurns = 5
-
 // MissingThresholdRatio is the fallback heuristic — when more than
 // MissingThresholdRatio of the template's required sections are
 // empty in the LLM response, we treat the response as if Claude
@@ -39,10 +36,6 @@ const MissingThresholdRatio = 0.5
 // ErrSessionInProgress is returned by RestructureStart when another
 // restructure session is already active on the same App.
 var ErrSessionInProgress = errors.New("uiapp: a restructure session is already running")
-
-// ErrTooManyTurns is returned when the chat history hits the hard
-// limit (5 user turns).
-var ErrTooManyTurns = errors.New("uiapp: restructure conversation exceeded 5 turns")
 
 // ErrTooLarge is returned when the artefact body exceeds
 // MaxRestructureBytes.
@@ -104,9 +97,6 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 	if len(req.FullMarkdown) > MaxRestructureBytes {
 		return "", ErrTooLarge
 	}
-	if len(req.History) > MaxRestructureTurns {
-		return "", ErrTooManyTurns
-	}
 	if a.hasActiveRestructure() {
 		return "", ErrSessionInProgress
 	}
@@ -116,7 +106,7 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 	// when the artefact has no front-matter.
 	_, body := splitFrontMatter(req.FullMarkdown)
 
-	prompt, err := promptbuilder.BuildRestructure(promptbuilder.RestructurePromptInput{
+	userPrompt, err := promptbuilder.BuildRestructureUser(promptbuilder.RestructurePromptInput{
 		FullMarkdown: body,
 		TemplateName: req.TemplateName,
 		Divergence: promptbuilder.DivergencePromptShape{
@@ -128,6 +118,7 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("build prompt: %w", err)
 	}
+	systemPrompt := promptbuilder.BuildRestructureSystem()
 
 	sessionID := fmt.Sprintf("restruct-%d", time.Now().UnixNano())
 	ctx, cancel := context.WithCancel(a.ctx)
@@ -148,9 +139,38 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 	var generate func(ctx context.Context, prompt string) (string, error)
 	if isClaude {
 		clone := *cp
+		clone.SystemPrompt = systemPrompt
+		// `--bare` désactive l'auth OAuth/keychain et n'accepte que
+		// ANTHROPIC_API_KEY. Comme la plupart des utilisateurs yukki
+		// sont sur OAuth (login Claude Code via navigateur), on
+		// garde `--bare` désactivé. Le system prompt reste séparé
+		// via `--system-prompt`, ce qui suffit pour le bénéfice
+		// principal (priorité système + prompt cache).
+		//
+		// Pas de `--effort high` : la doc Anthropic Agent SDK
+		// précise (Known limitations) qu'activer le thinking
+		// désactive l'émission de StreamEvent — on perd le streaming
+		// caractère-par-caractère du texte. Le CLI ne stream pas
+		// non plus le thinking lui-même en temps réel (cf. GitHub
+		// issue anthropics/claude-code#30660). Donc on désactive
+		// extended thinking pour préserver le streaming texte ; les
+		// blocs thinking (s'ils étaient émis) seraient toujours
+		// captés par OnThinking, mais en pratique la voie reste
+		// dormante avec le CLI actuel.
 		clone.OnChunk = func(text string) {
 			full.WriteString(text)
 			emitEvent(a.ctx, "spdd:restructure:chunk", map[string]any{
+				"sessionID": sessionID,
+				"text":      text,
+			})
+		}
+		// Extended thinking : Claude 4 émet des blocs de raisonnement
+		// quand le CLI tourne avec un effort suffisant. On les
+		// remonte via un event séparé pour que l'UI les rende dans
+		// une bulle dédiée (italique/gris) sans polluer le streamText
+		// de la réponse finale.
+		clone.OnThinking = func(text string) {
+			emitEvent(a.ctx, "spdd:restructure:thinking", map[string]any{
 				"sessionID": sessionID,
 				"text":      text,
 			})
@@ -167,7 +187,7 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 		defer a.restructureSessions.Delete(sessionID)
 		defer cancel()
 
-		nonStreamResponse, genErr := generate(ctx, prompt)
+		nonStreamResponse, genErr := generate(ctx, userPrompt)
 		// Streaming path écrit dans full via OnChunk ; non-streaming
 		// path doit copier la réponse complète manuellement.
 		if !isClaude && genErr == nil {
@@ -191,7 +211,14 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 			return
 		}
 
-		response := full.String()
+		// Strip défensif : Claude peut "compléter" la réponse avec un
+		// front-matter YAML hallucinant la complétude du document
+		// (malgré la consigne explicite « ne touche jamais au
+		// front-matter »). Le frontend réinjecte le front-matter
+		// d'origine après acceptation — si on laisse passer celui de
+		// Claude, on se retrouve avec deux blocs YAML empilés. Cf.
+		// invariant I6 + safeguard sécurité « Data ».
+		response := stripLeadingFrontMatter(full.String())
 
 		// 1) Marqueur explicite ?
 		if questions := parseInfoMissing(response); len(questions) > 0 {
@@ -203,20 +230,33 @@ func (a *App) RestructureStart(req RestructureRequest) (string, error) {
 			return
 		}
 
-		// 2) Heuristique fallback — la réponse a-t-elle >50% des
-		//    sections obligatoires vides ?
-		if shouldFallbackMissing(response, req.Divergence.MissingRequired) {
+		// 2) Réponse hors-protocole conversationnelle ? Claude pose
+		//    parfois sa question en texte libre malgré la consigne
+		//    « toute question dans <info-missing> ». Quand on ne
+		//    détecte aucune section markdown (`## `) → traiter le
+		//    texte entier comme la question chat. Beaucoup mieux
+		//    que la question générique de l'heuristique 50%.
+		if isConversationalResponse(response) {
 			emitEvent(a.ctx, "spdd:restructure:missing-info", map[string]any{
-				"sessionID": sessionID,
-				"questions": []string{
-					"Plusieurs sections obligatoires du template restent à compléter. Pouvez-vous me donner plus d'informations sur le périmètre attendu ?",
-				},
+				"sessionID":   sessionID,
+				"questions":   []string{strings.TrimSpace(response)},
 				"rawResponse": response,
 			})
 			return
 		}
 
-		// 3) Sinon — diff prêt, le frontend bascule en preview.
+		// 3) Heuristique fallback — la réponse a-t-elle >50% des
+		//    sections obligatoires vides ?
+		if shouldFallbackMissing(response, req.Divergence.MissingRequired) {
+			emitEvent(a.ctx, "spdd:restructure:missing-info", map[string]any{
+				"sessionID":   sessionID,
+				"questions":   buildHeuristicFallbackQuestions(req.Divergence.MissingRequired),
+				"rawResponse": response,
+			})
+			return
+		}
+
+		// 4) Sinon — diff prêt, le frontend bascule en preview.
 		emitEvent(a.ctx, "spdd:restructure:done", map[string]any{
 			"sessionID":  sessionID,
 			"fullText":   response,
@@ -316,6 +356,84 @@ func parseInfoMissing(response string) []string {
 		}
 	}
 	return out
+}
+
+// buildHeuristicFallbackQuestions construit la question chat émise
+// quand l'heuristique 50% se déclenche. Utilise la liste réelle des
+// sections obligatoires détectées comme vides pour donner un message
+// actionnable, plutôt qu'une phrase générique.
+//
+// Exemples :
+//   - 1 section : « La section ## Background reste à compléter. … »
+//   - N sections : « Les sections ## Background, ## Scope In, … restent à compléter. … »
+//   - 0 section (cas marginal — heuristique sans liste) : phrase
+//     générique de fallback.
+func buildHeuristicFallbackQuestions(missingRequired []string) []string {
+	if len(missingRequired) == 0 {
+		return []string{
+			"Plusieurs sections obligatoires du template restent à compléter. Pouvez-vous me donner plus d'informations sur le périmètre attendu ?",
+		}
+	}
+	var sb strings.Builder
+	if len(missingRequired) == 1 {
+		fmt.Fprintf(&sb, "La section %s reste à compléter. ", strings.TrimSpace(missingRequired[0]))
+	} else {
+		sb.WriteString("Les sections ")
+		for i, s := range missingRequired {
+			if i > 0 && i == len(missingRequired)-1 {
+				sb.WriteString(" et ")
+			} else if i > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(strings.TrimSpace(s))
+		}
+		sb.WriteString(" restent à compléter. ")
+	}
+	sb.WriteString("Pouvez-vous me donner du contenu pour ces sections, ou me dire quelles informations manquent encore ?")
+	return []string{sb.String()}
+}
+
+// isConversationalResponse détecte une réponse Claude hors-protocole :
+// pas de section markdown `## ` détectable (zéro headings H2). Dans
+// ce cas, on traite le texte brut comme une question conversationnelle
+// à afficher dans la bulle assistant — meilleur UX que la question
+// générique de l'heuristique 50%.
+//
+// Tolère les réponses très courtes (un simple `?` retourne true) et
+// les réponses qui ne contiennent qu'un H1 sans H2 (rare mais possible).
+func isConversationalResponse(response string) bool {
+	trimmed := strings.TrimSpace(response)
+	if trimmed == "" {
+		return false
+	}
+	for _, line := range strings.Split(trimmed, "\n") {
+		if strings.HasPrefix(line, "## ") {
+			return false
+		}
+	}
+	return true
+}
+
+// stripLeadingFrontMatter removes a YAML front-matter block at the
+// very start of the LLM response, if any. Claude sometimes
+// hallucinates a front-matter despite the prompt instruction to
+// leave it alone — the frontend re-injects the original after
+// acceptance, so a leaked one would produce a duplicated YAML block.
+//
+// Tolerates a leading whitespace prefix (Claude often emits a blank
+// line before the marker) and CRLF terminators.
+func stripLeadingFrontMatter(response string) string {
+	trimmed := strings.TrimLeft(response, " \t\r\n")
+	if !strings.HasPrefix(trimmed, "---\n") && !strings.HasPrefix(trimmed, "---\r\n") {
+		return response
+	}
+	// Reuse splitFrontMatter on the trimmed content to find where
+	// the YAML block ends, then return everything after.
+	fm, body := splitFrontMatter(trimmed)
+	if fm == "" {
+		return response // malformed, no closing --- → keep as-is
+	}
+	return strings.TrimLeft(body, "\r\n")
 }
 
 // shouldFallbackMissing returns true when the LLM response leaves

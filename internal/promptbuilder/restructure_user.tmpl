@@ -1,0 +1,33 @@
+## Template cible imposé : `{{TemplateName}}`
+
+> Ce template est la cible non-négociable. Tu remappes le contenu vers cette structure ; tu ne questionnes pas ce choix.
+
+### Sections attendues du template `{{TemplateName}}`
+
+{{SectionsExpected}}
+
+{{#if MissingRequired}}
+### Sections obligatoires absentes dans l'artefact courant
+
+{{MissingRequired}}
+{{/if}}
+
+{{#if OrphanSections}}
+### Sections orphelines à redistribuer
+
+{{OrphanSections}}
+{{/if}}
+
+{{#if History}}
+### Historique de la conversation chat
+
+{{History}}
+{{/if}}
+
+## Contenu actuel de l'artefact (à restructurer)
+
+<<<
+{{FullMarkdown}}
+>>>
+
+Restructure ce contenu vers le template `{{TemplateName}}` maintenant — ou écris le bloc `<info-missing>...</info-missing>` si tu manques d'information.

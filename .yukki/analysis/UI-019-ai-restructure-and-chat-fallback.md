@@ -2,9 +2,9 @@
 id: UI-019
 slug: ai-restructure-and-chat-fallback
 story: .yukki/stories/UI-019-ai-restructure-and-chat-fallback.md
-status: reviewed
+status: synced
 created: 2026-05-09
-updated: 2026-05-09
+updated: 2026-05-10
 ---
 
 # Analyse — Restructuration IA d'un artefact mal formé (+ fallback chat)
@@ -467,3 +467,118 @@ sessionID)` partagé).*
       besoin (perte récurrente de chat), réévaluer en
       suivi via une story dédiée (option B/C de la story
       OQ#4).
+
+### Décisions post-implémentation (sync 2026-05-10)
+
+Décisions prises pendant la phase de stabilisation, après
+revue UX par l'utilisateur sur le binaire dev. Affectent
+directement l'implémentation et le canvas (cf. Changelog
+canvas).
+
+- [x] **D5 — Tour limit retiré** → **résolu 2026-05-10** :
+      sur retour utilisateur, le cap dur 5 tours est levé.
+      `MaxRestructureTurns` + `ErrTooManyTurns` retirés du
+      Go ; `MAX_TURNS` + mode `exhausted` retirés du hook
+      frontend ; bouton « Recommencer » retiré de
+      l'Inspector. Conversation libre, abandon explicite
+      uniquement (bouton « Abandonner » + fermeture
+      Inspector).
+- [x] **D6 — Streaming chunk-par-chunk via
+      `--include-partial-messages`** → **résolu 2026-05-10** :
+      flag CLI ajouté côté `provider/claude.go`. Le parser
+      stream-json étendu pour gérer **3 formes** de manière
+      défensive : (a) bloc `assistant` final (legacy, sans
+      partial messages), (b) enveloppe `stream_event` avec
+      `event.type == "content_block_delta"` (forme observée
+      sur claude CLI 2.x), (c) `content_block_delta` flat
+      (futur). Un compteur `sawDelta` évite la double-
+      émission. **Bug initial corrigé** : la première
+      version de l'extension parser cherchait
+      `content_block_delta` au top-level mais le CLI emet
+      l'enveloppe `stream_event` → tous les deltas étaient
+      ignorés → impression de zéro streaming.
+- [x] **D7 — System prompt séparé via `--system-prompt`** →
+      **résolu 2026-05-10** : `BuildRestructure` splitté en
+      `BuildRestructureSystem()` (statique, règles non-
+      négociables) + `BuildRestructureUser(input, defs)`
+      (dynamique, template + divergence + history + body).
+      2 templates embarqués
+      `restructure_system.tmpl` + `restructure_user.tmpl`.
+      Le system prompt est passé via `--system-prompt`
+      (priorité système + prompt-cache) ; le user prompt
+      reste sur stdin. Bénéfice : Claude respecte mieux
+      les règles du protocole `<info-missing>` car elles
+      arrivent en system role. La fonction
+      `BuildRestructure` legacy est conservée pour
+      backward-compat des tests.
+- [x] **D8 — `--bare` désactivé** → **résolu 2026-05-10** :
+      `--bare` désactive l'auth OAuth/keychain (n'accepte
+      que `ANTHROPIC_API_KEY`). Comme la majorité des
+      utilisateurs yukki sont sur OAuth (login Claude Code
+      via navigateur), activer `--bare` casse l'auth et
+      retourne « Yuki n'a pas pu joindre le modèle ». Le
+      champ `ClaudeProvider.Bare` existe toujours (utile
+      en CI ou avec `ANTHROPIC_API_KEY`) mais est laissé
+      à `false` par `RestructureStart`.
+- [x] **D9 — Extended thinking infrastructure dormante** →
+      **résolu 2026-05-10** : `OnThinking` callback +
+      event Wails `spdd:restructure:thinking` + composant
+      `ThinkingBubble` (italique gris, repliable
+      `<details>`) sont câblés et fonctionnels. **Mais**
+      `--effort high` n'est PAS activé : la doc Anthropic
+      Agent SDK confirme que `max_thinking_tokens`
+      désactive les `StreamEvent` (incompatibilité
+      streaming/thinking, *Known limitations*). Le CLI
+      ne stream pas le thinking en temps réel (cf. issue
+      `anthropics/claude-code#30660` ouverte). On
+      privilégie le streaming du texte. L'infrastructure
+      est prête pour activation post-fix Anthropic.
+- [x] **D10 — Fallback conversationnel** →
+      **résolu 2026-05-10** : `isConversationalResponse(response)`
+      détecte une réponse Claude sans aucune section
+      markdown `## ` et utilise le texte brut comme
+      question chat. Place ce check **avant** l'heuristique
+      50% pour que l'utilisateur voie la vraie question
+      Claude au lieu de la question générique. Garde-fou
+      contre Claude qui pose ses questions hors du
+      protocole `<info-missing>`.
+- [x] **D11 — Front-matter strip défensif réponse LLM** →
+      **résolu 2026-05-10** : `stripLeadingFrontMatter(response)`
+      retire un éventuel bloc YAML que Claude aurait
+      halluciné en tête malgré la consigne « ne touche pas
+      au front-matter ». Sans ce strip, le frontend faisait
+      `frontMatter + after` → 2 blocs YAML empilés (corruption).
+      Tolère `\r\n` + espace en tête. Couvert par 4 tests
+      unitaires + 1 e2e.
+- [x] **D12 — Story-legacy path supporté** → **résolu
+      2026-05-10** : sur les artefacts story (`editState
+      === null`, viewMode wysiwyg), `restructureCurrentMarkdown`
+      vient de `draftToMarkdown(draft)` (ou `markdownSource`
+      en mode markdown) ; `restructureDivergence` est
+      dérivé des `markdownWarnings` parser story via regex
+      (extraction du heading depuis la chaîne « La section
+      X est absente »). Le path générique reste prioritaire
+      quand `editState` est non-null.
+- [x] **D13 — Windows hideConsole fix** → **résolu
+      2026-05-10** : nouveau helper build-tagged
+      `internal/provider/hidewindow_{windows,other}.go`
+      qui applique `CREATE_NO_WINDOW` (`syscall.SysProcAttr.HideWindow
+      = true ; CreationFlags |= 0x08000000`) à tous les
+      `exec.CommandContext` du provider Claude (4 sites :
+      version check ×2, generate, generateStreaming).
+      Sans ce flag, lancer `claude` CLI depuis le binaire
+      Wails GUI ouvrait une console terminale visible et
+      pouvait perturber les pipes stdout (Node.js détecte
+      un TTY).
+- [x] **D14 — Chat redesign messenger** → **résolu
+      2026-05-10** : composant `ChatLayout` interne à
+      `RestructureInspector` rend la conversation en bulles
+      style messenger (assistant gauche avec avatar Sparkles
+      violet, user droite en violet plein, scroll continu
+      auto-scrollant, input bar avec textarea + bouton
+      circulaire d'envoi). Curseur clignotant `BlinkingCursor`
+      pendant le streaming. `Entrée` envoie, `Maj+Entrée`
+      saute une ligne. Inspirée d'une maquette Claude
+      Design (cf. dossier `sketch/`). Remplace le rendu
+      à plat de la première version (questions en `<ul>` +
+      textarea générique).

@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { CloseProject, OpenProject, SwitchProject, ReorderProjects } from '../../../wailsjs/go/main/App';
 import { useTabsStore } from '@/stores/tabs';
+import { useNavGuardStore } from '@/stores/navGuard';
 import { cn } from '@/lib/utils';
 import type { ProjectTab } from '@/stores/tabs';
 
@@ -13,6 +14,7 @@ export function TabBar(): JSX.Element | null {
   const removeProject = useTabsStore((s) => s.removeProject);
   const setActive = useTabsStore((s) => s.setActive);
   const reorderProjects = useTabsStore((s) => s.reorderProjects);
+  const guard = useNavGuardStore((s) => s.guard);
 
   const dragSrc = useRef<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -21,34 +23,63 @@ export function TabBar(): JSX.Element | null {
     return null;
   }
 
-  async function handleClickTab(idx: number) {
-    try {
-      await SwitchProject(idx);
-      setActive(idx);
-    } catch (e) {
-      console.error('SwitchProject failed', e);
-    }
+  // Switch d'un onglet projet : skip si on re-clique l'onglet
+  // actif. Le guard lit lui-même les flags (isDirty + restructure
+  // open) et bloque si nécessaire.
+  function handleClickTab(idx: number) {
+    if (idx === activeIndex) return;
+    guard(async () => {
+      try {
+        await SwitchProject(idx);
+        setActive(idx);
+      } catch (e) {
+        console.error('SwitchProject failed', e);
+      }
+    });
   }
 
-  async function handleClose(e: React.MouseEvent, idx: number) {
+  function handleClose(e: React.MouseEvent, idx: number) {
     e.stopPropagation();
-    try {
-      await CloseProject(idx);
-      removeProject(idx);
-    } catch (e) {
-      console.error('CloseProject failed', e);
+    // Fermer l'onglet actif passe par le guard ; fermer un autre
+    // onglet ne déclenche le guard que si le draft courant est
+    // dirty (le guard décide via les stores).
+    if (idx === activeIndex) {
+      guard(async () => {
+        try {
+          await CloseProject(idx);
+          removeProject(idx);
+        } catch (e) {
+          console.error('CloseProject failed', e);
+        }
+      });
+    } else {
+      // Close d'un autre onglet : action immédiate, pas de risque
+      // de perte sur le draft courant.
+      void (async () => {
+        try {
+          await CloseProject(idx);
+          removeProject(idx);
+        } catch (e) {
+          console.error('CloseProject failed', e);
+        }
+      })();
     }
   }
 
   async function handleOpenNew() {
-    try {
-      const meta = await OpenProject('');
-      if (meta && meta.Path) {
-        addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+    // Ouvrir un nouveau projet auto-switche sur lui (addProject
+    // set activeIndex = nouveau tab) → on perd le contexte
+    // courant. Le guard décide via les flags des stores.
+    guard(async () => {
+      try {
+        const meta = await OpenProject('');
+        if (meta && meta.Path) {
+          addProject({ path: meta.Path, name: meta.Name, lastOpened: meta.LastOpened });
+        }
+      } catch (e) {
+        console.error('OpenProject failed', e);
       }
-    } catch (e) {
-      console.error('OpenProject failed', e);
-    }
+    });
   }
 
   // Drag-drop reorder (HTML5 native API, no external lib).

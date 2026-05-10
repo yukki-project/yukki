@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useArtifactsStore } from '@/stores/artifacts';
 import { useShellStore } from '@/stores/shell';
 import { usePdfExportStore } from '@/stores/pdfExport';
+import { useNavGuardStore } from '@/stores/navGuard';
 import { useToast } from '@/hooks/use-toast';
 import { STATUS_BADGE } from '@/lib/statusBadge';
 
@@ -27,6 +28,14 @@ export function HubList({ className }: HubListProps) {
   const selectedPath = useArtifactsStore((s) => s.selectedPath);
   const setSelectedPath = useArtifactsStore((s) => s.setSelectedPath);
   const kind = useArtifactsStore((s) => s.kind);
+
+  // Nav-guard : intercepte la sélection d'un autre artefact si
+  // l'éditeur a des modifs non sauvées OU une restructure IA
+  // ouverte. Le guard lit lui-même les flags des stores.
+  const guard = useNavGuardStore((s) => s.guard);
+  const handleSelectPath = (path: string) => {
+    guard(() => setSelectedPath(path));
+  };
 
   const showArchived = useShellStore((s) => s.showArchived);
   const setShowArchived = useShellStore((s) => s.setShowArchived);
@@ -181,7 +190,7 @@ export function HubList({ className }: HubListProps) {
             return (
               <li
                 key={m.Path}
-                onClick={() => setSelectedPath(m.Path)}
+                onClick={() => handleSelectPath(m.Path)}
                 className={cn(
                   'group flex items-start gap-1.5 px-3 py-2 cursor-pointer border-b hover:bg-ykp-line/40',
                   active && 'bg-ykp-line/60',

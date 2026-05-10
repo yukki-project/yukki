@@ -230,8 +230,13 @@ func TestRestructureStartE2E_FallbackHeuristicTriggers(t *testing.T) {
 	if len(qs) != 1 {
 		t.Errorf("expected 1 generic question, got %d", len(qs))
 	}
-	if !strings.Contains(qs[0], "périmètre") {
-		t.Errorf("generic question missing 'périmètre' keyword: %q", qs[0])
+	// La question listée doit contenir au moins une des sections
+	// obligatoires passées en Divergence (wording dynamique).
+	if !strings.Contains(qs[0], "## Background") {
+		t.Errorf("dynamic fallback question missing the missing-required headings: %q", qs[0])
+	}
+	if !strings.Contains(qs[0], "restent à compléter") {
+		t.Errorf("expected plural completion wording: %q", qs[0])
 	}
 }
 
@@ -312,7 +317,6 @@ func TestRestructureStartE2E_CancelMidStream(t *testing.T) {
 
 func TestRestructureStartE2E_RejectsSecondConcurrentStart(t *testing.T) {
 	block := make(chan struct{})
-	defer close(block)
 	mp := &provider.MockProvider{
 		NameVal:    "mock",
 		Response:   "## ok",
@@ -344,6 +348,45 @@ func TestRestructureStartE2E_RejectsSecondConcurrentStart(t *testing.T) {
 	})
 	if err != ErrSessionInProgress {
 		t.Errorf("second start should return ErrSessionInProgress, got %v", err)
+	}
+
+	// Wait for the first goroutine to terminate before exiting the
+	// test. Without this, the deferred close(block) lets the
+	// goroutine emit its `done` event into the next test's recorder.
+	close(block)
+	waitForSessionEnd(t, a, 2*time.Second)
+}
+
+// ─── Front-matter: stripped from response (defensive) ────────────
+
+func TestRestructureStartE2E_StripsHallucinatedFrontMatter(t *testing.T) {
+	// Simule un Claude qui ignore la consigne et renvoie son propre
+	// front-matter en tête de réponse. Le done event doit recevoir
+	// fullText sans ce bloc.
+	hallucinated := "---\nid: STORY-FAKE\ntitle: AI hallucinated\n---\n\n## Background\n\nLe vrai contenu remappé.\n"
+	a := newRestructureTestApp(t, hallucinated, nil)
+	getEvents := recordEmits(t)
+
+	if _, err := a.RestructureStart(RestructureRequest{
+		FullMarkdown: "---\nid: STORY-001\n---\n# Body",
+		TemplateName: "story",
+	}); err != nil {
+		t.Fatalf("RestructureStart: %v", err)
+	}
+	waitForSessionEnd(t, a, 2*time.Second)
+
+	events := getEvents()
+	done := findEvent(events, "spdd:restructure:done")
+	if done == nil {
+		t.Fatalf("expected done event")
+	}
+	m := payloadMap(t, done)
+	full, _ := m["fullText"].(string)
+	if strings.Contains(full, "STORY-FAKE") {
+		t.Errorf("done.fullText still contains hallucinated frontmatter: %q", full)
+	}
+	if !strings.HasPrefix(full, "## Background") {
+		t.Errorf("done.fullText should start at the real body, got %q", full)
 	}
 }
 
