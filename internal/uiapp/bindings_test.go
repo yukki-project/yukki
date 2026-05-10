@@ -602,3 +602,30 @@ func TestApp_StoryExport_Conflict_ReturnsConflictError(t *testing.T) {
 		t.Errorf("expected *ExportConflictError, got %T: %v", err, err)
 	}
 }
+
+// --- UI-023 — AcquireEditLock / ReleaseEditLock bindings -------------------
+
+func TestApp_AcquireEditLockBinding_Stores(t *testing.T) {
+	app := &App{}
+	abs, _ := filepath.Abs("foo.md")
+
+	if err := app.AcquireEditLock("foo.md"); err != nil {
+		t.Fatalf("AcquireEditLock: %v", err)
+	}
+	if !app.isEditLocked(abs) {
+		t.Errorf("expected lock to be present after AcquireEditLock")
+	}
+}
+
+func TestApp_ReleaseEditLockBinding_Removes(t *testing.T) {
+	app := &App{}
+	abs, _ := filepath.Abs("foo.md")
+
+	_ = app.AcquireEditLock("foo.md")
+	if err := app.ReleaseEditLock("foo.md"); err != nil {
+		t.Fatalf("ReleaseEditLock: %v", err)
+	}
+	if app.isEditLocked(abs) {
+		t.Errorf("expected lock to be cleared after ReleaseEditLock")
+	}
+}

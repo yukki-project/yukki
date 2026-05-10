@@ -150,6 +150,20 @@ type App struct {
 	// SaveSettings flips it WARN ↔ DEBUG without recreating the
 	// log file (OPS-001 invariant I2).
 	logLevel *slog.LevelVar
+
+	// fsWatchers tracks active UI-023 disk watchers, one per
+	// opened project, keyed by the project's canonical absolute
+	// path. Values are *fsWatcher. Lifecycle :
+	//   - OpenProject / OnStartup → startFsWatcher
+	//   - CloseProject / OnShutdown → stopFsWatcher / stopAllFsWatchers
+	fsWatchers sync.Map
+
+	// editLocks holds the set of absolute paths currently in edit
+	// mode in the SpddEditor (UI-023 self-write loop guard). Keys
+	// are absolute paths, values are struct{} sentinels. Mutated
+	// via acquireEditLock / releaseEditLock ; read by the fsWatch
+	// debouncer before emitting Wails events.
+	editLocks sync.Map
 }
 
 // NewApp constructs an App with the dependencies it needs at runtime.
@@ -193,6 +207,21 @@ func (a *App) OnStartup(ctx context.Context) {
 		a.logger.Warn("section defs load failed — using fallback", "err", defsErr)
 	}
 	a.sectionDefs = defs
+
+	// UI-023 — start a fsnotify watcher for each restored project
+	// so disk events from external tools (VS Code, CLI, git pull)
+	// flow back to the UI without manual refresh.
+	a.mu.RLock()
+	restored := make([]string, 0, len(a.openedProjects))
+	for _, p := range a.openedProjects {
+		restored = append(restored, p.Path)
+	}
+	a.mu.RUnlock()
+	for _, path := range restored {
+		if err := a.startFsWatcher(path); err != nil && a.logger != nil {
+			a.logger.Warn("fswatch start on OnStartup failed", "path", path, "err", err)
+		}
+	}
 }
 
 // OnShutdown is invoked by Wails when the user closes the window. Cancels
@@ -206,6 +235,8 @@ func (a *App) OnShutdown(ctx context.Context) {
 		}
 		return true
 	})
+	// UI-023 — stop every fs watcher and wait for goroutines.
+	a.stopAllFsWatchers()
 	a.persistRegistry()
 	if a.cancel != nil {
 		a.cancel()

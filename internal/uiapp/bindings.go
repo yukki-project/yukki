@@ -101,6 +101,13 @@ func (a *App) OpenProject(path string) (ProjectMeta, error) {
 	}
 	emitEvent(a.ctx, "project:opened", proj.meta())
 
+	// UI-023 — start a fs watcher for this project so disk events
+	// flow back to the UI without manual refresh. Failure is
+	// non-fatal (the project still opens).
+	if err := a.startFsWatcher(proj.Path); err != nil && a.logger != nil {
+		a.logger.Warn("fswatch start on OpenProject failed", "path", proj.Path, "err", err)
+	}
+
 	if a.logger != nil {
 		a.logger.Info("project opened", "path", canon, "name", proj.Name)
 	}
@@ -118,6 +125,10 @@ func (a *App) CloseProject(idx int) error {
 		return fmt.Errorf("CloseProject: index %d out of range [0, %d)", idx, len(a.openedProjects))
 	}
 	closed := a.openedProjects[idx]
+	// UI-023 — stop the fs watcher associated with this project
+	// before removing it from the list. Idempotent : no-op if no
+	// watcher is registered (e.g. project opened with .yukki absent).
+	_ = a.stopFsWatcher(closed.Path)
 	a.openedProjects = append(a.openedProjects[:idx], a.openedProjects[idx+1:]...)
 	if len(a.openedProjects) == 0 {
 		a.activeIndex = -1
@@ -424,4 +435,20 @@ func (a *App) activeProjectDir() string {
 		return ""
 	}
 	return a.openedProjects[a.activeIndex].Path
+}
+
+// AcquireEditLock marks the absolute resolution of `path` as being in
+// edit mode in the SpddEditor. The fsWatcher consults this lock and
+// drops events on the path while it is held — see UI-023 self-write
+// loop guard. Idempotent : a second call on the same path is a no-op.
+func (a *App) AcquireEditLock(path string) error {
+	a.traceBinding("AcquireEditLock", slog.String("path", path))
+	return a.acquireEditLock(path)
+}
+
+// ReleaseEditLock removes the edit lock on the absolute resolution of
+// `path`. Idempotent (no-op when no lock is held).
+func (a *App) ReleaseEditLock(path string) error {
+	a.traceBinding("ReleaseEditLock", slog.String("path", path))
+	return a.releaseEditLock(path)
 }

@@ -2,9 +2,9 @@
 id: UI-023
 slug: yukki-watch-fs-events
 title: Auto-rafraîchissement de l'UI sur changement disque (.yukki/)
-status: draft
+status: synced
 created: 2026-05-09
-updated: 2026-05-09
+updated: 2026-05-10
 owner: Thibaut Sannier
 modules:
   - frontend
@@ -53,16 +53,18 @@ c'est encore à jour ? ».
   ce même fichier change sur disque, afficher un warning de
   conflit avec choix « Recharger depuis le disque » /
   « Garder mes modifications ».
-- **Cycle de vie** propre : le watcher démarre quand un projet
-  s'ouvre, s'arrête quand il se ferme ou que yukki quitte.
+- **Cycle de vie** propre : un watcher démarre par projet ouvert,
+  s'arrête quand le projet se ferme (ou que yukki quitte).
+- **Watch multi-projet en parallèle** : **tous les projets ouverts**
+  sont surveillés simultanément, pas seulement le projet actif.
+  Permet de voir un commit / pull dans un projet inactif et de
+  retrouver l'UI à jour quand on revient dessus. Fermer un projet
+  arrête son watcher associé.
 
 ## Scope Out
 
 - **Watch hors `.yukki/`** (par exemple `.git/`, `frontend/`,
   `internal/`). Pas pertinent pour la vue artefacts.
-- **Watch multi-projet en parallèle** : seul le projet actif
-  est surveillé. Quand l'utilisateur change de projet, le
-  watcher bascule.
 - **Notifications utilisateur sur chaque event** (toast) : trop
   bruyant, le refresh est silencieux.
 - **Replay des events qui ont eu lieu pendant que yukki était

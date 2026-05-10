@@ -83,7 +83,12 @@ describe('useRestructureSession', () => {
     expect(useRestructureStore.getState().after).toBe('# restructured');
   });
 
-  it('missing-info event switches to chatAwaitingUser', async () => {
+  it('missing-info event auto-replies and transitions through chatStreaming', async () => {
+    // Post UI-019 amendments 2026-05-10b — yukki répond
+    // automatiquement au LLM avec AUTO_REPLY ; le mode passe par
+    // chatAwaitingUser puis bascule à chatStreaming sur le tour
+    // suivant. On vérifie l'état final : chatStreaming + history
+    // contient un tour avec answer != "".
     const { result } = renderHook(() => useRestructureSession());
     await act(async () => {
       await result.current.start(STARTED_INPUT);
@@ -95,17 +100,24 @@ describe('useRestructureSession', () => {
         rawResponse: '<info-missing>...</info-missing>',
       });
     });
-    await waitFor(() => expect(result.current.mode).toBe('chatAwaitingUser'));
-    expect(result.current.questions).toEqual(['Q1?', 'Q2?']);
+    // Auto-reply fires synchronously after missing-info handler ;
+    // observe the post-auto-reply state directly.
+    await waitFor(() => expect(result.current.mode).toBe('chatStreaming'));
     expect(result.current.history).toHaveLength(1);
-    expect(result.current.history[0].answer).toBe('');
+    expect(result.current.history[0].question).toBe('Q1?\nQ2?');
+    expect(result.current.history[0].answer).not.toBe('');
+    expect(result.current.chatTurnCount).toBe(1);
   });
 
-  it('answerChat fills the last turn answer and relaunches', async () => {
+  it('auto-reply propagates the AUTO_REPLY answer to the next RestructureStart call', async () => {
+    // Post UI-019 amendments 2026-05-10b — l'auto-reply remplace
+    // l'answerChat utilisateur. On vérifie que mockStart est invoqué
+    // avec un history non vide où la dernière answer = AUTO_REPLY.
     const { result } = renderHook(() => useRestructureSession());
     await act(async () => {
       await result.current.start(STARTED_INPUT);
     });
+    mockStart.mockClear();
     act(() => {
       fakeRuntime._emit('spdd:restructure:missing-info', {
         sessionID: 'restruct-1',
@@ -113,21 +125,14 @@ describe('useRestructureSession', () => {
         rawResponse: '',
       });
     });
-    await waitFor(() => expect(result.current.mode).toBe('chatAwaitingUser'));
+    await waitFor(() => expect(mockStart).toHaveBeenCalled());
 
-    mockStart.mockClear();
-    await act(async () => {
-      await result.current.answerChat('mon scope');
-    });
-
-    expect(result.current.mode).toBe('chatStreaming');
-    expect(result.current.history[0].answer).toBe('mon scope');
-    expect(result.current.chatTurnCount).toBe(1);
-    expect(mockStart).toHaveBeenCalledWith(
-      expect.objectContaining({
-        history: [{ question: 'Q1?', answer: 'mon scope' }],
-      }),
-    );
+    const callArgs = mockStart.mock.calls[mockStart.mock.calls.length - 1][0] as {
+      history: Array<{ question: string; answer: string }>;
+    };
+    expect(callArgs.history).toHaveLength(1);
+    expect(callArgs.history[0].question).toBe('Q1?');
+    expect(callArgs.history[0].answer).not.toBe('');
   });
 
   it('error event sets mode error', async () => {

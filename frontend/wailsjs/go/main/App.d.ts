@@ -35,6 +35,10 @@ export function InitializeYukki(dir: string): Promise<void>;
 // UI-010
 export function WriteArtifact(path: string, content: string): Promise<void>;
 
+// UI-023 — fs watcher edit-lock bindings
+export function AcquireEditLock(path: string): Promise<void>;
+export function ReleaseEditLock(path: string): Promise<void>;
+
 // CORE-007 — draft persistence
 export function DraftSave(draft: Record<string, unknown>): Promise<void>;
 export function DraftLoad(id: string): Promise<Record<string, unknown>>;
